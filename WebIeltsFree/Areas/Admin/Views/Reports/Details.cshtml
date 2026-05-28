@@ -1,0 +1,136 @@
+@model WebIeltsFree.Models.Report
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Report Details";
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="fs-3 fw-bold mb-1">Report Details</h1>
+            <p class="text-muted mb-0">Review user feedback and take action.</p>
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="ti ti-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-light text-dark border px-3 py-2 text-uppercase fw-semibold">@Model.ReportType.Replace("_", " ")</span>
+                    <span class="text-muted small"><i class="ti ti-clock me-1"></i> @Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                </div>
+                <h4 class="fw-bold text-dark">@Model.Title</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="p-4 bg-light rounded-3 border mb-4">
+                    <p class="mb-0" style="white-space: pre-wrap;">@Model.Description</p>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(Model.AttachmentsJson))
+                {
+                    <h6 class="fw-semibold mb-3">Attachments</h6>
+                    <div class="d-flex gap-2 flex-wrap">
+                        @{
+                            try 
+                            {
+                                var attachments = JsonSerializer.Deserialize<List<string>>(Model.AttachmentsJson);
+                                foreach (var attachment in attachments ?? new List<string>())
+                                {
+                                    <a href="@attachment" target="_blank" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center">
+                                        <i class="ti ti-paperclip me-2"></i> View Attachment
+                                    </a>
+                                }
+                            }
+                            catch
+                            {
+                                <span class="text-muted small">Invalid attachment data format.</span>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">User Information</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center p-3 bg-light rounded-3 border">
+                    <div class="avatar avatar-lg bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center fs-4">
+                        @Model.User?.Email?.FirstOrDefault()
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-1">@Model.User?.Profile?.FullName</h6>
+                        <div class="text-muted small mb-1"><i class="ti ti-mail me-1"></i> @Model.User?.Email</div>
+                        <div class="d-flex gap-2 mt-2">
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary">ID: @Model.UserId</span>
+                            <span class="badge bg-primary bg-opacity-10 text-primary text-uppercase">@Model.User?.Role</span>
+                        </div>
+                    </div>
+                    <div>
+                        <a asp-controller="Users" asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-outline-primary btn-sm">
+                            View Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">Triage & Status</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="UpdatePriority" method="post" class="mb-4">
+                    <input type="hidden" name="id" value="@Model.ReportId" />
+                    <label class="form-label fw-semibold small text-muted text-uppercase mb-2">Priority Level</label>
+                    <div class="input-group">
+                        <select name="priority" class="form-select" onchange="this.form.submit()">
+                            <option value="low" selected="@(Model.Priority == "low")">Low</option>
+                            <option value="medium" selected="@(Model.Priority == "medium")">Medium</option>
+                            <option value="high" selected="@(Model.Priority == "high")">High</option>
+                            <option value="critical" selected="@(Model.Priority == "critical")">Critical</option>
+                        </select>
+                    </div>
+                </form>
+
+                <form asp-action="UpdateStatus" method="post">
+                    <input type="hidden" name="id" value="@Model.ReportId" />
+                    <label class="form-label fw-semibold small text-muted text-uppercase mb-2">Resolution Status</label>
+                    <div class="input-group">
+                        <select name="status" class="form-select" onchange="this.form.submit()">
+                            <option value="open" selected="@(Model.Status == "open")">Open</option>
+                            <option value="in_progress" selected="@(Model.Status == "in_progress")">In Progress</option>
+                            <option value="resolved" selected="@(Model.Status == "resolved")">Resolved</option>
+                            <option value="closed" selected="@(Model.Status == "closed")">Closed</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 border-top border-secondary border-3">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-2">Close Report</h5>
+                <p class="text-muted small mb-3">Closing a report will hide it from active views. It can still be accessed through filters.</p>
+                <form asp-action="Delete" method="post" onsubmit="return confirm('Are you sure you want to close this report?');">
+                    <input type="hidden" name="id" value="@Model.ReportId" />
+                    <button type="submit" class="btn btn-outline-secondary w-100" @(Model.Status == "closed" ? "disabled" : "")>
+                        <i class="ti ti-archive me-2"></i> Close Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

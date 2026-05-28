@@ -1,0 +1,331 @@
+@{
+    ViewData["Title"] = "Writing Workshop — IELTS Learning";
+}
+
+@await Html.PartialAsync("~/Views/Learn/_LearnStyles.cshtml")
+
+<style>
+    /* ─── Writing Workshop Design ─── */
+    .writing-workshop {
+        --ws-sage: #2d6a4f;
+        --ws-sage-light: #d8f3dc;
+        --ws-ink: #1b2a1f;
+        --ws-cream: #fefaf4;
+        --ws-border: #d0ddd4;
+        --ws-accent: #e76f51;
+        font-family: 'Playfair Display', Georgia, serif;
+        background: linear-gradient(180deg, var(--ws-cream) 0%, #f4f0e8 100%);
+        min-height: calc(100vh - 60px);
+        color: var(--ws-ink);
+    }
+    .ws-container { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    /* Hero */
+    .ws-hero {
+        padding: 48px 0 32px;
+        border-bottom: 1px solid var(--ws-border);
+    }
+    .ws-hero h1 { font-size: 2.8rem; font-weight: 800; line-height: 1.1; letter-spacing: -.03em; }
+    .ws-hero p { font-family: 'Inter', sans-serif; color: #5c6b62; max-width: 560px; line-height: 1.6; }
+    .ws-chip {
+        display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px;
+        border-radius: 999px; background: var(--ws-sage-light); color: var(--ws-sage);
+        font-family: 'Inter', sans-serif; font-size: .7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* Layout */
+    .ws-grid { display: grid; grid-template-columns: 260px 1fr; gap: 24px; padding: 24px 0 60px; }
+    .ws-sidebar { position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+    .ws-main { min-width: 0; }
+
+    /* Sidebar lesson list */
+    .ws-lesson-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+        border-radius: 10px; cursor: pointer; transition: all .15s;
+        font-family: 'Inter', sans-serif; font-size: .85rem;
+        border: 1px solid transparent;
+    }
+    .ws-lesson-item:hover { background: rgba(45,106,79,.06); }
+    .ws-lesson-item.active { background: var(--ws-sage-light); border-color: var(--ws-sage); font-weight: 600; }
+    .ws-lesson-num {
+        width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+        border-radius: 50%; background: #e8ede9; font-size: .75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .ws-lesson-item.active .ws-lesson-num { background: var(--ws-sage); color: #fff; }
+
+    /* Content cards */
+    .ws-card { background: #fff; border: 1px solid var(--ws-border); border-radius: 14px; padding: 28px; margin-bottom: 20px; }
+    .ws-card-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; }
+    .ws-card-body { font-family: 'Inter', sans-serif; font-size: .92rem; line-height: 1.8; color: #3d4f43; }
+
+    /* Band descriptor box */
+    .ws-band-box {
+        border-left: 4px solid var(--ws-sage); padding: 14px 18px;
+        background: rgba(45,106,79,.04); border-radius: 0 10px 10px 0;
+        margin: 16px 0; font-family: 'Inter', sans-serif; font-size: .88rem;
+    }
+    .ws-band-label { font-weight: 700; color: var(--ws-sage); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+
+    /* Sample essay */
+    .ws-sample-essay {
+        background: #faf8f2; border: 1px dashed var(--ws-border); border-radius: 12px;
+        padding: 24px; font-family: 'Inter', sans-serif; font-size: .9rem; line-height: 1.9;
+        position: relative;
+    }
+    .ws-sample-label {
+        position: absolute; top: -10px; left: 16px; background: var(--ws-accent); color: #fff;
+        padding: 2px 12px; border-radius: 999px; font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    }
+
+    /* AI Mentor panel */
+    .ws-ai-panel {
+        background: linear-gradient(135deg, #1b3a2a 0%, #0f2618 100%); color: #fff;
+        border-radius: 14px; padding: 24px;
+    }
+    .ws-ai-panel h5 { font-family: 'Inter', sans-serif; font-weight: 700; }
+
+    /* Empty state */
+    .ws-empty {
+        text-align: center; padding: 60px 20px;
+        font-family: 'Inter', sans-serif; color: #8a9a8e;
+    }
+    .ws-empty-icon { font-size: 3rem; opacity: .3; margin-bottom: 16px; }
+
+    /* Expandable sections */
+    .ws-expandable summary {
+        cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; font-size: .9rem;
+        padding: 10px 0; color: var(--ws-sage); list-style: none;
+    }
+    .ws-expandable summary::before { content: '▶ '; font-size: .7rem; }
+    .ws-expandable[open] summary::before { content: '▼ '; }
+
+    @@media (max-width: 991.98px) {
+        .ws-grid { grid-template-columns: 1fr; }
+        .ws-sidebar { position: static; max-height: none; }
+        .ws-hero h1 { font-size: 2rem; }
+    }
+</style>
+
+<div class="writing-workshop">
+    <!-- Hero -->
+    <div class="ws-hero">
+        <div class="ws-container">
+            <span class="ws-chip"><i class="bi bi-pencil-square"></i> Writing Workshop</span>
+            <h1 class="mt-2">Master IELTS Writing</h1>
+            <p class="mt-2 mb-0">Learn essay structure, band descriptors, and scoring criteria through guided lessons and model essays.</p>
+        </div>
+    </div>
+
+    <div class="ws-container">
+        <div class="ws-grid">
+            <!-- Sidebar: Lesson Navigation -->
+            <aside class="ws-sidebar">
+                <div class="mb-3">
+                    <small class="fw-bold text-uppercase" style="font-family:'Inter',sans-serif;color:#8a9a8e;letter-spacing:.06em;font-size:.7rem;">Lessons</small>
+                </div>
+                <div id="writingLessonList" class="d-grid gap-1">
+                    <div class="text-muted small" style="font-family:'Inter',sans-serif;">Loading lessons...</div>
+                </div>
+
+
+            </aside>
+
+            <!-- Main Content -->
+            <main class="ws-main">
+                <!-- Active Lesson Content -->
+                <div id="writingLessonContent">
+                    <div class="ws-empty">
+                        <div class="ws-empty-icon"><i class="bi bi-journal-text"></i></div>
+                        <h3 style="font-size:1.3rem;">Select a lesson to begin</h3>
+                        <p class="small">Choose a writing lesson from the sidebar to load its content.</p>
+                    </div>
+                </div>
+
+                <!-- AI Writing Mentor -->
+                <div class="ws-ai-panel mt-3" id="writingAiMentor">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-robot"></i>
+                        <h5 class="mb-0">AI Writing Mentor</h5>
+                    </div>
+                    <p class="small mb-2" style="color:rgba(255,255,255,.7);">
+                        Ask questions about essay structure, vocabulary choices, or band improvement strategies.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <input id="writingMentorInput" type="text" class="form-control form-control-sm"
+                            style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;"
+                            placeholder="e.g., How do I write a strong introduction for Task 2?">
+                        <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;white-space:nowrap;">Ask AI</button>
+                    </div>
+                    <div id="writingMentorResponse" class="small mt-2" style="color:rgba(255,255,255,.6);"></div>
+                </div>
+
+                <!-- Personal Draft Pad (Document Editor Focus) -->
+                <div class="ws-card mt-3">
+                    <h5 class="ws-card-title" style="font-size:1rem;"><i class="bi bi-pencil-square me-2"></i>Personal Draft Pad</h5>
+                    <div class="ws-card-body p-0 pt-2">
+                        <textarea class="form-control border-0" rows="8" placeholder="Use this space to draft your essays, note down vocabulary, or practice writing structures while you study the lesson..." style="background:#faf8f2; font-family:'Inter',sans-serif; font-size:.9rem; resize:vertical; box-shadow:none;"></textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-2 px-2 pb-2">
+                            <small class="text-muted" style="font-size:.75rem;">Your notes are saved locally in this session.</small>
+                            <button class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;"><i class="bi bi-save me-1"></i>Save Notes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grammar Sidebar -->
+                <div class="ws-card mt-3">
+                    <h5 class="ws-card-title" style="font-size:1rem;"><i class="bi bi-spellcheck me-2"></i>Grammar Quick Reference</h5>
+                    <div class="ws-card-body">
+                        <details class="ws-expandable">
+                            <summary>Complex Sentences</summary>
+                            <p class="mt-2 small">Use subordinating conjunctions (although, because, while, whereas) to create complex sentences that demonstrate grammatical range.</p>
+                        </details>
+                        <details class="ws-expandable">
+                            <summary>Cohesive Devices</summary>
+                            <p class="mt-2 small">Furthermore, moreover, however, nevertheless, consequently, in contrast, on the other hand...</p>
+                        </details>
+                        <details class="ws-expandable">
+                            <summary>Common Band 7+ Structures</summary>
+                            <p class="mt-2 small">It is widely acknowledged that... / While it is true that... / Despite the fact that...</p>
+                        </details>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const listEl = document.getElementById('writingLessonList');
+    const contentEl = document.getElementById('writingLessonContent');
+
+    try {
+        const res = await api('/lessons/skills/writing', { method: 'GET' });
+        const lessons = res?.data || [];
+
+        if (lessons.length === 0) {
+            listEl.innerHTML = `
+                <div class="ws-empty" style="padding:20px 10px;">
+                    <p class="small mb-2">No writing lessons available yet.</p>
+                    <a href="/Home/AiRoadmap" class="small text-decoration-none" style="color:var(--ws-sage);">
+                        <i class="bi bi-stars me-1"></i>Get AI-recommended lessons
+                    </a>
+                </div>`;
+            return;
+        }
+
+        listEl.innerHTML = lessons.map((l, i) => `
+            <div class="ws-lesson-item ${i === 0 ? 'active' : ''}" data-lesson-id="${l.lessonId}" onclick="loadWritingLesson(${l.lessonId}, this)">
+                <span class="ws-lesson-num">${i + 1}</span>
+                <div>
+                    <div style="line-height:1.3;">${escapeHtml(l.title || 'Untitled')}</div>
+                    <div class="small text-muted" style="font-size:.72rem;">${l.estimatedMinutes || 20} min</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Auto-load first lesson
+        if (lessons[0]) loadWritingLesson(lessons[0].lessonId, listEl.firstElementChild);
+    } catch {
+        listEl.innerHTML = '<div class="small text-danger">Failed to load lessons.</div>';
+    }
+});
+
+async function loadWritingLesson(lessonId, el) {
+    // Update sidebar active state
+    document.querySelectorAll('.ws-lesson-item').forEach(i => i.classList.remove('active'));
+    el?.classList.add('active');
+
+    const contentEl = document.getElementById('writingLessonContent');
+    contentEl.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-secondary" role="status"></div></div>';
+
+    try {
+        const res = await api(`/lessons/${lessonId}`, { method: 'GET' });
+        const lesson = res?.data;
+
+        if (!lesson) {
+            contentEl.innerHTML = '<div class="ws-empty"><p>Lesson not found.</p></div>';
+            return;
+        }
+
+        const contents = lesson.contents || [];
+        let html = `<h2 class="ws-card-title" style="font-size:1.6rem;">${escapeHtml(lesson.title || 'Writing Lesson')}</h2>`;
+
+        if (contents.length === 0) {
+            html += `
+                <div class="ws-empty" style="padding:30px;">
+                    <div class="ws-empty-icon"><i class="bi bi-journal-plus"></i></div>
+                    <h4>No content yet</h4>
+                    <p class="small">This lesson doesn't have detailed content blocks yet.</p>
+                    <a href="/Home/AiRoadmap" class="btn btn-sm" style="background:var(--ws-sage);color:#fff;">
+                        <i class="bi bi-stars me-1"></i>Get AI Recommendations
+                    </a>
+                </div>`;
+        } else {
+            contents.forEach((item, idx) => {
+                const typeIcon = getWritingContentIcon(item.contentType);
+                html += `
+                    <div class="ws-card" style="animation:fadeInUp .4s ease ${idx * 0.1}s both;">
+                        <div class="ws-chip mb-2"><i class="bi bi-${typeIcon}"></i> ${escapeHtml(item.contentType || 'Content')}</div>
+                        <div class="ws-card-body lesson-content-rendered">${renderContent(item.contentBody || '')}</div>
+                    </div>`;
+            });
+        }
+
+        // Band descriptor section
+        html += `
+            <div class="ws-band-box">
+                <div class="ws-band-label">Band Descriptors — Writing</div>
+                <div class="mt-2 small" style="font-family:'Inter',sans-serif;">
+                    <strong>Band 7:</strong> Addresses all parts of the task. Presents a clear position throughout.
+                    Uses a range of cohesive devices appropriately. Uses a sufficient range of vocabulary.<br>
+                    <strong>Band 8:</strong> Sufficiently addresses all parts with well-developed ideas.
+                    Manages all aspects of cohesion well. Uses a wide range of vocabulary fluently.
+                </div>
+            </div>`;
+
+        contentEl.innerHTML = html;
+    } catch {
+        contentEl.innerHTML = '<div class="ws-card"><div class="text-danger small">Failed to load lesson content.</div></div>';
+    }
+}
+
+function getWritingContentIcon(type) {
+    const t = (type || '').toLowerCase();
+    if (t.includes('video')) return 'play-circle';
+    if (t.includes('exercise') || t.includes('quiz')) return 'question-circle';
+    if (t.includes('vocab')) return 'translate';
+    return 'file-text';
+}
+
+function renderContent(html) {
+    // Support both HTML and basic Markdown safely
+    if (!html) return '';
+    // If it looks like raw markdown (has ## or ** patterns), convert basics
+    if (html.includes('## ') || html.includes('**')) {
+        html = html
+            .replace(/^### (.+)$/gm, '<h5>$1</h5>')
+            .replace(/^## (.+)$/gm, '<h4>$1</h4>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
+    }
+    return html;
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+</script>
+
+<style>
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+}

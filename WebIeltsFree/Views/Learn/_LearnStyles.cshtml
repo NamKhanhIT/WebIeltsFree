@@ -1,0 +1,341 @@
+@*
+    Learning Interface — Shared Styles
+    Visual identity: Warm editorial / academic LMS
+    Design system: Serene Focus (Sage/Teal palette, serif headlines)
+    Usage: Include via @await Html.PartialAsync("~/Views/Learn/_LearnStyles.cshtml")
+*@
+
+<style>
+    /* ─── Learning Interface Design Tokens ─── */
+    :root {
+        --learn-canvas: #FDFBF7;
+        --learn-surface: #f5f0e8;
+        --learn-card: #fffcf5;
+        --learn-sage: #5C7C75;
+        --learn-sage-light: #7a9e96;
+        --learn-teal: #3B6978;
+        --learn-teal-dark: #2a4d58;
+        --learn-ink: #2d2a26;
+        --learn-muted: #8a857d;
+        --learn-hairline: #e6dfd8;
+        --learn-accent: #c49a6c;
+        --learn-accent-light: #f0dfc5;
+        --learn-success: #5a8f6e;
+        --learn-radius: 14px;
+        --learn-radius-sm: 8px;
+        --learn-shadow: 0 4px 24px rgba(45,42,38,0.06);
+        --learn-shadow-hover: 0 8px 32px rgba(45,42,38,0.10);
+    }
+
+    /* ─── Base Shell ─── */
+    .learn-shell {
+        background: var(--learn-canvas);
+        min-height: calc(100vh - 60px);
+        padding: 0 0 80px;
+        color: var(--learn-ink);
+    }
+
+    /* ─── Hero Banner ─── */
+    .learn-hero {
+        background: linear-gradient(135deg, var(--learn-teal-dark) 0%, var(--learn-sage) 60%, var(--learn-accent) 100%);
+        padding: 56px 0 48px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+    .learn-hero::after {
+        content: '';
+        position: absolute;
+        top: -60%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .learn-hero h1 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 700;
+        font-size: 2.6rem;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        margin: 0 0 10px;
+    }
+    .learn-hero p {
+        font-size: 1.05rem;
+        opacity: 0.88;
+        max-width: 600px;
+        line-height: 1.6;
+    }
+    .learn-hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 999px;
+        padding: 5px 14px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #fff;
+        margin-bottom: 14px;
+    }
+
+    /* ─── Breadcrumb ─── */
+    .learn-breadcrumb {
+        padding: 18px 0 0;
+    }
+    .learn-breadcrumb .breadcrumb {
+        background: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.82rem;
+    }
+    .learn-breadcrumb .breadcrumb-item a {
+        color: var(--learn-sage);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .learn-breadcrumb .breadcrumb-item a:hover {
+        color: var(--learn-teal);
+        text-decoration: underline;
+    }
+    .learn-breadcrumb .breadcrumb-item.active {
+        color: var(--learn-muted);
+    }
+
+    /* ─── Section Headers ─── */
+    .learn-section-title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 600;
+        font-size: 1.55rem;
+        color: var(--learn-ink);
+        letter-spacing: -0.01em;
+        margin: 0 0 4px;
+    }
+    .learn-section-sub {
+        font-size: 0.88rem;
+        color: var(--learn-muted);
+        line-height: 1.5;
+    }
+
+    /* ─── Cards ─── */
+    .learn-card {
+        background: var(--learn-card);
+        border: 1px solid var(--learn-hairline);
+        border-radius: var(--learn-radius);
+        box-shadow: var(--learn-shadow);
+        padding: 28px;
+        transition: box-shadow 0.25s ease, transform 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .learn-card:hover {
+        box-shadow: var(--learn-shadow-hover);
+        transform: translateY(-2px);
+    }
+    .learn-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .learn-card h3 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 600;
+        font-size: 1.18rem;
+        margin: 0;
+        color: var(--learn-ink);
+        line-height: 1.35;
+    }
+    .learn-card p {
+        font-size: 0.86rem;
+        color: var(--learn-muted);
+        line-height: 1.6;
+        margin: 0 0 14px;
+    }
+
+    /* ─── Badges & Chips ─── */
+    .learn-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+    .learn-badge-sage { background: rgba(92,124,117,0.1); color: var(--learn-sage); border-color: rgba(92,124,117,0.2); }
+    .learn-badge-teal { background: rgba(59,105,120,0.1); color: var(--learn-teal); border-color: rgba(59,105,120,0.2); }
+    .learn-badge-accent { background: var(--learn-accent-light); color: #8a6740; border-color: rgba(196,154,108,0.3); }
+    .learn-badge-success { background: rgba(90,143,110,0.1); color: var(--learn-success); }
+
+    .learn-skill-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .learn-skill-icon.reading   { background: rgba(59,105,120,0.12); color: var(--learn-teal); }
+    .learn-skill-icon.listening { background: rgba(196,154,108,0.15); color: var(--learn-accent); }
+    .learn-skill-icon.writing   { background: rgba(92,124,117,0.12); color: var(--learn-sage); }
+    .learn-skill-icon.speaking  { background: rgba(180,80,60,0.1); color: #b4503c; }
+
+    /* ─── Buttons ─── */
+    .learn-btn {
+        border: none;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 10px 22px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .learn-btn-primary {
+        background: var(--learn-sage);
+        color: #fff;
+    }
+    .learn-btn-primary:hover {
+        background: var(--learn-teal);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+    .learn-btn-outline {
+        background: transparent;
+        color: var(--learn-sage);
+        border: 1.5px solid var(--learn-hairline);
+    }
+    .learn-btn-outline:hover {
+        border-color: var(--learn-sage);
+        background: rgba(92,124,117,0.04);
+        color: var(--learn-teal);
+    }
+
+    /* ─── Progress ─── */
+    .learn-progress {
+        height: 6px;
+        background: var(--learn-surface);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .learn-progress > div {
+        height: 100%;
+        background: linear-gradient(90deg, var(--learn-sage), var(--learn-teal));
+        border-radius: 999px;
+        transition: width 0.5s ease;
+    }
+
+    /* ─── Stat Chips ─── */
+    .learn-stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.78rem;
+        color: var(--learn-muted);
+    }
+    .learn-stat i { font-size: 0.9rem; }
+    .learn-stat strong { color: var(--learn-ink); font-weight: 600; }
+
+    /* ─── Lesson Viewer (Inline Detail) ─── */
+    .learn-viewer {
+        background: var(--learn-card);
+        border: 1px solid var(--learn-hairline);
+        border-radius: var(--learn-radius);
+        box-shadow: inset 0 2px 8px rgba(45,42,38,0.04);
+        padding: 32px;
+        margin-top: 16px;
+        animation: learnSlideIn 0.35s ease;
+    }
+    .learn-viewer h4 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 600;
+        font-size: 1.3rem;
+        margin: 0 0 8px;
+    }
+    .learn-viewer .content-block {
+        padding: 16px 0;
+        border-bottom: 1px solid var(--learn-hairline);
+    }
+    .learn-viewer .content-block:last-child { border-bottom: none; }
+    .learn-viewer .content-type-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: var(--learn-sage);
+        margin-bottom: 6px;
+    }
+
+    /* ─── Grid Layout ─── */
+    .learn-grid-courses {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 22px;
+    }
+    .learn-grid-lessons {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+        gap: 18px;
+    }
+
+    /* ─── Info Bar ─── */
+    .learn-info-bar {
+        background: var(--learn-surface);
+        border: 1px solid var(--learn-hairline);
+        border-radius: var(--learn-radius-sm);
+        padding: 14px 20px;
+        font-size: 0.84rem;
+        color: var(--learn-ink);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .learn-info-bar i { color: var(--learn-sage); font-size: 1.1rem; }
+
+    /* ─── Animations ─── */
+    @@keyframes learnSlideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .learn-fade-in {
+        animation: learnSlideIn 0.4s ease;
+    }
+
+    /* ─── Responsive ─── */
+    @@media (max-width: 767.98px) {
+        .learn-hero h1 { font-size: 1.9rem; }
+        .learn-hero { padding: 36px 0 32px; }
+        .learn-grid-courses { grid-template-columns: 1fr; }
+        .learn-grid-lessons { grid-template-columns: 1fr; }
+        .learn-card { padding: 20px; }
+    }
+</style>
+
+<script>
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>

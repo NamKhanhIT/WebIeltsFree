@@ -1,0 +1,405 @@
+@{
+    var skillType = (ViewData["SkillType"]?.ToString() ?? "reading").ToLower();
+    var lessonId = ViewData["LessonId"]?.ToString() ?? "0";
+    var didAvatarUrl = System.Environment.GetEnvironmentVariable("DID_AVATAR_URL") ?? "";
+    var skillName = skillType switch
+    {
+        "listening" => "Listening",
+        "writing" => "Writing",
+        "speaking" => "Speaking",
+        _ => "Reading"
+    };
+}
+
+<style>
+    :root {
+        --ac-bg: #fbf8ff;
+        --ac-surface: #f3f2ff;
+        --ac-white: #ffffff;
+        --ac-primary: #0057c2;
+        --ac-primary2: #006ef2;
+        --ac-text: #001552;
+        --ac-muted: #727786;
+        --ac-outline: rgba(114, 119, 134, .18);
+    }
+    .practice-shell {
+        background: var(--cream);
+        color: var(--ac-text);
+        min-height: calc(100vh - 140px);
+    }
+    .ac-main-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .ac-main { padding: 6px 6px 0; }
+    .ac-title { font-size: 3rem; line-height: 1.03; letter-spacing: -.03em; margin: 0; font-weight: 800; color: var(--ac-text); }
+    .ac-subtitle { color: var(--ac-muted); margin: 8px 0 0; }
+    .ac-surface { background: var(--ac-surface); border-radius: 18px; border: 1px solid rgba(193,198,215,.2); }
+    .ac-white { background: var(--ac-white); border-radius: 16px; border: 1px solid rgba(193,198,215,.2); }
+    .ac-chip {
+        display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+        background: #e6edff; color: var(--ac-primary); font-size: .67rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700;
+    }
+    .ac-btn-primary {
+        border: 0; border-radius: 999px; color: #fff; font-weight: 700;
+        background: linear-gradient(135deg,var(--ac-primary),var(--ac-primary2));
+        padding: 11px 18px;
+    }
+    .ac-btn-light {
+        border: 1px solid rgba(193,198,215,.5); border-radius: 999px; background: #fff; color: var(--ac-primary); font-weight: 600; padding: 11px 18px;
+    }
+    .ac-progress { height: 8px; background: #dbe3f4; border-radius: 999px; overflow: hidden; }
+    .ac-progress > div { height: 100%; background: var(--ac-primary); border-radius: 999px; }
+    .ac-input:focus, .ac-textarea:focus, .ac-select:focus {
+        border-color: rgba(0,87,194,.35);
+        box-shadow: 0 0 0 .2rem rgba(0,87,194,.15);
+    }
+    .ac-wave { height: 72px; display: flex; align-items: end; justify-content: center; gap: 5px; }
+    .ac-wave span { width: 18px; border-radius: 999px; background: #1f6ad6; }
+    .ac-wave span:nth-child(odd){ background:#aec8fb; }
+    .ac-wave span:nth-child(1){height:28px}.ac-wave span:nth-child(2){height:38px}.ac-wave span:nth-child(3){height:20px}
+    .ac-wave span:nth-child(4){height:48px}.ac-wave span:nth-child(5){height:56px}.ac-wave span:nth-child(6){height:66px}
+    .ac-wave span:nth-child(7){height:44px}.ac-wave span:nth-child(8){height:30px}.ac-wave span:nth-child(9){height:24px}
+    .ac-wave span:nth-child(10){height:28px}.ac-wave span:nth-child(11){height:40px}.ac-wave span:nth-child(12){height:50px}
+    .ac-wave span:nth-child(13){height:47px}.ac-wave span:nth-child(14){height:16px}
+    .ac-grid-2 { display:grid; grid-template-columns: 1fr 310px; gap: 16px; }
+    .ac-grid-listen { display:grid; grid-template-columns: 1fr 260px; gap:16px; }
+    .ac-questions-panel { max-height: calc(100vh - 220px); overflow: auto; }
+    .ac-passage-panel { max-height: calc(100vh - 220px); overflow: auto; padding-right: 8px; }
+    .ac-q-option { border: 1px solid #cad2e4; border-radius: 999px; padding: 6px 14px; background: #fff; font-size: .8rem; font-weight: 600; display:inline-block; cursor:pointer; }
+    .ac-q-option.active { background: var(--ac-primary); color: #fff; border-color: var(--ac-primary); }
+    .ac-card-shadow { box-shadow: 0 12px 32px rgba(0, 21, 82, 0.06); }
+    @@media (max-width: 1199.98px) {
+        .ac-grid-2, .ac-grid-listen { grid-template-columns: 1fr; }
+        .ac-title { font-size: 2.2rem; }
+    }
+</style>
+
+<div class="practice-shell">
+    <main class="ac-main">
+        <div class="ac-main-head">
+            <div>
+                <h5 class="mb-0 fw-bold">@skillName Practice</h5>
+                <small class="text-muted">Lesson #@lessonId</small>
+            </div>
+        </div>
+        <hr class="mt-2 mb-3" />
+            <div id="listeningHub" class="d-none">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div>
+                        <h1 class="ac-title">Listening Lab</h1>
+                        <p class="ac-subtitle">Refine your auditory comprehension with curated IELTS section exercises.</p>
+                    </div>
+                    <div class="ac-surface p-3" style="min-width:260px;">
+                        <div class="small fw-bold text-primary text-uppercase mb-1">Current Band Score</div>
+                        <div class="d-flex justify-content-between align-items-center"><strong class="fs-4">7.5</strong><span class="small text-success">+0.3</span></div>
+                        <div class="ac-progress mt-2"><div style="width:83%"></div></div>
+                    </div>
+                </div>
+
+                <div class="ac-grid-listen">
+                    <div class="d-grid gap-3">
+                        <div class="ac-surface p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="ac-chip">Section 3: Academic Discussion</span>
+                                    <h4 class="mt-2 mb-0 fw-bold">Sustainable Architecture Seminar</h4>
+                                </div>
+                                <div class="text-primary"><i class="bi bi-gear me-2"></i><i class="bi bi-download"></i></div>
+                            </div>
+                            <div class="ac-wave mb-3">
+                                <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                                <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                            <audio id="listeningAudio" controls class="w-100 mb-3"></audio>
+                            <div id="listeningDynamic" class="ac-white p-3">Loading listening set...</div>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="saveDraftBtnListening" class="ac-btn-light">Save Draft</button>
+                                <button id="submitBtnListening" class="ac-btn-primary">Submit</button>
+                            </div>
+                        </div>
+
+                        <div class="ac-white p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0 fw-bold">Guided Transcript</h5>
+                                <span class="ac-chip">Smart Highlights</span>
+                            </div>
+                            <div id="lessonContent"><p class="text-muted mb-0">Preparing transcript...</p></div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-3">
+                        <div class="ac-surface p-3">
+                            <h6 class="fw-bold mb-3">Module Navigation</h6>
+                            <div class="d-grid gap-2 small">
+                                <div class="ac-white p-2"><strong>Section 1</strong><div class="text-success">Completed</div></div>
+                                <div class="ac-white p-2"><strong>Section 2</strong><div class="text-success">Completed</div></div>
+                                <div class="ac-white p-2 border border-primary"><strong>Section 3</strong><div class="text-primary">In progress</div></div>
+                                <div class="ac-white p-2 text-muted"><strong>Section 4</strong><div>Locked</div></div>
+                            </div>
+                        </div>
+                        <div class="ac-white p-3 ac-card-shadow">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-stars text-primary me-1"></i>AI Curator Insights</h6>
+                            <p class="small text-muted mb-2">You often miss plural markers in fast speech. Watch word endings.</p>
+                            <div class="d-flex justify-content-between small fw-semibold"><span>Accuracy</span><span>88%</span></div>
+                            <div class="ac-progress mb-2"><div style="width:88%"></div></div>
+                            <div class="d-flex justify-content-between small fw-semibold"><span>Listening Stamina</span><span>High</span></div>
+                        </div>
+                        <div class="ac-surface p-3">
+                            <h6 class="fw-bold mb-2">Lab Vocabulary</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="ac-chip">Urbanization</span>
+                                <span class="ac-chip">Industrial smog</span>
+                                <span class="ac-chip">Demographic</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="readingHub" class="d-none">
+                <div class="ac-grid-2">
+                    <div class="ac-passage-panel pe-lg-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="ac-chip">Academic Passage 1</span>
+                            <div class="text-primary"><i class="bi bi-highlighter me-2"></i><i class="bi bi-chat-left-text"></i></div>
+                        </div>
+                        <h1 class="ac-title">The Future of Renewable Energy: Scaling the Invisible Power</h1>
+                        <p class="fs-4 fst-italic border-start border-4 border-primary ps-3 mt-4 mb-4 text-secondary-emphasis">
+                            As global temperatures continue to rise, the urgency to transition from carbon-intensive fuels has never been more pressing.
+                        </p>
+                        <div id="lessonContentReading"><p class="text-muted">Preparing passage...</p></div>
+                    </div>
+                    <div class="ac-surface p-3 ac-questions-panel">
+                        <div class="ac-white p-4 mb-3">
+                            <h4 class="fw-bold mb-1">Questions 1-5</h4>
+                            <p class="small text-muted mb-3">Do the following statements agree with the passage?</p>
+                            <div id="readingDynamic">Loading reading set...</div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button id="submitBtnReading" class="ac-btn-primary">Submit Section</button>
+                            <button id="saveDraftBtnReading" class="ac-btn-light">Save Progress</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="writingHub" class="d-none">
+                <div class="ac-grid-2">
+                    <div class="d-grid gap-3">
+                        <div class="ac-surface p-4 p-lg-5">
+                            <span class="ac-chip mb-2"><i class="bi bi-journal-text"></i>IELTS Writing Practice</span>
+                            <h1 class="ac-title mb-2" style="font-size:2.5rem;">Writing Studio</h1>
+                            <p class="ac-subtitle mb-0">Practice with authentic IELTS format, get AI scoring, and review your personalized model answer.</p>
+                        </div>
+
+                        <div class="ac-white p-4">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Task Type</label>
+                                    <select id="writingTaskType" class="form-select ac-select"></select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold">Prompt</label>
+                                    <div id="writingPromptBox" class="ac-surface p-3">Loading writing prompt...</div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label for="writingAnswer" class="form-label fw-semibold">Your Writing</label>
+                                <textarea id="writingAnswer" class="form-control ac-textarea" rows="13" placeholder="Write your response here..."></textarea>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <small class="text-muted">Task 1: at least 150 words • Task 2: at least 250 words</small>
+                                    <small id="writingWordCount" class="text-muted">0 words</small>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="saveDraftBtnWriting" class="ac-btn-light">Save Draft</button>
+                                <button id="submitBtnWriting" class="ac-btn-primary">Submit for AI scoring</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-3">
+                        <div class="ac-white p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-1"></i>Writing History</h5>
+                                <button id="refreshWritingHistoryBtn" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                            </div>
+                            <div id="writingHistoryList" class="d-grid gap-2"></div>
+                            <small id="writingHistoryEmpty" class="text-muted">No writing submissions yet.</small>
+                        </div>
+
+                        <div id="writingFeedbackPanel" class="ac-surface p-3 d-none">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-robot me-1 text-primary"></i>AI Feedback</h5>
+                                <span class="ac-chip">Band <span id="writingBandScore">-</span></span>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6"><div class="ac-white p-2 small"><strong>Task Response</strong><div id="writingScoreTA" class="text-primary">-</div></div></div>
+                                <div class="col-6"><div class="ac-white p-2 small"><strong>Coherence</strong><div id="writingScoreCC" class="text-primary">-</div></div></div>
+                                <div class="col-6"><div class="ac-white p-2 small"><strong>Lexical Resource</strong><div id="writingScoreLR" class="text-primary">-</div></div></div>
+                                <div class="col-6"><div class="ac-white p-2 small"><strong>Grammar</strong><div id="writingScoreGA" class="text-primary">-</div></div></div>
+                            </div>
+                            <div class="ac-white p-3 mb-2">
+                                <h6 class="fw-semibold mb-1">AI Evaluation</h6>
+                                <div id="writingFeedbackText" class="small text-muted mb-0">Submit your essay to receive detailed feedback.</div>
+                            </div>
+                            <div class="ac-white p-3">
+                                <h6 class="fw-semibold mb-1">Improvement Notes</h6>
+                                <ul id="writingTipsList" class="small text-muted mb-0 ps-3">
+                                    <li>Use a clear thesis and topic sentence in each paragraph.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div id="writingModelPanel" class="ac-white p-3 d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-stars me-1 text-warning"></i>Higher-band Model Answer</h5>
+                                <span class="ac-chip">Target <span id="writingModelBand">8.0</span>+</span>
+                            </div>
+                            <h6 id="writingModelAnswerPrompt" class="small fw-semibold text-muted mb-2"></h6>
+                            <div id="writingModelAnswerText" class="small" style="white-space:pre-line;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="speakingHub" class="d-none">
+                <div class="ac-grid-2">
+                    <div>
+                        <div class="ac-surface overflow-hidden mb-3" style="background:#06133f;color:#fff;">
+                            <div class="p-4 p-lg-5">
+                                <span class="ac-chip" style="background:#4bfc61;color:#005313;">Lily is Online</span>
+                                <h1 class="mt-2 mb-2" style="font-size:3rem;line-height:1;font-weight:800;">1:1 AI Speaking Call</h1>
+                                <p class="mb-3" style="color:#dbe5ff;">Live IELTS examiner simulation with realtime question streaming, topic guard and safe-call controls.</p>
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-lg-6">
+                                        <div class="ac-white p-2" style="background:#02133a;border-color:#1f3f92;">
+                                            <video id="speakingAvatarVideo" class="w-100 rounded" style="aspect-ratio:16/10;background:#000;object-fit:cover;" autoplay muted playsinline poster="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=60"></video>
+                                            <div class="small mt-2" style="color:#dbe5ff;">
+                                                Avatar status: <strong id="speakingAvatarStatus">Idle</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="ac-white p-3 mb-2" style="background:#02133a;border-color:#1f3f92;">
+                                            <div class="small d-flex justify-content-between">
+                                                <span>Call state</span>
+                                                <strong id="speakingRealtimeStatus">Idle</strong>
+                                            </div>
+                                            <div class="small d-flex justify-content-between mt-1">
+                                                <span>Safety</span>
+                                                <strong id="speakingSafetyStatus" style="color:#4bfc61;">On-topic</strong>
+                                            </div>
+                                            <div class="small d-flex justify-content-between mt-1">
+                                                <span>Warnings</span>
+                                                <strong id="speakingTopicWarningCount">0</strong>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <button id="startSpeakingBtn" class="ac-btn-light"><i class="bi bi-telephone me-1"></i>Start Call</button>
+                                            <button id="nextQuestionBtn" class="btn btn-outline-light">Next Question</button>
+                                            <button id="interruptSpeakingBtn" class="btn btn-outline-warning">Interrupt</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ac-white p-4">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Speaking Part</label>
+                                    <select id="speakingPart" class="form-select ac-select">
+                                        <option value="part1">Part 1 - Introduction & Interview</option>
+                                        <option value="part2">Part 2 - Long Turn</option>
+                                        <option value="part3">Part 3 - Discussion</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold">Prompt</label>
+                                    <div class="ac-surface p-3"><p id="speakingPrompt" class="mb-0">Describe a memorable event in your life.</p></div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="stopSpeakingBtn" class="btn btn-outline-danger">Stop</button>
+                                <button id="resetSpeakingBtn" class="btn btn-outline-secondary">Reset</button>
+                                <span class="ms-auto small text-muted align-self-center">Recording time: <span id="speakingTimer">00:00</span></span>
+                            </div>
+                            <textarea id="speakingTranscript" class="form-control ac-textarea mt-2" rows="7" placeholder="Your speech will appear here..." readonly></textarea>
+                            <small id="speakingMicStatus" class="text-muted d-block mt-1">Microphone: idle</small>
+                            <div class="ac-surface p-2 mt-2">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="speakingAutoNextToggle" checked>
+                                        <label class="form-check-label small fw-semibold" for="speakingAutoNextToggle">Auto-next after you stop speaking</label>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <label for="speakingAutoNextDelay" class="small text-muted mb-0">Delay</label>
+                                        <select id="speakingAutoNextDelay" class="form-select form-select-sm" style="min-width: 110px;">
+                                            <option value="1200">1.2s</option>
+                                            <option value="1600">1.6s</option>
+                                            <option value="2000" selected>2.0s</option>
+                                            <option value="2600">2.6s</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <small id="speakingAutoNextStatus" class="text-muted d-block mt-1">Auto-next is enabled.</small>
+                            </div>
+                            <div class="ac-white p-2 mt-2">
+                                <label for="speakingAvatarFallbackUrl" class="small fw-semibold mb-1">Avatar fallback video URL (optional)</label>
+                                <input id="speakingAvatarFallbackUrl" type="url" class="form-control ac-input" value="@didAvatarUrl" placeholder="https://.../avatar.mp4">
+                                <small class="text-muted">If provider API is unavailable, this URL is used for video playback. Google Drive public links are supported.</small>
+                            </div>
+                            <div class="ac-surface p-2 mt-2">
+                                <div class="d-flex justify-content-between small">
+                                    <span>Current IELTS Part: <strong id="speakingCurrentPart">1</strong></span>
+                                    <span>Safety state: <strong id="speakingSafetyStateInline">On-topic</strong></span>
+                                </div>
+                                <div id="speakingStreamText" class="small mt-1 text-muted"></div>
+                            </div>
+                            <div class="ac-surface p-2 mt-2">
+                                <div class="small fw-semibold mb-1"><i class="bi bi-shield-exclamation me-1"></i>Safety and Topic Monitor</div>
+                                <ul id="speakingWarningLog" class="small mb-0 ps-3 text-muted">
+                                    <li>No warning yet. Stay on the topic to continue the interview.</li>
+                                </ul>
+                            </div>
+                            <div class="mt-3"><button id="submitBtnSpeaking" class="ac-btn-primary">Submit Speaking Analysis</button></div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-3">
+                        <div class="ac-surface p-3">
+                            <h6 class="fw-bold mb-2">Part 3 Prefetch</h6>
+                            <ul id="speakingPrefetchList" class="small mb-0 ps-3 text-muted">
+                                <li>Part 3 questions will be prepared during Part 2.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+                <div class="col-lg-8">
+                    <div class="ac-surface p-3 d-none" id="commonLessonBlock">
+                        <h6 id="lessonTitle" class="mb-1">Loading lesson...</h6>
+                        <p id="lessonMeta" class="small text-muted mb-2"></p>
+                        <div id="lessonContentCommon"><p class="mb-0 text-muted">Preparing content...</p></div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="ac-surface p-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-semibold">Lesson progress</small>
+                            <small id="progressLabel">0%</small>
+                        </div>
+                        <div class="ac-progress mb-3"><div id="progressBar" style="width:0%"></div></div>
+                        <a href="@Url.Action("Skill", "Home", new { type = skillType })" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-arrow-left me-1"></i>Back to @skillName lessons</a>
+                    </div>
+                </div>
+            </div>
+    </main>
+</div>

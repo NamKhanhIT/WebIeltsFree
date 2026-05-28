@@ -1,0 +1,533 @@
+@{
+    ViewData["Title"] = "Listening Lab — IELTS Learning";
+}
+
+@await Html.PartialAsync("~/Views/Learn/_LearnStyles.cshtml")
+
+<style>
+    /* ─── Listening Lab: Immersive Audio Design ─── */
+    .listening-lab {
+        --ll-bg: #0f172a;
+        --ll-surface: #1e293b;
+        --ll-card: #1e293b;
+        --ll-border: rgba(148,163,184,.12);
+        --ll-primary: #38bdf8;
+        --ll-primary-soft: rgba(56,189,248,.12);
+        --ll-ink: #e2e8f0;
+        --ll-muted: #94a3b8;
+        --ll-accent: #f472b6;
+        font-family: 'Inter', -apple-system, sans-serif;
+        background: var(--ll-bg);
+        min-height: calc(100vh - 60px);
+        color: var(--ll-ink);
+    }
+    .ll-container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+    .ll-hero { padding: 44px 0 28px; }
+    .ll-hero h1 { font-size: 2.6rem; font-weight: 800; line-height: 1.08; letter-spacing: -.03em; color: #f1f5f9; }
+    .ll-hero p { color: var(--ll-muted); max-width: 520px; line-height: 1.6; }
+    .ll-chip {
+        display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px;
+        border-radius: 999px; background: var(--ll-primary-soft); color: var(--ll-primary);
+        font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* Audio center */
+    .ll-audio-center {
+        background: var(--ll-surface); border: 1px solid var(--ll-border);
+        border-radius: 16px; padding: 28px; position: relative; overflow: hidden;
+    }
+    .ll-audio-center::before {
+        content: ''; position: absolute; top: -50%; right: -20%; width: 300px; height: 300px;
+        border-radius: 50%; background: radial-gradient(circle, rgba(56,189,248,.08) 0%, transparent 70%);
+    }
+    .ll-waveform {
+        height: 72px; display: flex; align-items: end; justify-content: center; gap: 4px;
+        background: rgba(15,23,42,.5); border-radius: 10px; padding: 10px; margin-bottom: 16px;
+    }
+    .ll-waveform span {
+        width: 5px; border-radius: 3px; transition: height .3s ease;
+    }
+    .ll-waveform span:nth-child(odd) { background: var(--ll-primary); }
+    .ll-waveform span:nth-child(even) { background: rgba(56,189,248,.35); }
+
+    /* Layout */
+    .ll-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 24px 0 60px; }
+    .ll-card {
+        background: var(--ll-surface); border: 1px solid var(--ll-border);
+        border-radius: 14px; padding: 20px;
+    }
+    .ll-section-title {
+        font-size: .72rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .06em; color: var(--ll-muted); margin-bottom: 12px;
+    }
+
+    /* Transcript */
+    .ll-transcript { font-size: .92rem; line-height: 2; color: var(--ll-ink); }
+    .ll-transcript .keyword {
+        background: var(--ll-primary-soft); color: var(--ll-primary);
+        padding: 1px 6px; border-radius: 4px; font-weight: 600; cursor: help;
+    }
+    .ll-transcript .segment {
+        padding: 4px 0; border-left: 3px solid transparent; padding-left: 10px;
+        transition: all .2s; cursor: pointer;
+    }
+    .ll-transcript .segment:hover { border-left-color: var(--ll-primary); background: rgba(56,189,248,.04); }
+    .ll-transcript .segment.active { border-left-color: var(--ll-primary); background: rgba(56,189,248,.08); }
+
+    /* Lesson list */
+    .ll-lesson-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        border-radius: 10px; cursor: pointer; transition: all .15s; font-size: .85rem;
+    }
+    .ll-lesson-item:hover { background: rgba(56,189,248,.06); }
+    .ll-lesson-item.active { background: var(--ll-primary-soft); border: 1px solid rgba(56,189,248,.2); }
+    .ll-lesson-num {
+        width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+        border-radius: 50%; background: rgba(148,163,184,.15); font-size: .72rem; font-weight: 700; flex-shrink: 0;
+    }
+    .ll-lesson-item.active .ll-lesson-num { background: var(--ll-primary); color: var(--ll-bg); }
+
+    /* Speed controls */
+    .ll-speed-btn {
+        padding: 4px 10px; border-radius: 6px; border: 1px solid var(--ll-border);
+        background: transparent; color: var(--ll-muted); font-size: .78rem; font-weight: 600;
+        cursor: pointer; transition: all .15s;
+    }
+    .ll-speed-btn.active { background: var(--ll-primary-soft); color: var(--ll-primary); border-color: rgba(56,189,248,.3); }
+
+    /* Vocabulary extraction */
+    .ll-vocab-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 12px; border-radius: 8px; background: rgba(148,163,184,.06);
+        font-size: .84rem; margin-bottom: 6px;
+    }
+    .ll-vocab-word { font-weight: 600; color: var(--ll-primary); }
+
+    /* Empty */
+    .ll-empty { text-align: center; padding: 48px 20px; color: var(--ll-muted); }
+    .ll-empty-icon { font-size: 3rem; opacity: .2; margin-bottom: 12px; }
+
+    @@media (max-width: 991.98px) {
+        .ll-grid { grid-template-columns: 1fr; }
+        .ll-hero h1 { font-size: 2rem; }
+    }
+</style>
+
+<div class="listening-lab">
+    <!-- Hero -->
+    <div class="ll-hero">
+        <div class="ll-container">
+            <span class="ll-chip"><i class="bi bi-headphones"></i> Listening Lab</span>
+            <h1 class="mt-2">Immersive Listening</h1>
+            <p class="mt-2 mb-0">Develop your auditory comprehension with synchronized transcripts, keyword highlighting, and guided replay.</p>
+        </div>
+    </div>
+
+    <div class="ll-container">
+        <div class="ll-grid">
+            <!-- Main Content -->
+            <div>
+                <!-- Audio Center -->
+                <div class="ll-audio-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3" style="position:relative;z-index:1;">
+                        <div>
+                            <h4 id="listeningLessonTitle" class="fw-bold mb-0" style="color:#f1f5f9;">Select a lesson</h4>
+                            <small class="text-muted" id="listeningLessonMeta"></small>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="ll-speed-btn" onclick="setAudioSpeed(0.75, this)">0.75x</button>
+                            <button class="ll-speed-btn active" onclick="setAudioSpeed(1, this)">1x</button>
+                            <button class="ll-speed-btn" onclick="setAudioSpeed(1.25, this)">1.25x</button>
+                            <button class="ll-speed-btn" onclick="setAudioSpeed(1.5, this)">1.5x</button>
+                        </div>
+                    </div>
+                    <div class="ll-waveform" id="listeningWaveDisplay">
+                        <span style="height:28%"></span><span style="height:40%"></span>
+                        <span style="height:55%"></span><span style="height:30%"></span>
+                        <span style="height:70%"></span><span style="height:45%"></span>
+                        <span style="height:60%"></span><span style="height:35%"></span>
+                        <span style="height:50%"></span><span style="height:20%"></span>
+                        <span style="height:65%"></span><span style="height:42%"></span>
+                        <span style="height:55%"></span><span style="height:30%"></span>
+                    </div>
+                    <audio id="listeningLessonAudio" controls class="w-100" style="position:relative;z-index:1;"></audio>
+                </div>
+
+                <!-- Transcript Panel -->
+                <div class="ll-card mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="ll-section-title mb-0"><i class="bi bi-chat-square-text me-1"></i>Synchronized Transcript</span>
+                        <span class="ll-chip" style="font-size:.6rem;">Smart Highlights</span>
+                    </div>
+                    <div class="ll-transcript" id="listeningTranscript">
+                        <p style="color:var(--ll-muted);">Load a lesson to see the transcript with keyword highlighting and segment replay.</p>
+                    </div>
+                </div>
+
+                <!-- Lesson Content (theory/strategy) -->
+                <div id="listeningLessonContent">
+                    <div class="ll-empty">
+                        <div class="ll-empty-icon"><i class="bi bi-music-note-beamed"></i></div>
+                        <h3 style="font-size:1.2rem;">Select a lesson to begin</h3>
+                        <p class="small">Choose a listening lesson from the sidebar.</p>
+                    </div>
+                </div>
+
+                <!-- Strategy Tips -->
+                <div class="ll-card mt-3">
+                    <span class="ll-section-title"><i class="bi bi-lightbulb me-1"></i>Listening Strategies</span>
+                    <details open style="margin-bottom:8px;">
+                        <summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:var(--ll-primary);">Note-Taking Tips</summary>
+                        <p class="small mt-1" style="color:var(--ll-muted);">Write keywords, not full sentences. Use abbreviations. Focus on numbers, names, and dates.</p>
+                    </details>
+                    <details style="margin-bottom:8px;">
+                        <summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:var(--ll-primary);">Anticipating Answers</summary>
+                        <p class="small mt-1" style="color:var(--ll-muted);">Read questions before listening. Predict what type of answer is expected (number, name, place).</p>
+                    </details>
+                    <details>
+                        <summary style="cursor:pointer;font-weight:600;font-size:.88rem;color:var(--ll-primary);">Pronunciation Shadowing</summary>
+                        <p class="small mt-1" style="color:var(--ll-muted);">Replay segments and speak along. This improves both listening accuracy and speaking fluency.</p>
+                    </details>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <aside>
+                <!-- Lesson List -->
+                <div class="ll-card mb-3">
+                    <span class="ll-section-title">Lessons</span>
+                    <div id="listeningLessonList" class="d-grid gap-1">
+                        <div class="text-muted small">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Vocabulary Extraction -->
+                <div class="ll-card mb-3">
+                    <span class="ll-section-title"><i class="bi bi-translate me-1"></i>Key Vocabulary</span>
+                    <div id="listeningVocabList">
+                        <p class="small" style="color:var(--ll-muted);">Vocabulary will appear after loading a lesson.</p>
+                    </div>
+                </div>
+
+                <!-- AI Explanation -->
+                <div class="ll-card" style="background:linear-gradient(135deg,#1a1a3e,#0f172a);border-color:rgba(244,114,182,.15);">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-robot" style="color:var(--ll-accent);"></i>
+                        <span class="fw-bold small" style="color:var(--ll-accent);">AI Listening Coach</span>
+                    </div>
+                    <p class="small mb-2" style="color:rgba(226,232,240,.5);">
+                        Ask about sections you missed, vocabulary meaning, or speaker intent.
+                    </p>
+                    <input id="listeningCoachInput" type="text" class="form-control form-control-sm"
+                        style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:#fff;"
+                        placeholder="e.g., What did Speaker 2 mean by...">
+                    <div id="listeningCoachResponse" class="mt-2 small text-muted" style="max-height: 200px; overflow-y: auto; display: none; line-height: 1.5; padding: 8px; background: rgba(0,0,0,0.25); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);"></div>
+                </div>
+
+
+            </aside>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function setAudioSpeed(speed, btn) {
+    const audio = document.getElementById('listeningLessonAudio');
+    if (audio) audio.playbackRate = speed;
+    document.querySelectorAll('.ll-speed-btn').forEach(b => b.classList.remove('active'));
+    btn?.classList.add('active');
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function renderContent(html) {
+    if (!html) return '';
+    if (html.includes('## ') || html.includes('**')) {
+        html = html
+            .replace(/^### (.+)$/gm, '<h5>$1</h5>')
+            .replace(/^## (.+)$/gm, '<h4>$1</h4>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
+    }
+    return html;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const listEl = document.getElementById('listeningLessonList');
+    const contentEl = document.getElementById('listeningLessonContent');
+
+    try {
+        const res = await api('/lessons/skills/listening', { method: 'GET' });
+        const lessons = res?.data || [];
+
+        if (lessons.length === 0) {
+            listEl.innerHTML = `
+                <div class="ll-empty" style="padding:16px;">
+                    <p class="small mb-1">No listening lessons yet.</p>
+                    <a href="/Home/AiRoadmap" class="small" style="color:var(--ll-primary);">
+                        <i class="bi bi-stars me-1"></i>AI Recommendations
+                    </a>
+                </div>`;
+            return;
+        }
+
+        listEl.innerHTML = lessons.map((l, i) => `
+            <div class="ll-lesson-item ${i === 0 ? 'active' : ''}" onclick="loadListeningLesson(${l.lessonId}, this)">
+                <span class="ll-lesson-num">${i + 1}</span>
+                <div>
+                    <div style="line-height:1.3;font-size:.84rem;">${escapeHtml(l.title || 'Untitled')}</div>
+                    <div class="small" style="color:var(--ll-muted);font-size:.7rem;">${l.estimatedMinutes || 15} min</div>
+                </div>
+            </div>
+        `).join('');
+
+        if (lessons[0]) loadListeningLesson(lessons[0].lessonId, listEl.firstElementChild);
+    } catch {
+        listEl.innerHTML = '<div class="small text-danger">Failed to load lessons.</div>';
+    }
+});
+
+async function loadListeningLesson(lessonId, el) {
+    document.querySelectorAll('.ll-lesson-item').forEach(i => i.classList.remove('active'));
+    el?.classList.add('active');
+
+    const contentEl = document.getElementById('listeningLessonContent');
+    const titleEl = document.getElementById('listeningLessonTitle');
+    contentEl.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-info" role="status"></div></div>';
+
+    // Clear previous audio & coach response
+    const audioEl = document.getElementById('listeningLessonAudio');
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute('src');
+    }
+    const coachResponse = document.getElementById('listeningCoachResponse');
+    if (coachResponse) {
+        coachResponse.style.display = 'none';
+        coachResponse.innerHTML = '';
+    }
+
+    try {
+        const res = await api(`/lessons/${lessonId}`, { method: 'GET' });
+        const lesson = res?.data;
+        if (!lesson) { contentEl.innerHTML = '<div class="ll-empty"><p>Lesson not found.</p></div>'; return; }
+
+        titleEl.textContent = lesson.title || 'Listening Lesson';
+        document.getElementById('listeningLessonMeta').textContent =
+            `${lesson.estimatedMinutes || 15} min • Difficulty: ${getDiffLabel(lesson.difficultyLevel)}`;
+
+        const contents = lesson.contents || [];
+        if (contents.length === 0) {
+            contentEl.innerHTML = `
+                <div class="ll-empty">
+                    <div class="ll-empty-icon"><i class="bi bi-music-note-list"></i></div>
+                    <h4 style="font-size:1.1rem;">No content yet</h4>
+                    <p class="small">This lesson is still being prepared.</p>
+                    <a href="/Home/AiRoadmap" class="btn btn-sm" style="background:var(--ll-primary);color:var(--ll-bg);">
+                        <i class="bi bi-stars me-1"></i>AI Recommendations
+                    </a>
+                </div>`;
+            return;
+        }
+
+        contentEl.innerHTML = contents.map((item, idx) => `
+            <div class="ll-card mb-3" style="animation:fadeInUp .4s ease ${idx * 0.1}s both;">
+                <span class="ll-chip mb-2" style="font-size:.6rem;">${escapeHtml(item.contentType || 'Content')}</span>
+                <div style="line-height:1.85;font-size:.92rem;">${renderContent(item.contentBody || '')}</div>
+            </div>
+        `).join('');
+
+        // ─── Fetch Listening Material Details (Audio, Transcript, Questions) ───
+        try {
+            const matRes = await api(`/listening/lesson/${lessonId}`, { method: 'GET' });
+            const mat = matRes?.data;
+            if (matRes?.success && mat) {
+                // 1. Playable Audio File
+                if (audioEl) {
+                    if (mat.material.audioUrl) {
+                        audioEl.src = mat.material.audioUrl;
+                        audioEl.load();
+                    } else {
+                        audioEl.removeAttribute('src');
+                    }
+                }
+
+                // 2. Synchronized Interactive Transcript Formatting
+                const transcriptEl = document.getElementById('listeningTranscript');
+                if (transcriptEl && mat.transcript) {
+                    const lines = mat.transcript.split('\n').filter(l => l.trim().length > 0);
+                    transcriptEl.innerHTML = lines.map(line => {
+                        const colonIndex = line.indexOf(':');
+                        if (colonIndex !== -1) {
+                            const speaker = line.substring(0, colonIndex).trim();
+                            const speech = line.substring(colonIndex + 1).trim();
+                            let speakerClass = 'text-info';
+                            if (['Caller', 'Mark', 'Sara'].includes(speaker)) {
+                                speakerClass = 'text-warning';
+                            }
+                            return `
+                                <div class="segment py-2 px-3 mb-2 rounded border-start border-3 border-transparent" style="background:rgba(255,255,255,0.02)">
+                                    <strong class="${speakerClass}">${escapeHtml(speaker)}:</strong>
+                                    <span class="ms-1">${escapeHtml(speech)}</span>
+                                </div>`;
+                        } else {
+                            return `
+                                <div class="segment py-2 px-3 mb-2 rounded border-start border-3 border-transparent" style="background:rgba(255,255,255,0.02)">
+                                    <span>${escapeHtml(line)}</span>
+                                </div>`;
+                        }
+                    }).join('');
+                }
+
+                // 3. Key Vocabulary Extraction list
+                const vocabEl = document.getElementById('listeningVocabList');
+                if (vocabEl) {
+                    const topicsList = mat.material.topics ? mat.material.topics.split(',') : [];
+                    const extraVocab = [];
+                    if (lessonId === 2001) {
+                        extraVocab.push({ word: 'membership options', def: 'Các lựa chọn gói thành viên' });
+                        extraVocab.push({ word: 'gym access', def: 'Quyền vào phòng gym' });
+                        extraVocab.push({ word: 'induction session', def: 'Buổi hướng dẫn ban đầu' });
+                        extraVocab.push({ word: 'Bronze/Silver/Gold tier', def: 'Phân hạng Đồng/Bạc/Vàng' });
+                    } else if (lessonId === 2002) {
+                        extraVocab.push({ word: 'layout / facilities', def: 'Sơ đồ / Cơ sở vật chất' });
+                        extraVocab.push({ word: 'Ancient History gallery', def: 'Phòng trưng bày lịch sử cổ đại' });
+                        extraVocab.push({ word: 'Science Wing', def: 'Phân khu Khoa học' });
+                        extraVocab.push({ word: 'special exhibition', def: 'Triển lãm đặc biệt' });
+                    } else if (lessonId === 2003) {
+                        extraVocab.push({ word: 'literature review', def: 'Tổng quan tài liệu nghiên cứu' });
+                        extraVocab.push({ word: 'stratified sample', def: 'Mẫu phân tầng (trong thống kê)' });
+                        extraVocab.push({ word: 'ethical approval', def: 'Sự phê duyệt về mặt đạo đức' });
+                        extraVocab.push({ word: 'data consistency', def: 'Sự nhất quán của dữ liệu' });
+                    } else if (lessonId === 2004) {
+                        extraVocab.push({ word: 'coral bleaching', def: 'Hiện tượng tẩy trắng san hô' });
+                        extraVocab.push({ word: 'ocean acidification', def: 'Sự axit hóa đại dương' });
+                        extraVocab.push({ word: 'symbiotic algae', def: 'Tảo cộng sinh' });
+                        extraVocab.push({ word: 'agricultural runoff', def: 'Nước thải nông nghiệp chảy tràn' });
+                    }
+                    const topicsBadges = topicsList.map(t => `<span class="badge bg-dark border border-slate-700 me-1 text-capitalize text-info">${escapeHtml(t.trim())}</span>`).join('');
+                    vocabEl.innerHTML = `
+                        <div class="mb-3">${topicsBadges}</div>
+                        <div class="d-flex flex-column gap-2">
+                            ${extraVocab.map(v => `
+                                <div class="ll-vocab-item" style="border: 1px solid rgba(255,255,255,0.05);">
+                                    <div>
+                                        <div class="ll-vocab-word">${escapeHtml(v.word)}</div>
+                                        <div class="text-muted small">${escapeHtml(v.def)}</div>
+                                    </div>
+                                    <button class="btn btn-link btn-sm text-info p-0" onclick="askAICoach('Explain vocabulary term: ${escapeHtml(v.word)}')">
+                                        <i class="bi bi-robot"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                }
+
+                // 4. Clickable Audio Bookmarks
+                const bookmarksContainer = document.createElement('div');
+                bookmarksContainer.className = 'll-card mt-3';
+                bookmarksContainer.innerHTML = `
+                    <span class="ll-section-title"><i class="bi bi-bookmark-star me-1"></i>Interactive Question Bookmarks</span>
+                    <p class="small text-muted mb-3">Click any question to jump to its corresponding segment in the audio.</p>
+                    <div class="d-flex flex-column gap-2">
+                        ${mat.questions.map(q => `
+                            <button class="btn btn-sm btn-outline-info text-start d-flex align-items-center justify-content-between p-2 rounded-lg" 
+                                    style="background:rgba(56,189,248,.03);border-color:rgba(56,189,248,.15);"
+                                    onclick="jumpAudioTo(${q.timeCodeStart || 0})">
+                                <span class="text-truncate" style="max-width:480px;color:#cbd5e1;">
+                                    <strong>Q${q.questionOrder}:</strong> ${escapeHtml(q.questionText)}
+                                </span>
+                                <span class="badge bg-info-soft text-info small flex-shrink-0" style="background:rgba(56,189,248,.12)">
+                                    <i class="bi bi-play-circle me-1"></i>${formatTime(q.timeCodeStart || 0)}
+                                </span>
+                            </button>
+                        `).join('')}
+                    </div>`;
+                contentEl.appendChild(bookmarksContainer);
+            }
+        } catch (err) {
+            console.error("No additional listening material details found for lesson", lessonId, err);
+        }
+    } catch {
+        contentEl.innerHTML = '<div class="ll-card"><div class="small text-danger">Failed to load.</div></div>';
+    }
+}
+
+function jumpAudioTo(seconds) {
+    const audio = document.getElementById('listeningLessonAudio');
+    if (audio) {
+        audio.currentTime = seconds;
+        audio.play();
+        showToast(`Jumped to audio segment at ${formatTime(seconds)}!`, 'success');
+    }
+}
+
+function formatTime(seconds) {
+    if (seconds === null || seconds === undefined) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function askAICoach(promptText) {
+    const input = document.getElementById('listeningCoachInput');
+    if (input) {
+        input.value = promptText;
+        input.focus();
+        showToast("Press Enter to ask your AI Listening Coach!", "info");
+    }
+}
+
+function getDiffLabel(level) {
+    return { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced', 4: 'Expert' }[level] || 'Beginner';
+}
+
+// Bind Keypress event for AI Listening Coach
+document.addEventListener('DOMContentLoaded', () => {
+    const coachInput = document.getElementById('listeningCoachInput');
+    const coachResponse = document.getElementById('listeningCoachResponse');
+    if (coachInput && coachResponse) {
+        coachInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const query = coachInput.value.trim();
+                if (!query) return;
+
+                coachResponse.style.display = 'block';
+                coachResponse.innerHTML = '<div class="text-center py-2"><span class="spinner-border spinner-border-sm text-pink" role="status" style="width:1rem;height:1rem;color:var(--ll-accent);"></span></div>';
+                coachInput.value = '';
+
+                try {
+                    const response = await api('/ai/chat', {
+                        method: 'POST',
+                        body: JSON.stringify({ message: query, context: `You are an expert IELTS Listening Coach. The student is currently studying a lesson with the transcript:\n${document.getElementById('listeningTranscript')?.innerText || ''}` })
+                    });
+                    
+                    if (response?.success && response.data?.reply) {
+                        coachResponse.innerHTML = `
+                            <div style="color:var(--ll-accent);font-weight:600;margin-bottom:4px;font-size:.8rem;"><i class="bi bi-robot me-1"></i>Coach Evelyn:</div>
+                            <div style="color:#e2e8f0;font-size:.82rem;">${renderContent(response.data.reply)}</div>`;
+                    } else {
+                        coachResponse.innerHTML = '<div class="text-danger small">Sorry, I encountered an issue. Please try again.</div>';
+                    }
+                } catch {
+                    coachResponse.innerHTML = '<div class="text-danger small">Error connecting to coach.</div>';
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+}

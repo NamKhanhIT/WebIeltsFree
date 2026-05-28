@@ -1,0 +1,64 @@
+@model WebIeltsFree.Models.WritingPrompt
+@{
+    ViewData["Title"] = "Create Writing Prompt";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 h5 fw-bold">Create Writing Prompt</h4>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Task Type</label>
+                            <select name="taskType" class="form-select shadow-none">
+                                <option value="task1">Academic Task 1 (Graph/Chart)</option>
+                                <option value="task2">Task 2 (Essay)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Target Difficulty</label>
+                            <select name="difficulty" class="form-select shadow-none">
+                                <option value="band_4_5">Band 4.0 - 5.0</option>
+                                <option value="band_5_6">Band 5.0 - 6.0</option>
+                                <option value="band_6_7" selected>Band 6.0 - 7.0</option>
+                                <option value="band_7_8">Band 7.0 - 8.0</option>
+                                <option value="band_8_9">Band 8.0 - 9.0</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Prompt Text <span class="text-danger">*</span></label>
+                        <textarea name="promptText" class="form-control shadow-none" rows="6" required placeholder="Enter the exact IELTS writing task prompt here..."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Sample Answer (Optional)</label>
+                        <textarea name="sampleAnswer" class="form-control shadow-none" rows="8" placeholder="Provide a high-scoring sample answer for reference..."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Chart Image (Optional for Task 1)</label>
+                        <input type="file" name="ImageFile" class="form-control shadow-none" accept=".jpg,.png,.jpeg" />
+                        <div class="form-text">Upload a chart or diagram if this is a Task 1 prompt.</div>
+                    </div>
+
+                    <div class="alert bg-light border text-muted small mb-4">
+                        <i class="ti ti-info-circle me-1"></i> Newly created prompts are saved as <strong>Drafts</strong>. You can submit them for peer review later.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Save as Draft</button>
+                        <a asp-action="Index" class="btn btn-light px-4">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

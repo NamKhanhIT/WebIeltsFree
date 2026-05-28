@@ -1,0 +1,368 @@
+@{
+    ViewData["Title"] = "Create New Test Template";
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="ti ti-arrow-left"></i> Back to Assignments
+    </a>
+    <h1 class="fs-3 mb-1">Create Test Template</h1>
+    <p class="text-muted">Design a full test template containing sections and questions that can be assigned to students or peer teachers.</p>
+    <div style="display:none;">
+        @Html.AntiForgeryToken()
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-xl-9">
+        <div class="card shadow-sm border-0 mb-4 p-4">
+            <h4 class="card-title text-dark mb-4"><i class="ti ti-edit text-primary me-2"></i>1. Test Basic Details</h4>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="testTitle" class="form-label fw-semibold">Test Title</label>
+                    <input type="text" id="testTitle" class="form-control form-control-lg border-2" placeholder="e.g. Cambridge 20 - Reading Test 1" required />
+                </div>
+                <div class="col-md-3">
+                    <label for="testDifficulty" class="form-label fw-semibold">Target Band (Difficulty)</label>
+                    <select id="testDifficulty" class="form-select form-select-lg border-2">
+                        <option value="4">4.0 - Foundation</option>
+                        <option value="5">5.0 - Pre-Intermediate</option>
+                        <option value="6" selected>6.0 - Intermediate</option>
+                        <option value="7">7.0 - Upper-Intermediate</option>
+                        <option value="8">8.0 - Advanced</option>
+                        <option value="9">9.0 - Expert</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="testDuration" class="form-label fw-semibold">Duration (Minutes)</label>
+                    <input type="number" id="testDuration" class="form-control form-control-lg border-2" value="60" min="5" max="240" required />
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTIONS CONTAINER -->
+        <div id="sectionsContainer">
+            <!-- Test sections will be dynamically inserted here -->
+        </div>
+
+        <div class="d-flex gap-3 mb-5 justify-content-between">
+            <button type="button" class="btn btn-outline-primary btn-lg shadow-sm" onclick="addSection()">
+                <i class="ti ti-folder-plus me-1"></i> Add Test Section
+            </button>
+            <button type="button" class="btn btn-success btn-lg shadow" onclick="submitTest()">
+                <i class="ti ti-device-floppy me-1"></i> Save Test Template
+            </button>
+        </div>
+    </div>
+
+    <!-- SIDEBAR GUIDE -->
+    <div class="col-12 col-xl-3 d-none d-xl-block">
+        <div class="card shadow-sm border-0 bg-light p-3" style="position: sticky; top: 100px;">
+            <h6 class="fw-bold mb-3"><i class="ti ti-bulb text-warning me-1"></i>Test Creation Guidelines</h6>
+            <ul class="small text-muted ps-3 mb-0" style="line-height: 1.6;">
+                <li class="mb-2"><strong>Skill Type:</strong> Select the primary skill type for each section. This determines the test taking layout.</li>
+                <li class="mb-2"><strong>Listening Audio:</strong> For Listening sections, specify a path (e.g., <code>/audio/cam20/T1S1.m4a</code>) or leave it empty to use fallback system audio.</li>
+                <li class="mb-2"><strong>Answer Key:</strong> The answers are graded automatically (case-insensitive). Specify precise short answers (e.g. <code>yes</code>, <code>TRUE</code>, or <code>tourism</code>).</li>
+                <li class="mb-0"><strong>Validation:</strong> Ensure all sections have at least one question and titles are non-empty.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATES (HIDDEN) -->
+<template id="sectionTemplate">
+    <div class="card shadow-sm border-0 mb-4 section-card animate-slide-in" data-section-id="SECTION_ID">
+        <div class="card-header bg-transparent border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary rounded-circle p-2 section-number-badge small fw-bold">N</span>
+                <h5 class="mb-0 text-dark fw-bold section-title-label">New Section</h5>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSection('SECTION_ID')">
+                <i class="ti ti-trash"></i> Remove Section
+            </button>
+        </div>
+        <div class="card-body px-4 py-3">
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Skill Type</label>
+                    <select class="form-select border-2 section-skill-type" onchange="updateSectionHeader(this, 'SECTION_ID')">
+                        <option value="reading" selected>Reading (Passage & Questions)</option>
+                        <option value="listening">Listening (Audio & Questions)</option>
+                        <option value="writing">Writing (Prompt & Essays)</option>
+                        <option value="speaking">Speaking (Topic & Recording)</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Audio URL <small class="text-muted">(Listening Only)</small></label>
+                    <input type="text" class="form-control border-2 section-audio-url" placeholder="e.g. /audio/cam20/T1S1.m4a" />
+                </div>
+            </div>
+
+            <div class="questions-wrapper border-top pt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0 text-secondary"><i class="ti ti-help me-1"></i>Questions List</h6>
+                    <button type="button" class="btn btn-sm btn-light text-primary" onclick="addQuestion('SECTION_ID')">
+                        <i class="ti ti-plus"></i> Add Question
+                    </button>
+                </div>
+                <div class="questions-list-container">
+                    <!-- Questions will go here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="questionTemplate">
+    <div class="row g-3 mb-3 p-3 bg-light border rounded question-row animate-fade-in align-items-end" data-question-id="QUESTION_ID">
+        <div class="col-md-6">
+            <label class="form-label small fw-bold">Question Text / Instruction</label>
+            <textarea class="form-control form-control-sm border-2 question-text" rows="2" placeholder="e.g. Fill in the blank: The capital of France is ______" required></textarea>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Correct Answer</label>
+            <input type="text" class="form-control form-control-sm border-2 question-correct-answer" placeholder="e.g. Paris" required />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Target Band</label>
+            <select class="form-select form-select-sm border-2 question-difficulty">
+                <option value="4">4.0</option>
+                <option value="5">5.0</option>
+                <option value="6" selected>6.0</option>
+                <option value="7">7.0</option>
+                <option value="8">8.0</option>
+                <option value="9">9.0</option>
+            </select>
+        </div>
+        <div class="col-md-1 text-end">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-icon" onclick="removeQuestion('QUESTION_ID')" title="Delete question">
+                <i class="ti ti-trash"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <script>
+        let sectionCounter = 0;
+        let questionCounter = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add initial section
+            addSection();
+        });
+
+        function addSection() {
+            sectionCounter++;
+            const container = document.getElementById('sectionsContainer');
+            const templateHtml = document.getElementById('sectionTemplate').innerHTML;
+            
+            const uniqueId = `sec_${Date.now()}_${sectionCounter}`;
+            const rendered = templateHtml
+                .replace(/SECTION_ID/g, uniqueId)
+                .replace('New Section', `Section ${sectionCounter}`);
+                
+            container.insertAdjacentHTML('beforeend', rendered);
+            
+            // Update badges/numbering
+            reorderSectionNumbers();
+            
+            // Add one initial question to the new section
+            addQuestion(uniqueId);
+        }
+
+        function removeSection(sectionId) {
+            const sectionCard = document.querySelector(`[data-section-id="${sectionId}"]`);
+            if (sectionCard) {
+                sectionCard.classList.add('animate-slide-out');
+                setTimeout(() => {
+                    sectionCard.remove();
+                    reorderSectionNumbers();
+                }, 300);
+            }
+        }
+
+        function reorderSectionNumbers() {
+            const sections = document.querySelectorAll('.section-card');
+            sections.forEach((sec, idx) => {
+                const badge = sec.querySelector('.section-number-badge');
+                const title = sec.querySelector('.section-title-label');
+                const skillSelect = sec.querySelector('.section-skill-type');
+                if (badge) badge.textContent = idx + 1;
+                if (title) {
+                    const skillText = skillSelect.options[skillSelect.selectedIndex].text.split(' ')[0];
+                    title.textContent = `Section ${idx + 1} - ${skillText}`;
+                }
+            });
+        }
+
+        function updateSectionHeader(selectEl, sectionId) {
+            reorderSectionNumbers();
+            // Optional: Hide/Show audio URL input based on skill type
+            const audioInput = selectEl.closest('.card-body').querySelector('.section-audio-url');
+            if (selectEl.value !== 'listening') {
+                audioInput.setAttribute('disabled', 'disabled');
+                audioInput.value = '';
+            } else {
+                audioInput.removeAttribute('disabled');
+            }
+        }
+
+        function addQuestion(sectionId) {
+            questionCounter++;
+            const sectionCard = document.querySelector(`[data-section-id="${sectionId}"]`);
+            if (!sectionCard) return;
+
+            const questionsContainer = sectionCard.querySelector('.questions-list-container');
+            const templateHtml = document.getElementById('questionTemplate').innerHTML;
+            
+            const uniqueQId = `q_${Date.now()}_${questionCounter}`;
+            const rendered = templateHtml.replace(/QUESTION_ID/g, uniqueQId);
+            
+            questionsContainer.insertAdjacentHTML('beforeend', rendered);
+        }
+
+        function removeQuestion(questionId) {
+            const questionRow = document.querySelector(`[data-question-id="${questionId}"]`);
+            if (questionRow) {
+                questionRow.classList.add('animate-fade-out');
+                setTimeout(() => {
+                    questionRow.remove();
+                }, 300);
+            }
+        }
+
+        async function submitTest() {
+            const titleInput = document.getElementById('testTitle');
+            const difficultySelect = document.getElementById('testDifficulty');
+            const durationInput = document.getElementById('testDuration');
+
+            const title = titleInput.value.trim();
+            if (!title) {
+                alert('Please enter a test title.');
+                titleInput.focus();
+                return;
+            }
+
+            const sections = [];
+            const sectionCards = document.querySelectorAll('.section-card');
+            
+            if (sectionCards.length === 0) {
+                alert('Please add at least one section.');
+                return;
+            }
+
+            let valid = true;
+
+            sectionCards.forEach(secCard => {
+                const skillType = secCard.querySelector('.section-skill-type').value;
+                const audioUrl = secCard.querySelector('.section-audio-url').value.trim();
+                
+                const questions = [];
+                const questionRows = secCard.querySelectorAll('.question-row');
+
+                if (questionRows.length === 0) {
+                    alert(`Please add at least one question to Section "${secCard.querySelector('.section-title-label').textContent}".`);
+                    valid = false;
+                    return;
+                }
+
+                questionRows.forEach(qRow => {
+                    const qText = qRow.querySelector('.question-text').value.trim();
+                    const correctAns = qRow.querySelector('.question-correct-answer').value.trim();
+                    const qDiff = parseInt(qRow.querySelector('.question-difficulty').value);
+
+                    if (!qText || !correctAns) {
+                        alert('Please fill out all Question Text and Correct Answer inputs.');
+                        valid = false;
+                        return;
+                    }
+
+                    questions.push({
+                        QuestionText: qText,
+                        CorrectAnswer: correctAns,
+                        Difficulty: qDiff
+                    });
+                });
+
+                sections.push({
+                    SkillType: skillType,
+                    AudioUrl: audioUrl || null,
+                    Questions: questions
+                });
+            });
+
+            if (!valid) return;
+
+            const payload = {
+                Title: title,
+                Difficulty: parseInt(difficultySelect.value),
+                DurationMinutes: parseInt(durationInput.value) || 60,
+                Sections: sections
+            };
+
+            try {
+                const response = await fetch('/Teacher/TestAssignments/CreateTest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    window.location.href = '/Teacher/TestAssignments/Assign?testId=' + result.testId;
+                } else {
+                    alert('Failed to save test template: ' + (result.message || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while saving the test template. Please try again.');
+            }
+        }
+    </script>
+
+    <style>
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        .animate-slide-out {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+        .animate-fade-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        @@keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @@keyframes slideOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(20px); }
+        }
+        @@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @@keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+    </style>
+}

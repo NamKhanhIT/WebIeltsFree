@@ -1,0 +1,304 @@
+@model WebIeltsFree.Models.TeacherAssignment
+
+@{
+    ViewData["Title"] = "Review Test Assignment";
+    var test = Model.Test;
+}
+
+<div class="container-fluid py-4">
+    <!-- Header Back Navigation -->
+    <div class="mb-4">
+        <a asp-action="Index" class="btn btn-link text-decoration-none p-0 d-inline-flex align-items-center gap-1 text-secondary hover-primary">
+            <i class="ti ti-arrow-left fs-5"></i> Back to Assignments & P2P
+        </a>
+    </div>
+
+    <!-- Main Title Card -->
+    <div class="card border-0 shadow-lg mb-4 overflow-hidden position-relative" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 16px;">
+        <div class="position-absolute top-0 end-0 p-3 opacity-10">
+            <i class="ti ti-school" style="font-size: 15rem; color: #fff;"></i>
+        </div>
+        <div class="card-body p-5 text-white position-relative">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-semibold">
+                    <i class="ti ti-circle-dot-filled animate-pulse"></i> Under Review
+                </span>
+                <span class="text-white-50">|</span>
+                <span class="text-white-50">Draft ID: #@test?.TestId</span>
+            </div>
+            <h1 class="display-5 fw-bold mb-2">@test?.Title</h1>
+            <p class="fs-5 text-white-50 mb-4 max-w-2xl">
+                Please carefully audit the sections, questions, and correct answers provided below before approving or rejecting this test for public student access.
+            </p>
+            <div class="row g-4 border-top border-white-10 pt-4">
+                <div class="col-6 col-sm-3">
+                    <div class="text-white-50 small mb-1">Author</div>
+                    <div class="fw-semibold fs-6">@(Model.Teacher?.Profile?.FullName ?? Model.Teacher?.Username ?? "Teacher Creator")</div>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <div class="text-white-50 small mb-1">Duration</div>
+                    <div class="fw-semibold fs-6 d-flex align-items-center gap-1">
+                        <i class="ti ti-clock"></i> @(test?.DurationMinutes) minutes
+                    </div>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <div class="text-white-50 small mb-1">Assigned Date</div>
+                    <div class="fw-semibold fs-6">@Model.AssignedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <div class="text-white-50 small mb-1">Difficulty</div>
+                    <div class="fw-semibold fs-6 d-flex align-items-center gap-1">
+                        <i class="ti ti-chart-arrows"></i> Level @(test?.Difficulty ?? 6)/10
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline / Progress Bar -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-body py-4 px-5">
+            <div class="row align-items-center justify-content-between text-center g-3 position-relative">
+                <!-- Timeline connecting line -->
+                <div class="position-absolute top-50 start-50 translate-middle w-75 d-none d-md-block" style="height: 3px; background: #e0e6ed; z-index: 1;">
+                    <div class="h-100 bg-warning" style="width: 50%;"></div>
+                </div>
+
+                <!-- Timeline step 1 -->
+                <div class="col-md-4 position-relative" style="z-index: 2;">
+                    <div class="mx-auto mb-2 rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; box-shadow: 0 0 0 5px rgba(25, 135, 84, 0.15);">
+                        <i class="ti ti-check fs-4"></i>
+                    </div>
+                    <h6 class="mb-0 fw-bold">Test Created</h6>
+                    <small class="text-muted">Saved as draft & set private</small>
+                </div>
+
+                <!-- Timeline step 2 -->
+                <div class="col-md-4 position-relative" style="z-index: 2;">
+                    <div class="mx-auto mb-2 rounded-circle bg-warning text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; box-shadow: 0 0 0 5px rgba(255, 193, 7, 0.2);">
+                        <i class="ti ti-checklist fs-4"></i>
+                    </div>
+                    <h6 class="mb-0 fw-bold text-warning">Peer Reviewing</h6>
+                    <small class="text-muted">Assigned to peer for grading</small>
+                </div>
+
+                <!-- Timeline step 3 -->
+                <div class="col-md-4 position-relative" style="z-index: 2;">
+                    <div class="mx-auto mb-2 rounded-circle bg-light text-muted d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; border: 2px dashed #b0c0d0;">
+                        <i class="ti ti-rocket fs-4"></i>
+                    </div>
+                    <h6 class="mb-0 text-muted">Publish & Live</h6>
+                    <small class="text-muted">Approved and visible to students</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviewer Instructions (if any) -->
+    @if (!string.IsNullOrEmpty(Model.Instructions))
+    {
+        <div class="alert alert-info border-0 shadow-sm mb-4 d-flex align-items-start gap-3 p-4" style="border-radius: 12px; background-color: #ebf3fe;">
+            <i class="ti ti-info-circle text-primary fs-3 mt-1"></i>
+            <div>
+                <h6 class="fw-bold mb-1 text-primary">Creator's Instructions for Reviewer:</h6>
+                <div class="text-muted">@Model.Instructions</div>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Left: Interactive Test Review Explorer -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header bg-transparent border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="ti ti-book-open text-primary fs-4"></i> Exam Sheet Explorer
+                    </h5>
+                    <span class="badge bg-light-primary text-primary px-3 py-2 rounded-pill small">
+                        @(test?.Sections?.Count ?? 0) Section(s) Total
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    @if (test?.Sections == null || !test.Sections.Any())
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="ti ti-alert-triangle fs-1 d-block text-warning mb-2"></i>
+                            This test has no sections or questions registered yet.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="accordion" id="testSectionsAccordion">
+                            @{
+                                int sIdx = 0;
+                            }
+                            @foreach (var sec in test.Sections)
+                            {
+                                sIdx++;
+                                <div class="accordion-item border-0 mb-3 shadow-sm rounded overflow-hidden" style="background-color: #fcfdfe;">
+                                    <h2 class="accordion-header" id="sectionHeading-@sec.SectionId">
+                                        <button class="accordion-button @(sIdx > 1 ? "collapsed" : "") px-4 py-3 bg-white text-dark fw-bold d-flex justify-content-between align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSection-@sec.SectionId" aria-expanded="@(sIdx == 1 ? "true" : "false")" aria-controls="collapseSection-@sec.SectionId">
+                                            <span class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">@sIdx</span>
+                                                <span class="text-capitalize text-dark fs-6">@sec.SkillType Section</span>
+                                            </span>
+                                            @if (!string.IsNullOrEmpty(sec.AudioUrl))
+                                            {
+                                                <span class="badge bg-light-success text-success rounded-pill ms-auto me-3 py-1 px-2 small d-inline-flex align-items-center gap-1">
+                                                    <i class="ti ti-volume"></i> Audio Attached
+                                                </span>
+                                            }
+                                        </button>
+                                    </h2>
+                                    <div id="collapseSection-@sec.SectionId" class="accordion-collapse collapse @(sIdx == 1 ? "show" : "")" aria-labelledby="sectionHeading-@sec.SectionId" data-bs-parent="#testSectionsAccordion">
+                                        <div class="accordion-body px-4 py-4 bg-white border-top">
+                                            @if (!string.IsNullOrEmpty(sec.AudioUrl))
+                                            {
+                                                <div class="mb-4 p-3 rounded bg-light border d-flex align-items-center gap-3">
+                                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                        <i class="ti ti-headphones fs-5"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="small fw-semibold text-dark">Section Audio Track</div>
+                                                        <audio src="@sec.AudioUrl" controls class="w-100 mt-2" style="height: 35px;"></audio>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            <h6 class="fw-bold mb-3 text-secondary d-flex align-items-center gap-1">
+                                                <i class="ti ti-help"></i> Questions & Correct Keys:
+                                            </h6>
+                                            <div class="list-group list-group-flush gap-3">
+                                                @{
+                                                    int qIdx = 0;
+                                                }
+                                                @foreach (var question in sec.Questions)
+                                                {
+                                                    qIdx++;
+                                                    <div class="list-group-item border-0 p-3 rounded shadow-sm bg-light-subtle d-flex flex-column gap-2" style="border-left: 4px solid #5d87ff !important; background-color: #f9fbfd;">
+                                                        <div class="d-flex align-items-start gap-2 justify-content-between">
+                                                            <div class="fw-semibold text-dark flex-grow-1">
+                                                                <span class="text-primary fw-bold me-1">Q@(qIdx).</span> @question.QuestionText
+                                                            </div>
+                                                            <span class="badge bg-secondary-subtle text-secondary py-1 px-2 rounded small">Difficulty: @(question.Difficulty ?? 6)</span>
+                                                        </div>
+                                                        <div class="p-3 mt-2 rounded bg-success-subtle border border-success-20 d-flex align-items-center gap-2" style="background-color: #e8f7f0; border-color: rgba(25, 135, 84, 0.15) !important;">
+                                                            <i class="ti ti-key text-success fs-5"></i>
+                                                            <div>
+                                                                <small class="text-success-800 d-block small fw-bold">Correct Key / Sample Answer:</small>
+                                                                <strong class="text-success fs-6">@(question.Answer?.CorrectAnswer ?? "No Answer Configured")</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (!sec.Questions.Any())
+                                                {
+                                                    <div class="text-center text-muted small py-3">No questions inside this section.</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Decision Control & Feedback Panel -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="border-radius: 12px; top: 24px; z-index: 100;">
+                <div class="card-header bg-transparent border-bottom py-3 px-4">
+                    <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="ti ti-gavel text-warning fs-4"></i> Review Decision
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert bg-warning-subtle text-warning border-0 p-3 mb-4 small rounded" style="background-color: #fff9e6; color: #856404 !important;">
+                        <div class="d-flex gap-2">
+                            <i class="ti ti-exclamation-circle fs-4 mt-0.5"></i>
+                            <div>
+                                <strong>Important Note:</strong>
+                                Approving this test makes it <strong>Public</strong>. Students will instantly see it in their practice lists. Rejecting returns it to draft mode.
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="reviewForm" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.AssignmentId" />
+
+                        <!-- Review Feedback Notes -->
+                        <div class="mb-4">
+                            <label for="reviewerNote" class="form-label fw-bold text-dark d-flex align-items-center gap-1">
+                                <i class="ti ti-message-report text-secondary"></i> Reviewer Feedback & Suggestions
+                            </label>
+                            <textarea id="reviewerNote" name="reviewerNote" rows="5" class="form-control border-light-200" placeholder="Type reviewer feedback, suggestions, or details about your decision here (optional)..." style="resize: none; border-radius: 8px;"></textarea>
+                            <div class="invalid-feedback">Please write a reason when rejecting the test.</div>
+                        </div>
+
+                        <!-- Decision Quick Actions -->
+                        <div class="d-grid gap-2">
+                            <button type="button" onclick="submitApprove()" class="btn btn-success py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2" style="border-radius: 8px; background-color: #198754;">
+                                <i class="ti ti-circle-check-filled fs-5"></i> Approve & Publish
+                            </button>
+                            <button type="button" onclick="submitReject()" class="btn btn-danger py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2" style="border-radius: 8px; background-color: #dc3545;">
+                                <i class="ti ti-circle-x-filled fs-5"></i> Reject with Feedback
+                            </button>
+                            <hr class="my-3 text-muted opacity-20">
+                            <a asp-action="Index" class="btn btn-light py-2" style="border-radius: 8px;">Cancel & Go Back</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function submitApprove() {
+        if (confirm("Are you sure you want to APPROVE this test? It will be marked as published and visible to all students.")) {
+            var form = document.getElementById("reviewForm");
+            form.action = "@Url.Action("Approve", "TestAssignments")";
+            form.submit();
+        }
+    }
+
+    function submitReject() {
+        var note = document.getElementById("reviewerNote").value.trim();
+        if (!note) {
+            alert("Please provide feedback or a reason in the notes field before rejecting the test.");
+            document.getElementById("reviewerNote").focus();
+            return;
+        }
+
+        if (confirm("Are you sure you want to REJECT this test? It will return to draft status and require the creator to edit it.")) {
+            var form = document.getElementById("reviewForm");
+            form.action = "@Url.Action("Reject", "TestAssignments")";
+            form.submit();
+        }
+    }
+</script>
+
+<style>
+    .bg-light-primary {
+        background-color: rgba(93, 135, 255, 0.1) !important;
+    }
+    .bg-light-success {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+    }
+    .hover-primary:hover {
+        color: #5d87ff !important;
+    }
+    .animate-pulse {
+        animation: pulse 2s infinite;
+    }
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .4; }
+    }
+    .max-w-2xl {
+        max-width: 42rem;
+    }
+</style>

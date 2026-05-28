@@ -1,0 +1,88 @@
+@{
+    ViewData["Title"] = "Student Conversations";
+    var openConversations = ViewBag.OpenConversations as List<WebIeltsFree.Models.Conversation> ?? new List<WebIeltsFree.Models.Conversation>();
+    var activeConversations = ViewBag.MyActiveConversations as List<WebIeltsFree.Models.Conversation> ?? new List<WebIeltsFree.Models.Conversation>();
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0 fw-bold">Student Conversations</h4>
+        <p class="text-muted small">Help students by claiming open support tickets and responding to active conversations.</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Conversations -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 border-top border-primary border-4 h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-dark"><i class="ti ti-messages text-primary me-2"></i> My Active Conversations</h5>
+                <span class="badge bg-primary rounded-pill">@activeConversations.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @foreach (var c in activeConversations)
+                    {
+                        <a asp-action="Details" asp-route-id="@c.ConversationId" class="list-group-item list-group-item-action p-4 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar avatar-sm rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold">
+                                        @(c.Student?.Profile?.FullName?.FirstOrDefault().ToString() ?? c.Student?.Email.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                    </div>
+                                    <h6 class="mb-0 fw-bold text-dark">@(c.Student?.Profile?.FullName ?? "Unknown Student")</h6>
+                                </div>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small px-2">Active</span>
+                            </div>
+                            <h6 class="mb-1 text-dark fw-semibold">@c.Subject</h6>
+                            <p class="mb-0 text-muted small"><i class="ti ti-clock me-1"></i> Last updated @(c.LastMessageAt?.ToString("MMM dd, HH:mm") ?? c.CreatedAt.ToString("MMM dd, HH:mm"))</p>
+                        </a>
+                    }
+                    @if (!activeConversations.Any())
+                    {
+                        <div class="p-5 text-center text-muted">
+                            <i class="ti ti-check fs-1 text-success opacity-50 mb-3 d-block"></i>
+                            <p class="mb-0">You don't have any active conversations.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Open/Unassigned Conversations -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 border-top border-warning border-4 h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-dark"><i class="ti ti-inbox text-warning me-2"></i> Open (Unassigned)</h5>
+                <span class="badge bg-warning text-dark rounded-pill">@openConversations.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @foreach (var c in openConversations)
+                    {
+                        <a asp-action="Details" asp-route-id="@c.ConversationId" class="list-group-item list-group-item-action p-4 border-bottom bg-light">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar avatar-sm rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center fw-bold">
+                                        @(c.Student?.Profile?.FullName?.FirstOrDefault().ToString() ?? c.Student?.Email.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                    </div>
+                                    <h6 class="mb-0 fw-bold text-dark">@(c.Student?.Profile?.FullName ?? "Unknown Student")</h6>
+                                </div>
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill small px-2">Open</span>
+                            </div>
+                            <h6 class="mb-1 text-dark fw-semibold">@c.Subject</h6>
+                            <p class="mb-0 text-muted small"><i class="ti ti-calendar me-1"></i> Opened @c.CreatedAt.ToString("MMM dd, HH:mm")</p>
+                        </a>
+                    }
+                    @if (!openConversations.Any())
+                    {
+                        <div class="p-5 text-center text-muted">
+                            <i class="ti ti-mood-smile fs-1 opacity-50 mb-3 d-block"></i>
+                            <p class="mb-0">No open support tickets. Great job!</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,1075 @@
+@using Microsoft.EntityFrameworkCore
+@using WebIeltsFree.Models
+@using System.Security.Claims
+@inject AppDbContext DbContext
+
+@{
+    ViewData["Title"] = "AI Private Tutor";
+    ViewData["Page"] = "aitutor";
+
+    // Retrieve current user details if logged in
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    int userId = 0;
+    int.TryParse(userIdClaim, out userId);
+
+    UserGoal? userGoal = null;
+    UserProfile? userProfile = null;
+    AISkillAnalysis? skillAnalysis = null;
+
+    if (userId > 0)
+    {
+        userGoal = DbContext.UserGoals.FirstOrDefault(g => g.UserId == userId);
+        userProfile = DbContext.UserProfiles.FirstOrDefault(p => p.UserId == userId);
+        skillAnalysis = DbContext.AISkillAnalyses.OrderByDescending(a => a.AnalyzedAt).FirstOrDefault(a => a.UserId == userId);
+    }
+
+    // Set dynamic personalization details
+    var fullName = userProfile?.FullName ?? User.GetFullName() ?? "Learner";
+    var targetBand = userGoal?.TargetBand ?? 6.5f;
+    var currentBand = userGoal?.CurrentBand ?? skillAnalysis?.OverallBand ?? 5.0f;
+    var learningReason = userGoal?.LearningReason ?? "Higher Education & Global Career Opportunities";
+    var weaknesses = skillAnalysis?.Weaknesses ?? "Lexical Resource & Fluency under timed conditions";
+    var strengths = skillAnalysis?.Strengths ?? "Reading Speed & Basic Grammar";
+}
+
+<!-- Google Fonts & Marked.js for Premium Styling & Markdown Parsing -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<style>
+    :root {
+        --tutor-primary: #3b82f6;
+        --tutor-primary-rgb: 59, 130, 246;
+        --tutor-secondary: #8b5cf6;
+        --tutor-secondary-rgb: 139, 92, 246;
+        --tutor-success: #10b981;
+        --tutor-warning: #f59e0b;
+        --tutor-dark: #0f172a;
+        --tutor-light: #f8fafc;
+        --tutor-glass-bg: rgba(255, 255, 255, 0.7);
+        --tutor-glass-border: rgba(226, 232, 240, 0.8);
+        --tutor-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+        --tutor-glow: 0 0 20px rgba(139, 92, 246, 0.15);
+    }
+
+    /* Premium Theme Reset & Container Styling */
+    .tutor-theme {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: #334155;
+    }
+
+    .tutor-title-font {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    /* Premium Glassmorphic Card Styles */
+    .tutor-glass-card {
+        background: var(--tutor-glass-bg);
+        backdrop-filter: blur(12px) saturate(180%);
+        -webkit-backdrop-filter: blur(12px) saturate(180%);
+        border: 1px solid var(--tutor-glass-border);
+        border-radius: 20px;
+        box-shadow: var(--tutor-shadow);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    .tutor-glass-card:hover {
+        box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1);
+        border-color: rgba(139, 92, 246, 0.25);
+    }
+
+    /* Gradient Glowing Header */
+    .tutor-header-gradient {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(139, 92, 246, 0.04) 100%);
+        border-bottom: 1px solid var(--tutor-glass-border);
+        padding: 18px 24px;
+    }
+
+    /* Modern Scrollbar */
+    .tutor-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .tutor-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .tutor-scroll::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.2);
+        border-radius: 10px;
+    }
+    .tutor-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.4);
+    }
+
+    /* Private Tutor Profile Header block */
+    .tutor-avatar-box {
+        position: relative;
+        width: 75px;
+        height: 75px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, var(--tutor-primary) 0%, var(--tutor-secondary) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
+    }
+
+    .tutor-avatar-box i {
+        font-size: 38px;
+        color: white;
+    }
+
+    .tutor-avatar-status {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        background-color: var(--tutor-success);
+        border: 2px solid white;
+        border-radius: 50%;
+        animation: pulseStatus 2s infinite;
+    }
+
+    @@keyframes pulseStatus {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Beautiful Chat Bubbles */
+    .tutor-chat-messages {
+        padding: 24px;
+        height: 520px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        background: rgba(248, 250, 252, 0.4);
+    }
+
+    .tutor-msg-wrapper {
+        display: flex;
+        gap: 12px;
+        max-width: 85%;
+        align-self: flex-start;
+        animation: bubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .tutor-msg-wrapper.user {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+        max-width: 80%;
+    }
+
+    .tutor-bubble-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 18px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .tutor-msg-wrapper.ai .tutor-bubble-avatar {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        color: var(--tutor-secondary);
+    }
+
+    .tutor-msg-wrapper.user .tutor-bubble-avatar {
+        background: linear-gradient(135deg, var(--tutor-primary) 0%, var(--tutor-secondary) 100%);
+        color: white;
+    }
+
+    .tutor-bubble {
+        padding: 16px 20px;
+        border-radius: 20px;
+        font-size: 15px;
+        line-height: 1.6;
+        position: relative;
+    }
+
+    .tutor-msg-wrapper.ai .tutor-bubble {
+        background: white;
+        color: #1e293b;
+        border: 1px solid rgba(226, 232, 240, 0.7);
+        border-top-left-radius: 4px;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.02);
+    }
+
+    .tutor-msg-wrapper.user .tutor-bubble {
+        background: linear-gradient(135deg, var(--tutor-primary) 0%, var(--tutor-secondary) 100%);
+        color: white;
+        border-top-right-radius: 4px;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Neat Markdown Formatting inside AI Bubbles */
+    .tutor-bubble h1, .tutor-bubble h2, .tutor-bubble h3, .tutor-bubble h4 {
+        color: #0f172a;
+        font-weight: 700;
+        margin-top: 14px;
+        margin-bottom: 8px;
+        font-family: 'Outfit', sans-serif;
+    }
+    .tutor-bubble h3 { font-size: 17px; }
+    .tutor-bubble h4 { font-size: 15px; }
+
+    .tutor-bubble p {
+        margin-bottom: 10px;
+    }
+    .tutor-bubble p:last-child {
+        margin-bottom: 0;
+    }
+
+    .tutor-bubble ul, .tutor-bubble ol {
+        padding-left: 20px;
+        margin-bottom: 12px;
+    }
+    .tutor-bubble li {
+        margin-bottom: 6px;
+    }
+
+    /* Emerald green/colored bullet highlight */
+    .tutor-msg-wrapper.ai .tutor-bubble li::marker {
+        color: var(--tutor-secondary);
+        font-weight: bold;
+    }
+
+    /* Tables in Markdown */
+    .tutor-bubble table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+        font-size: 14px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .tutor-bubble th, .tutor-bubble td {
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    }
+    .tutor-bubble th {
+        background-color: rgba(139, 92, 246, 0.05);
+        color: #0f172a;
+        font-weight: 600;
+    }
+    .tutor-bubble tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Highlights & Code blocks */
+    .tutor-bubble code {
+        background: rgba(139, 92, 246, 0.08);
+        color: var(--tutor-secondary);
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 13.5px;
+        font-family: Consolas, Monaco, monospace;
+    }
+
+    .tutor-bubble strong {
+        color: #0f172a;
+        font-weight: 600;
+        background: linear-gradient(120deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+        padding: 0 4px;
+        border-radius: 4px;
+    }
+
+    .tutor-msg-wrapper.user .tutor-bubble strong {
+        color: white;
+        background: none;
+        padding: 0;
+    }
+
+    /* Audio Speaker Control */
+    .tutor-audio-btn {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        padding: 4px 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        transition: all 0.2s;
+        margin-top: 8px;
+        border: 1px solid rgba(226, 232, 240, 0.6);
+    }
+
+    .tutor-audio-btn:hover {
+        background: rgba(139, 92, 246, 0.08);
+        color: var(--tutor-secondary);
+        border-color: rgba(139, 92, 246, 0.25);
+    }
+
+    .tutor-audio-btn.playing {
+        background: var(--tutor-secondary);
+        color: white;
+        border-color: var(--tutor-secondary);
+        animation: audioRipple 1.2s infinite ease-in-out;
+    }
+
+    @@keyframes audioRipple {
+        0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(139, 92, 246, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+    }
+
+    /* Interactive Input Panel */
+    .tutor-chat-input-bar {
+        background: white;
+        border-top: 1px solid var(--tutor-glass-border);
+        padding: 20px 24px;
+    }
+
+    .tutor-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px;
+        padding: 6px 10px;
+        transition: all 0.3s;
+    }
+
+    .tutor-input-wrapper:focus-within {
+        border-color: var(--tutor-secondary);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+    }
+
+    .tutor-textarea {
+        flex: 1;
+        background: transparent;
+        border: none;
+        resize: none;
+        outline: none;
+        padding: 10px 12px;
+        font-size: 15px;
+        color: #1e293b;
+        max-height: 120px;
+    }
+
+    .tutor-send-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--tutor-primary) 0%, var(--tutor-secondary) 100%);
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);
+    }
+
+    .tutor-send-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(139, 92, 246, 0.35);
+    }
+
+    /* Pulsing Bouncing loading indicator */
+    .tutor-loading {
+        display: flex;
+        gap: 6px;
+        padding: 6px 8px;
+        align-items: center;
+    }
+
+    .tutor-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--tutor-secondary);
+        border-radius: 50%;
+        animation: bounceDot 1.4s infinite ease-in-out both;
+    }
+
+    .tutor-dot:nth-child(1) { animation-delay: -0.32s; }
+    .tutor-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @@keyframes bounceDot {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1.0); }
+    }
+
+    /* Form Customization Controls */
+    .tutor-select, .tutor-checkbox {
+        border-radius: 8px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        padding: 8px 12px;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s;
+        background-color: white;
+    }
+
+    .tutor-select:focus {
+        border-color: var(--tutor-secondary);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .interest-pill {
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 30px;
+        padding: 6px 14px;
+        font-size: 13.5px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        background: white;
+        user-select: none;
+    }
+
+    .interest-pill input {
+        display: none;
+    }
+
+    .interest-pill:hover {
+        background: #f8fafc;
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .interest-pill.active {
+        background: rgba(139, 92, 246, 0.08);
+        border-color: var(--tutor-secondary);
+        color: var(--tutor-secondary);
+        font-weight: 500;
+    }
+
+    /* Quick Action Pill Grid */
+    .tutor-action-pill {
+        background: white;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 13.5px;
+        color: #475569;
+        text-align: left;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .tutor-action-pill:hover {
+        background: rgba(59, 130, 246, 0.04);
+        border-color: var(--tutor-primary);
+        color: var(--tutor-primary);
+        transform: translateX(4px);
+    }
+
+    .tutor-action-pill i {
+        font-size: 16px;
+        color: var(--tutor-primary);
+    }
+
+    /* Animations */
+    @@keyframes bubblePop {
+        0% { transform: scale(0.9) translateY(10px); opacity: 0; }
+        100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* Mobile adjustments */
+    @@media (max-width: 991px) {
+        .tutor-chat-messages {
+            height: 450px;
+        }
+    }
+</style>
+
+<div class="tutor-theme container-fluid py-2">
+    <!-- Breadcrumb & Banner Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Learn")">Learning Path</a></li>
+                    <li class="breadcrumb-item active">AI Private Tutor</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-3">
+                <div class="tutor-avatar-box">
+                    <i class="bi bi-robot"></i>
+                    <div class="tutor-avatar-status"></div>
+                </div>
+                <div>
+                    <h2 class="tutor-title-font fw-bold mb-1" style="background: linear-gradient(135deg, #1e293b 0%, #475569 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        Personal Virtual IELTS Tutor
+                    </h2>
+                    <p class="text-muted mb-0">Support for speaking, writing, vocabulary correction, grammar, and personalized progress tracking</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Sidebar: Tutor & Personal specifications (Personalization Panel) -->
+        <div class="col-lg-4">
+            <!-- Tutor Spec Card -->
+            <div class="tutor-glass-card p-4 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div style="width: 54px; height: 54px; border-radius: 14px; background: rgba(139, 92, 246, 0.1); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--tutor-secondary);">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark tutor-title-font">Ms. Evelyn</h5>
+                        <p class="text-muted small mb-0">AI IELTS Academic Coach</p>
+                    </div>
+                </div>
+
+                <div class="alert alert-light border mb-0 py-3 px-3 small">
+                    <h6 class="fw-bold mb-2 text-primary d-flex align-items-center gap-2">
+                        <i class="bi bi-bookmark-check-fill"></i>Student Information
+                    </h6>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Student Name:</span>
+                            <span class="fw-semibold text-dark">@fullName</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Target Band:</span>
+                            <span class="badge bg-primary px-2 py-1 fs-7">@targetBand</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Current Level:</span>
+                            <span class="badge bg-light text-dark border px-2 py-1">@currentBand</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Learning Goal:</span>
+                            <span class="fw-semibold text-dark text-end" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@learningReason</span>
+                        </div>
+                        <div class="mt-2 pt-2 border-top">
+                            <span class="text-muted d-block mb-1">Areas to Improve:</span>
+                            <span class="fw-medium text-danger text-wrap small d-block">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>@weaknesses
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customization Settings Card -->
+            <div class="tutor-glass-card p-4 mb-4">
+                <h5 class="fw-bold mb-3 text-dark tutor-title-font d-flex align-items-center gap-2">
+                    <i class="bi bi-sliders2-vertical text-primary"></i>Tutor Configuration
+                </h5>
+
+                <!-- Tone control selector -->
+                <div class="mb-4">
+                    <label class="form-label text-muted small fw-semibold">Tone & Personality:</label>
+                    <select class="form-select tutor-select" id="tutorTone">
+                        <option value="Friendly, supportive, highly encouraging">Supportive & Encouraging (Recommended)</option>
+                        <option value="Formal, precise, academic focused">Academic & Formal</option>
+                        <option value="Strict, detailed correction oriented">Strict & Detailed Correction</option>
+                    </select>
+                </div>
+
+                <!-- Interests toggle -->
+                <div class="mb-2">
+                    <label class="form-label text-muted small fw-semibold d-block">Favorite Topics (Interests):</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <label class="interest-pill active" id="pill-travel">
+                            <input type="checkbox" class="interest-checkbox" value="Travel, culture, tourism" checked onchange="togglePill(this)">
+                            <i class="bi bi-compass"></i>Travel
+                        </label>
+                        <label class="interest-pill active" id="pill-tech">
+                            <input type="checkbox" class="interest-checkbox" value="Science, artificial intelligence, technology" checked onchange="togglePill(this)">
+                            <i class="bi bi-cpu"></i>Technology
+                        </label>
+                        <label class="interest-pill" id="pill-edu">
+                            <input type="checkbox" class="interest-checkbox" value="Education, career growth, personal development" onchange="togglePill(this)">
+                            <i class="bi bi-book"></i>Education
+                        </label>
+                        <label class="interest-pill" id="pill-env">
+                            <input type="checkbox" class="interest-checkbox" value="Environment, conservation, global warming" onchange="togglePill(this)">
+                            <i class="bi bi-globe-americas"></i>Environment
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalized Recommended Exercises Panel -->
+            <div class="tutor-glass-card p-4">
+                <h5 class="fw-bold mb-3 text-dark tutor-title-font d-flex align-items-center gap-2">
+                    <i class="bi bi-fire text-warning"></i>Recommended for You
+                </h5>
+                <p class="text-muted small mb-3">Ms. Evelyn suggests personalized exercises based on your profile:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn tutor-action-pill" id="exercise-speaking">
+                        <i class="bi bi-mic-fill"></i>
+                        <div>
+                            <div class="fw-semibold small">Practice Speaking: Travel</div>
+                            <div class="text-muted xs-text" style="font-size: 11px;">Simulate IELTS Speaking Part 2</div>
+                        </div>
+                    </button>
+                    <button class="btn tutor-action-pill" id="exercise-writing">
+                        <i class="bi bi-pencil-square"></i>
+                        <div>
+                            <div class="fw-semibold small">Writing Task 2: AI & Society</div>
+                            <div class="text-muted xs-text" style="font-size: 11px;">Draft a high-band essay on technology</div>
+                        </div>
+                    </button>
+                    <button class="btn tutor-action-pill" id="exercise-vocab">
+                        <i class="bi bi-spellcheck"></i>
+                        <div>
+                            <div class="fw-semibold small">Band 7.5+ Vocab Challenge</div>
+                            <div class="text-muted xs-text" style="font-size: 11px;">Enhance your word choice and idioms</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Beautiful Glassmorphic Chat Area -->
+        <div class="col-lg-8">
+            <div class="tutor-glass-card d-flex flex-column" style="height: 690px;">
+                <!-- Chat Area Header -->
+                <div class="tutor-header-gradient d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-text-fill text-primary fs-5"></i>
+                        <div>
+                            <span class="fw-bold text-dark fs-6 tutor-title-font">Chat with Ms. Evelyn</span>
+                            <span class="text-muted ms-2 small d-none d-sm-inline">• Tutor is online</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger px-3 rounded-pill d-flex align-items-center gap-1" id="clearChat">
+                        <i class="bi bi-trash"></i>Clear History
+                    </button>
+                </div>
+                
+                <!-- Chat Messages Container -->
+                <div class="tutor-chat-messages tutor-scroll" id="chatMessages">
+                    <!-- Dynamic welcome greeting containing name and customized suggestions -->
+                    <div class="tutor-msg-wrapper ai">
+                        <div class="tutor-bubble-avatar"><i class="bi bi-robot"></i></div>
+                        <div>
+                            <div class="tutor-bubble">
+                                <p class="mb-2"><strong>Hello @fullName!</strong> I am Ms. Evelyn, your personal virtual IELTS tutor helping you achieve your target of <strong>Band @targetBand</strong>.</p>
+                                <p class="mb-2">Based on your profile, your strengths lie in <em>@strengths</em>, but we need to focus on improving <strong>@weaknesses</strong>.</p>
+                                <p class="mb-2">I have prepared some practice exercises tailored to your interests in Travel and Technology. What shall we start with today?</p>
+                                <ul class="mb-2 ps-3">
+                                    <li>Practice IELTS Writing Task 1 & Task 2.</li>
+                                    <li>Ask questions about IELTS grammar or vocabulary.</li>
+                                    <li>Get detailed feedback on any practice work you submit here.</li>
+                                </ul>
+                            </div>
+                            <button class="tutor-audio-btn" onclick="speakMessage(this, 0)"><i class="bi bi-volume-up-fill"></i> Listen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input area -->
+                <div class="tutor-chat-input-bar">
+                    <form id="chatForm" class="m-0">
+                        <div class="tutor-input-wrapper">
+                            <textarea class="tutor-textarea tutor-scroll" id="userMessage" rows="1"
+                                      placeholder="Type your message, ask a question, or paste your IELTS essay here..." autocomplete="off"></textarea>
+                            <button type="submit" class="tutor-send-btn">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                        <small class="text-muted" style="font-size: 12px;">Press Enter to send, Shift+Enter for new line.</small>
+                        <small class="text-muted d-none d-sm-block" style="font-size: 12px;">Personalized tutor mode active</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Safeguard to prevent double /api/api prefixing if site.js or views are cached
+    if (typeof api === 'function') {
+        const originalApi = api;
+        window.api = async function(endpoint, options = {}) {
+            if (endpoint && endpoint.startsWith('/api/')) {
+                endpoint = endpoint.substring(4);
+            }
+            return originalApi(endpoint, options);
+        };
+    }
+
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const userMessage = document.getElementById('userMessage');
+
+    // Keep track of the active audio session to play and interrupt voice responses
+    window.activeAudio = null;
+    window.activeAudioButton = null;
+
+    // Chat History in-memory buffer to append to RAG Context
+    let conversationHistory = [];
+
+    // Initialize custom markdown compiler rules for clean layouts
+    marked.setOptions({
+        breaks: true,
+        gfm: true
+    });
+
+    // Handle toggling of interactive interest pills
+    function togglePill(checkbox) {
+        const label = checkbox.closest('.interest-pill');
+        if (checkbox.checked) {
+            label.classList.add('active');
+        } else {
+            label.classList.remove('active');
+        }
+    }
+
+    // Auto-resize message input area dynamically
+    userMessage.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Send with Enter key
+    userMessage.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+
+    // Form Submission Logic
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const rawMessageText = userMessage.value.trim();
+        if (!rawMessageText) return;
+
+        // Stop active playing tutor audio if running
+        stopActiveAudio();
+
+        // Append user visual bubble (clean text)
+        addVisualMessage(rawMessageText, 'user');
+        userMessage.value = '';
+        userMessage.style.height = 'auto';
+
+        // Add visual loading dots in chat container
+        const loadingId = addLoadingIndicator();
+
+        // Build personalization payloads dynamically from settings panel
+        const tutorTone = document.getElementById('tutorTone').value;
+        const selectedInterests = Array.from(document.querySelectorAll('.interest-checkbox:checked'))
+            .map(cb => cb.value).join(', ') || 'General Interest';
+
+        // Create the hidden directive context for the AI prompt
+        const personaPrompt = `[System Directive - STRICT: You must act as my private IELTS tutor. Student's name is @fullName, target IELTS Band: @targetBand, current band level: @currentBand. Your communication tone/personality: ${tutorTone}. The student's favorite topics/interests: ${selectedInterests}. Critical areas the student needs to improve: @weaknesses. Please address me warmly, encourage me regularly, point out any mistakes, and incorporate advanced vocabulary or idioms related to my favorite topics. Always write all responses in English, format your replies beautifully with clean sections using Markdown, bold key structures and idioms, and use bullet points for lists to maximize readability. Do not output any Vietnamese unless asked to translate.]`;
+
+        // Prepend context guidelines directly onto the message payload
+        const messagePayload = `${personaPrompt}\n\nUser Question: ${rawMessageText}`;
+
+        // Construct context history string for stateless endpoint
+        // Format last 4 messages in context
+        const historyContextString = conversationHistory.slice(-4)
+            .map(h => `${h.sender === 'user' ? 'User' : 'AI'}: ${h.text}`)
+            .join('\n');
+
+        try {
+            const response = await api('/ai/chat', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    message: messagePayload,
+                    context: historyContextString
+                })
+            });
+
+            // Remove loading indicator
+            document.getElementById(loadingId)?.remove();
+
+            if (response.success && response.data) {
+                const aiReply = response.data.response;
+                
+                // Save clean message values into conversation history (without personalization prefix)
+                conversationHistory.push({ sender: 'user', text: rawMessageText });
+                conversationHistory.push({ sender: 'ai', text: aiReply });
+
+                // Render beautiful parsed markdown bubbles
+                addVisualMessage(aiReply, 'ai', false, response.data.suggestedFollowUps);
+            } else {
+                addVisualMessage("I'm sorry, an error occurred in the AI Tutor system. Please try again.", 'ai');
+            }
+        } catch (err) {
+            document.getElementById(loadingId)?.remove();
+            addVisualMessage('Network connection error. Please try again later.', 'ai');
+        }
+    });
+
+    // Helper to render message bubbles
+    function addVisualMessage(content, sender, isWelcome = false, suggestedQuestions = []) {
+        const id = 'msg-' + Date.now();
+        const isAi = sender === 'ai';
+        
+        const wrapper = document.createElement('div');
+        wrapper.id = id;
+        wrapper.className = `tutor-msg-wrapper ${isAi ? 'ai' : 'user'}`;
+        
+        // Parse markdown logic for AI, treat User content safely as plain text
+        let renderedHtml = isAi ? marked.parse(content) : escapeHtml(content);
+
+        // Append suggested question pills inside AI bubble if present
+        let followUpsHtml = '';
+        if (isAi && suggestedQuestions && suggestedQuestions.length > 0) {
+            const pills = suggestedQuestions.map(q => 
+                `<button class="btn btn-sm btn-outline-primary rounded-pill me-2 mb-2 follow-up" data-q="${escapeHtml(q)}">${escapeHtml(q)}</button>`
+            ).join('');
+            followUpsHtml = `<div class="d-flex flex-wrap mt-3 pt-2 border-top">${pills}</div>`;
+        }
+
+        const audioButtonHtml = isAi ? 
+            `<button class="tutor-audio-btn" onclick="speakMessage(this, '${id}')"><i class="bi bi-volume-up-fill"></i> Listen</button>` : '';
+
+        wrapper.innerHTML = `
+            <div class="tutor-bubble-avatar">
+                <i class="bi ${isAi ? 'bi-robot' : 'bi-person-fill'}"></i>
+            </div>
+            <div class="d-flex flex-column align-items-start">
+                <div class="tutor-bubble">
+                    <div class="tutor-rendered-content">${renderedHtml}</div>
+                    ${followUpsHtml}
+                </div>
+                ${audioButtonHtml}
+            </div>
+        `;
+        
+        chatMessages.appendChild(wrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Hook click handlers for follow up question pills
+        wrapper.querySelectorAll('.follow-up').forEach(btn => {
+            btn.addEventListener('click', function() {
+                userMessage.value = this.dataset.q;
+                chatForm.dispatchEvent(new Event('submit'));
+            });
+        });
+
+        return id;
+    }
+
+    // Helper to load bouncing loading bubbles
+    function addLoadingIndicator() {
+        const id = 'loading-' + Date.now();
+        const wrapper = document.createElement('div');
+        wrapper.id = id;
+        wrapper.className = 'tutor-msg-wrapper ai';
+        
+        wrapper.innerHTML = `
+            <div class="tutor-bubble-avatar"><i class="bi bi-robot"></i></div>
+            <div class="tutor-bubble">
+                <div class="tutor-loading">
+                    <div class="tutor-dot"></div>
+                    <div class="tutor-dot"></div>
+                    <div class="tutor-dot"></div>
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(wrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return id;
+    }
+
+    // HTML sanitizer
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // TTS play audio integration utilizing backend API
+    async function speakMessage(button, messageWrapperId) {
+        // If clicking same button while playing, stop it
+        if (button.classList.contains('playing')) {
+            stopActiveAudio();
+            return;
+        }
+
+        stopActiveAudio();
+
+        let rawText = '';
+        if (messageWrapperId === 0) {
+            // First welcome message
+            rawText = `Hello @fullName! I am Ms. Evelyn, your personal virtual IELTS tutor helping you achieve your target of Band @targetBand. Based on your profile, your strengths lie in @strengths, but we need to focus on improving @weaknesses. I have prepared some practice exercises tailored to your interests in Travel and Technology. What shall we start with today?`;
+        } else {
+            const container = document.getElementById(messageWrapperId);
+            if (!container) return;
+            const contentDiv = container.querySelector('.tutor-rendered-content');
+            rawText = contentDiv ? contentDiv.innerText || contentDiv.textContent : '';
+        }
+
+        // Clean up markdown syntax for voice synthesizer friendly reading
+        const cleanedText = stripMarkdownForSpeech(rawText);
+        if (!cleanedText) return;
+
+        // Visual loading state on the button
+        const originalIcon = button.innerHTML;
+        button.innerHTML = `<div class="spinner-border spinner-border-sm me-1" role="status"></div> Speaking...`;
+        button.disabled = true;
+
+        try {
+            const response = await api('/ai/text-to-speech', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    text: cleanedText,
+                    language: 'en-US',
+                    voice: 'en-US-Neural2-C',
+                    pitch: 0.0,
+                    speakingRate: 1.05
+                })
+            });
+
+            if (response.success && response.data && response.data.audioUrl) {
+                window.activeAudio = new Audio(response.data.audioUrl);
+                window.activeAudioButton = button;
+                
+                button.innerHTML = `<i class="bi bi-stop-circle-fill"></i> Stop`;
+                button.classList.add('playing');
+                button.disabled = false;
+
+                window.activeAudio.onended = function() {
+                    resetAudioButton(button, originalIcon);
+                    stopActiveAudio();
+                };
+
+                window.activeAudio.onerror = function() {
+                    speakMessageBrowserFallback(button, originalIcon, cleanedText);
+                };
+
+                await window.activeAudio.play();
+            } else {
+                speakMessageBrowserFallback(button, originalIcon, cleanedText);
+            }
+        } catch (e) {
+            speakMessageBrowserFallback(button, originalIcon, cleanedText);
+        }
+    }
+
+    function speakMessageBrowserFallback(button, originalIcon, text) {
+        if (!window.speechSynthesis) {
+            resetAudioButton(button, originalIcon);
+            alert('Your browser does not support Speech Synthesis.');
+            return;
+        }
+
+        // Interrupt any ongoing speech synthesis
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Find a natural English voice if possible
+        const voices = window.speechSynthesis.getVoices();
+        let englishVoice = voices.find(v => v.lang.startsWith('en-US') && v.name.includes('Google'));
+        if (!englishVoice) {
+            englishVoice = voices.find(v => v.lang.startsWith('en-'));
+        }
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+        }
+        
+        utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+
+        window.activeAudioButton = button;
+
+        button.innerHTML = `<i class="bi bi-stop-circle-fill"></i> Stop`;
+        button.classList.add('playing');
+        button.disabled = false;
+
+        utterance.onend = function() {
+            resetAudioButton(button, originalIcon);
+            stopActiveAudio();
+        };
+
+        utterance.onerror = function(e) {
+            console.error('SpeechSynthesis error:', e);
+            resetAudioButton(button, originalIcon);
+            stopActiveAudio();
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function resetAudioButton(button, originalIcon) {
+        if (!button) return;
+        button.innerHTML = originalIcon;
+        button.classList.remove('playing');
+        button.disabled = false;
+    }
+
+    function stopActiveAudio() {
+        if (window.activeAudio) {
+            window.activeAudio.pause();
+            window.activeAudio = null;
+        }
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        if (window.activeAudioButton) {
+            window.activeAudioButton.innerHTML = `<i class="bi bi-volume-up-fill"></i> Listen`;
+            window.activeAudioButton.classList.remove('playing');
+            window.activeAudioButton.disabled = false;
+            window.activeAudioButton = null;
+        }
+    }
+
+    function stripMarkdownForSpeech(text) {
+        return text
+            .replace(/[#*`~_\[\]()]+/g, '') 
+            .replace(/-\s+/g, '') 
+            .replace(/\n+/g, ' ')
+            .trim();
+    }
+
+    // Dynamic exercise starters triggers
+    document.getElementById('exercise-speaking').addEventListener('click', function() {
+        userMessage.value = "I want to practice Speaking Part 2 on the topic of Travel. Please roleplay as an IELTS examiner, ask me a prompt, and provide feedback on my response according to my goals!";
+        chatForm.dispatchEvent(new Event('submit'));
+    });
+
+    document.getElementById('exercise-writing').addEventListener('click', function() {
+        userMessage.value = "Please give me an IELTS Writing Task 2 prompt related to Technology and guide me step-by-step to draft a Band 7.5+ outline.";
+        chatForm.dispatchEvent(new Event('submit'));
+    });
+
+    document.getElementById('exercise-vocab').addEventListener('click', function() {
+        userMessage.value = "Based on my weakness in advanced vocabulary, please suggest 5 academic collocations/idioms for Band 8.0+ related to my favorite topics, with example sentences and a quick challenge.";
+        chatForm.dispatchEvent(new Event('submit'));
+    });
+
+    // Clear history handler
+    document.getElementById('clearChat').addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear your entire chat history?')) {
+            stopActiveAudio();
+            chatMessages.innerHTML = '';
+            conversationHistory = [];
+            
+            // Re-append dynamic welcome greeting
+            addVisualMessage(`<strong>Hello @fullName!</strong> I am Ms. Evelyn, your personal virtual IELTS tutor helping you achieve your target of <strong>Band @targetBand</strong>.
+            
+            Based on your profile, your strengths lie in <em>@strengths</em>, but we need to focus on improving <strong>@weaknesses</strong>.
+            
+            I have prepared some practice exercises tailored to your interests in Travel and Technology. What shall we start with today?`, 'ai', true);
+        }
+    });
+</script>
+}

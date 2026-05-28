@@ -1,0 +1,498 @@
+@{
+    var didAvatarUrl = System.Environment.GetEnvironmentVariable("DID_AVATAR_URL") ?? "";
+}
+@await Html.PartialAsync("~/Views/Practice/_PracticeStyles.cshtml")
+
+<style>
+    .speaking-exam-dark {
+        background: linear-gradient(145deg, #050d1d 0%, #0a1a3a 50%, #0f1f45 100%);
+        color: #fff;
+        min-height: calc(100vh - 60px);
+        padding-bottom: 2rem;
+    }
+
+    /* Immersive Container */
+    .speaking-immersive-view {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .speaking-avatar-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Picture in Picture Camera */
+    .speaking-pip-camera {
+        position: absolute;
+        bottom: 24px;
+        right: 24px;
+        width: 200px;
+        aspect-ratio: 4 / 3;
+        background: #1a1a2e;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+        z-index: 20;
+        transition: all 0.3s ease;
+    }
+
+    .speaking-pip-camera:hover {
+        transform: scale(1.02);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .speaking-pip-camera video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1); /* Mirror effect for local camera */
+    }
+
+    .speaking-pip-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 0.85rem;
+    }
+
+    /* Floating Controls */
+    .speaking-floating-controls {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 24px;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 9999px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 20;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .speaking-ctrl-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .speaking-ctrl-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .speaking-ctrl-btn.active-green {
+        background: #10b981;
+        color: #fff;
+    }
+    
+    .speaking-ctrl-btn.active-green:hover {
+        background: #059669;
+    }
+
+    .speaking-ctrl-btn.danger {
+        background: #ef4444;
+        color: #fff;
+    }
+
+    .speaking-ctrl-btn.danger:hover {
+        background: #dc2626;
+    }
+
+    /* Closed Captions Overlay */
+    .speaking-cc-overlay {
+        position: absolute;
+        bottom: 90px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 800px;
+        text-align: center;
+        z-index: 15;
+        pointer-events: none;
+    }
+
+    .speaking-cc-text {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 1.15rem;
+        line-height: 1.5;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        transition: opacity 0.3s ease;
+        opacity: 0;
+    }
+
+    .speaking-cc-text.visible {
+        opacity: 1;
+    }
+
+    /* Top Status Bar (Overlay) */
+    .speaking-top-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 10;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+    }
+
+    .speaking-status-pill {
+        display: inline-flex; 
+        align-items: center; 
+        gap: 6px;
+        padding: 6px 14px; 
+        border-radius: 999px;
+        font-size: 0.75rem; 
+        font-weight: 700; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(8px);
+    }
+    
+    .speaking-status-pill.idle { background: rgba(255,255,255,0.15); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
+    .speaking-status-pill.active { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .speaking-status-pill.warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Sidebar Cards */
+    .speaking-dark-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        height: 100%;
+    }
+    .speaking-avatar-blur {
+        filter: blur(8px) brightness(0.6);
+        transition: filter 0.5s ease;
+    }
+
+    .speaking-ctrl-btn.interrupt-active {
+        background: #f59e0b; /* Amber warning */
+        color: #fff;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+        animation: pulse-amber 1.5s infinite;
+    }
+
+    @@keyframes pulse-amber {
+        0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+</style>
+
+<div id="speakingHub" class="speaking-exam-dark">
+    <div style="padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom: 24px;">
+        <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <span class="exam-skill-badge speaking" style="box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);"><i class="bi bi-mic-fill me-1"></i>Live Speaking</span>
+                <h1 class="exam-title" style="color:#fff; font-size: 1.5rem; letter-spacing: -0.5px;">1-on-1 AI Examiner</h1>
+            </div>
+            @await Html.PartialAsync("~/Views/Practice/_PracticeTimer.cshtml")
+        </div>
+    </div>
+
+    <div class="container-fluid px-4">
+        <div class="row g-4">
+            <div class="col-lg-8 col-xl-9">
+                <div class="speaking-immersive-view">
+                    <video id="speakingAvatarVideo" class="speaking-avatar-video" autoplay muted playsinline loop
+                        poster="https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1600&q=80"></video>
+                    
+                    <div class="speaking-top-bar">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="speaking-status-pill idle" id="speakingCallStatus">
+                                <i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> Offline
+                            </span>
+                            <span class="speaking-status-pill idle" id="speakingSafetyBadge">
+                                <i class="bi bi-shield-check"></i> Safe
+                            </span>
+                        </div>
+                        <div class="speaking-status-pill idle" style="font-variant-numeric: tabular-nums;">
+                            <i class="bi bi-clock"></i> <span id="speakingCallTimer" class="ms-1">00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="speaking-pip-camera" id="speakingPipContainer">
+                        <div class="speaking-pip-placeholder" id="speakingCameraPlaceholder">
+                            <i class="bi bi-camera-video-off fs-4 mb-1"></i>
+                            <span>Camera Off</span>
+                        </div>
+                        <video id="speakingCameraPreview" autoplay muted playsinline style="display:none;"></video>
+                    </div>
+
+                    <div class="speaking-cc-overlay">
+                        <div class="speaking-cc-text" id="speakingCcText"></div>
+                    </div>
+                    <div class="speaking-floating-controls">
+                        <button id="toggleMicBtn" class="speaking-ctrl-btn" title="Toggle Microphone">
+                            <i class="bi bi-mic-fill"></i>
+                        </button>
+                        <button id="toggleCameraBtn" class="speaking-ctrl-btn" title="Toggle Camera">
+                            <i class="bi bi-camera-video-fill"></i>
+                        </button>
+                        
+                        <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.2); margin: 0 8px;"></div>
+                        
+                        <button id="startSpeakingBtn" class="speaking-ctrl-btn active-green" title="Start Call" style="width: auto; padding: 0 20px; border-radius: 999px; font-weight: 600;">
+                            <i class="bi bi-telephone-fill me-2"></i> Start
+                        </button>
+                        
+                        <button id="interruptSpeakingBtn" class="speaking-ctrl-btn" title="Interrupt AI" style="color: #fbbf24;">
+                            <i class="bi bi-hand-index-thumb-fill"></i>
+                        </button>
+                        
+                        <button id="nextQuestionBtn" class="speaking-ctrl-btn" title="Next Question">
+                            <i class="bi bi-skip-forward-fill"></i>
+                        </button>
+
+                        <button id="stopSpeakingBtn" class="speaking-ctrl-btn danger" title="End Call">
+                            <i class="bi bi-telephone-x-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-xl-3">
+                <div class="d-flex flex-column gap-3 h-100" style="overflow-y: auto; max-height: calc(100vh - 120px);">
+                    <!-- Part Selector & Prompt -->
+                    <div class="speaking-dark-card">
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary">
+                            <span class="small fw-bold text-uppercase" style="color: #94a3b8; letter-spacing: 0.05em;">Part <strong id="speakingCurrentPart">1</strong></span>
+                            <select id="speakingPart" class="form-select form-select-sm" style="width:auto; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); color: #fff; border-radius: 6px;">
+                                <option value="part1">Part 1 — Intro</option>
+                                <option value="part2">Part 2 — Long Turn</option>
+                                <option value="part3">Part 3 — Discussion</option>
+                            </select>
+                        </div>
+                        <p id="speakingPrompt" class="mb-0 text-white" style="font-size: 1rem; line-height: 1.6; font-weight: 500;">
+                            Press "Start" to begin your speaking practice session.
+                        </p>
+                    </div>
+
+                    <!-- Call State & Safety -->
+                    <div class="speaking-dark-card">
+                        <span class="small fw-bold text-uppercase d-block mb-3" style="color: #94a3b8; letter-spacing: 0.05em;">
+                            <i class="bi bi-telephone-fill me-1"></i> Call Status
+                        </span>
+                        <div class="d-grid gap-2 small">
+                            <div class="d-flex justify-content-between align-items-center" style="color: #cbd5e1;">
+                                <span>Call State</span>
+                                <strong id="speakingRealtimeStatus" style="color: #fff;">Idle</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center" style="color: #cbd5e1;">
+                                <span>Avatar</span>
+                                <strong id="speakingAvatarStatus" style="color: #fff;">Idle</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center" style="color: #cbd5e1;">
+                                <span>Safety</span>
+                                <strong id="speakingSafetyStatus" style="color: #4bfc61;">On-topic</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center" style="color: #cbd5e1;">
+                                <span>Warnings</span>
+                                <strong id="speakingTopicWarningCount" style="color: #34d399;">0</strong>
+                            </div>
+                        </div>
+                        <small id="speakingMicStatus" class="d-block mt-2" style="color: #64748b;">Microphone: idle</small>
+                        <!-- Hidden alias for safety inline element used by JS -->
+                        <span id="speakingSafetyStateInline" class="d-none">On-topic</span>
+                        <!-- Hidden alias for speakingTimer used by old JS code -->
+                        <span id="speakingTimer" class="d-none">00:00</span>
+                    </div>
+
+                    <!-- Session Stats -->
+                    <div class="speaking-dark-card">
+                        <span class="small fw-bold text-uppercase d-block mb-3" style="color: #94a3b8; letter-spacing: 0.05em;">
+                            <i class="bi bi-bar-chart-fill me-1"></i> Analytics
+                        </span>
+                        <div class="d-grid gap-3 small">
+                            <div class="d-flex justify-content-between align-items-center" style="color: #cbd5e1;">
+                                <span>Duration</span>
+                                <strong style="color: #fff; font-size: 1.1rem; font-variant-numeric: tabular-nums;" id="speakingDuration">00:00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center" style="color: #cbd5e1;">
+                                <span>Questions Asked</span>
+                                <strong style="color: #fff; font-size: 1.1rem;" id="speakingQCount">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center" style="color: #cbd5e1;">
+                                <span>Topic Warnings</span>
+                                <strong id="speakingWarnings" style="color: #34d399; font-size: 1.1rem;">0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Examiner Stream -->
+                    <div class="speaking-dark-card">
+                        <span class="small fw-bold text-uppercase d-block mb-2" style="color: #94a3b8; letter-spacing: 0.05em;">
+                            <i class="bi bi-chat-dots-fill me-1"></i> Examiner Stream
+                        </span>
+                        <div id="speakingStreamText" class="small mb-2" style="color: #a5b4fc; min-height: 20px; line-height: 1.5;"></div>
+                    </div>
+
+                    <!-- Auto-next Settings -->
+                    <div class="speaking-dark-card">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="speakingAutoNextToggle" checked>
+                                <label class="form-check-label small fw-semibold" for="speakingAutoNextToggle" style="color: #cbd5e1;">Auto-next</label>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="speakingAutoNextDelay" class="small mb-0" style="color: #64748b;">Delay</label>
+                                <select id="speakingAutoNextDelay" class="form-select form-select-sm" style="min-width: 80px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); color: #fff; border-radius: 6px;">
+                                    <option value="1200">1.2s</option>
+                                    <option value="1600">1.6s</option>
+                                    <option value="2000" selected>2.0s</option>
+                                    <option value="2600">2.6s</option>
+                                </select>
+                            </div>
+                        </div>
+                        <small id="speakingAutoNextStatus" class="d-block mt-2" style="color: #64748b;">Auto-next is enabled.</small>
+                    </div>
+
+                    <!-- Safety & Warning Log -->
+                    <div class="speaking-dark-card">
+                        <span class="small fw-bold text-uppercase d-block mb-2" style="color: #94a3b8; letter-spacing: 0.05em;">
+                            <i class="bi bi-shield-exclamation me-1"></i> Safety Monitor
+                        </span>
+                        <ul id="speakingWarningLog" class="small mb-0 ps-3" style="color: #64748b; list-style-type: disc;">
+                            <li>No warning yet. Stay on the topic to continue the interview.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Part 3 Prefetch -->
+                    <div class="speaking-dark-card">
+                        <span class="small fw-bold text-uppercase d-block mb-2" style="color: #94a3b8; letter-spacing: 0.05em;">
+                            <i class="bi bi-lightning-charge-fill me-1"></i> Part 3 Prefetch
+                        </span>
+                        <ul id="speakingPrefetchList" class="small mb-0 ps-3" style="color: #64748b; list-style-type: disc;">
+                            <li>Part 3 questions will be prepared during Part 2.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Hidden Transcript (used by collectSkillAnswer) -->
+                    <textarea id="speakingTranscript" class="d-none" rows="1" readonly></textarea>
+
+                    <!-- Settings & Submission -->
+                    <div class="speaking-dark-card">
+                        <label for="speakingAvatarFallbackUrl" class="small fw-bold d-block mb-1" style="color: #94a3b8;">
+                            <i class="bi bi-person-bounding-box me-1"></i> AI Tutor Face Image URL
+                        </label>
+                        <small class="d-block mb-2 text-muted" style="font-size: 0.75rem; line-height: 1.3;">
+                            Enter a direct public link to a face image (JPG/PNG). D-ID will animate this face. Supports Google Drive share links!
+                        </small>
+                        <input id="speakingAvatarFallbackUrl" type="url" class="form-control form-control-sm mb-2"
+                            style="background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); color: #fff; border-radius: 6px;"
+                            value="@didAvatarUrl" placeholder="https://example.com/avatar.jpg">
+                        
+                        <!-- Premium Live Image Preview Card -->
+                        <div id="avatarPreviewContainer" class="mb-3" style="display: none; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0,0,0,0.3); padding: 8px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <img id="speakingAvatarPreviewImg" src="" alt="Avatar Preview" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.2);" onerror="this.parentElement.parentElement.style.display='none';">
+                                <div class="small">
+                                    <div class="fw-semibold text-white" style="font-size:0.75rem;">Avatar Preview</div>
+                                    <span class="text-muted" style="font-size:0.7rem;">This face will be animated by AI</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button id="submitBtnSpeaking" class="exam-btn exam-btn-primary w-100" style="padding: 12px; border-radius: 8px; font-weight: 600;">
+                            <i class="bi bi-send-fill me-2"></i> Submit for Analysis
+                        </button>
+                        <button id="disputeSpeakingBtn" onclick="openDisputeModal('speaking')" class="btn w-100 mt-2" style="padding: 10px; border-radius: 8px; font-weight: 500; background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Dispute Score
+                        </button>
+                        <small class="d-block text-center mt-1" style="color: #64748b; font-size: 0.7rem;">Not satisfied? A teacher will review it.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="disputeSpeakingModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); z-index: 9999;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;">
+            <div class="modal-header border-bottom-0" style="padding: 20px 24px 10px;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="p-2 d-inline-flex align-items-center justify-content-center" style="background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-radius: 12px;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.2rem;"></i>
+                    </span>
+                    <div>
+                        <h5 class="modal-title fw-bold text-white" style="font-size: 1.1rem; line-height: 1.2;">Dispute Grade</h5>
+                        <small class="text-muted" style="font-size: 0.75rem;">A teacher will manually review your speaking session</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="font-size: 0.8rem;"></button>
+            </div>
+            
+            <div class="modal-body" style="padding: 10px 24px 24px;">
+                <div class="alert alert-warning mb-3 border-0" style="background: rgba(245, 158, 11, 0.1); color: #fde047; border-radius: 12px; font-size: 0.8rem; line-height: 1.4;">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Your dispute will be reviewed by a qualified teacher. You can only have one open dispute per submission.
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-white-50" style="font-size: 0.85rem; margin-bottom: 6px;">Current Score</label>
+                    <div id="disputeSpeakingCurrentScore" class="form-control-plaintext font-monospace text-white fw-bold px-3 py-2" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;">
+                        Speaking Session Score
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="disputeSpeakingReason" class="form-label fw-semibold text-white-50" style="font-size: 0.85rem; margin-bottom: 6px;">
+                        Reason for Dispute <span class="text-danger">*</span>
+                    </label>
+                    <textarea id="disputeSpeakingReason" rows="4" class="form-control"
+                        style="background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.1); color: #fff; border-radius: 12px; resize: none; font-size: 0.875rem;"
+                        placeholder="Explain why you believe the AI score is inaccurate. Be specific about which criteria you disagree with (e.g., Fluency, Pronunciation, Lexical Resource, Grammar)..."></textarea>
+                    <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Minimum 20 characters required.</small>
+                </div>
+                
+                <input type="hidden" id="disputeSpeakingSubmissionId" value="">
+            </div>
+            
+            <div class="modal-footer border-top-0 d-flex justify-content-between" style="padding: 12px 24px 24px;">
+                <button type="button" class="btn text-secondary hover-text-white fw-medium border-0" data-bs-dismiss="modal" style="background: transparent; font-size: 0.875rem;">Cancel</button>
+                <button id="disputeSpeakingSubmitBtn" onclick="submitGradeDisputeSpeaking()" class="btn exam-btn exam-btn-primary px-4 py-2" style="background: #ef4444; border-color: #ef4444; border-radius: 12px; font-weight: 600; font-size: 0.875rem;">
+                    <i class="bi bi-send-fill me-2"></i>Submit Dispute
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

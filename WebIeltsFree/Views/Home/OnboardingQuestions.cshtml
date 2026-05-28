@@ -1,0 +1,308 @@
+@{
+    ViewData["Title"] = "Setup Your Goals";
+    ViewData["Page"] = "onboarding";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Progress Steps -->
+            <div class="d-flex justify-content-center mb-4">
+                <div class="onboarding-steps">
+                    <div class="step completed"><i class="bi bi-check"></i></div>
+                    <div class="step-line completed"></div>
+                    <div class="step completed"><i class="bi bi-check"></i></div>
+                    <div class="step-line"></div>
+                    <div class="step active">3</div>
+                    <div class="step-line"></div>
+                    <div class="step">4</div>
+                </div>
+            </div>
+            <p class="text-center text-muted mb-4">Step 3 of 4: Set Your Goals</p>
+
+            <div class="card">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="bi bi-bullseye text-ielts" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3>Personalize Your Learning</h3>
+                        <p class="text-muted">Help us create your perfect study plan</p>
+                    </div>
+
+                    <form id="goalsForm">
+                        <!-- Learning Reason -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Why are you learning IELTS?</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="learningReason" id="reason1" value="academic" checked>
+                                    <label class="btn btn-outline-primary w-100 py-3" for="reason1">
+                                        <i class="bi bi-mortarboard d-block mb-1 fs-4"></i>
+                                        Academic Studies
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="learningReason" id="reason2" value="immigration">
+                                    <label class="btn btn-outline-primary w-100 py-3" for="reason2">
+                                        <i class="bi bi-globe d-block mb-1 fs-4"></i>
+                                        Immigration
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="learningReason" id="reason3" value="career">
+                                    <label class="btn btn-outline-primary w-100 py-3" for="reason3">
+                                        <i class="bi bi-briefcase d-block mb-1 fs-4"></i>
+                                        Career Growth
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="learningReason" id="reason4" value="personal">
+                                    <label class="btn btn-outline-primary w-100 py-3" for="reason4">
+                                        <i class="bi bi-person-heart d-block mb-1 fs-4"></i>
+                                        Personal Goal
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target Band -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">What band score do you want to achieve?</label>
+                            <div class="row g-2">
+                                @for (float band = 5.0f; band <= 8.5f; band += 0.5f)
+                                {
+                                    var bandStr = band.ToString("0.0");
+                                    var isDefault = band == 7.0f;
+                                    <div class="col-3">
+                                        <input type="radio" class="btn-check" name="targetBand" id="band@(bandStr.Replace(".", ""))" 
+                                               value="@bandStr" @(isDefault ? "checked" : "")>
+                                        <label class="btn btn-outline-success w-100 py-2" for="band@(bandStr.Replace(".", ""))">
+                                            @bandStr
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Most universities require 6.5-7.0, immigration often needs 7.0+
+                            </small>
+                        </div>
+
+                        <!-- Exam Date -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">When is your IELTS exam?</label>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="examTiming" id="timing1" value="1month">
+                                    <label class="btn btn-outline-warning w-100 py-2" for="timing1">
+                                        <small>Within</small><br><strong>1 Month</strong>
+                                    </label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="examTiming" id="timing2" value="3months" checked>
+                                    <label class="btn btn-outline-warning w-100 py-2" for="timing2">
+                                        <small>Within</small><br><strong>3 Months</strong>
+                                    </label>
+                                </div>
+                                <div class="col-4">
+                                    <input type="radio" class="btn-check" name="examTiming" id="timing3" value="6months">
+                                    <label class="btn btn-outline-warning w-100 py-2" for="timing3">
+                                        <small>Within</small><br><strong>6 Months</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <input type="date" class="form-control" id="exactExamDate" placeholder="Or select exact date">
+                            </div>
+                        </div>
+
+                        <!-- Study Hours -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">How many hours can you study per day?</label>
+                            <div class="row g-2">
+                                <div class="col-3">
+                                    <input type="radio" class="btn-check" name="studyHours" id="hours1" value="1">
+                                    <label class="btn btn-outline-info w-100 py-2" for="hours1">
+                                        1 hour
+                                    </label>
+                                </div>
+                                <div class="col-3">
+                                    <input type="radio" class="btn-check" name="studyHours" id="hours2" value="2" checked>
+                                    <label class="btn btn-outline-info w-100 py-2" for="hours2">
+                                        2 hours
+                                    </label>
+                                </div>
+                                <div class="col-3">
+                                    <input type="radio" class="btn-check" name="studyHours" id="hours3" value="3">
+                                    <label class="btn btn-outline-info w-100 py-2" for="hours3">
+                                        3 hours
+                                    </label>
+                                </div>
+                                <div class="col-3">
+                                    <input type="radio" class="btn-check" name="studyHours" id="hours4" value="4">
+                                    <label class="btn btn-outline-info w-100 py-2" for="hours4">
+                                        4+ hours
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-ielts btn-lg">
+                                <i class="bi bi-magic me-2"></i>Generate My Learning Plan
+                            </button>
+                            <a href="/Home/Courses" class="btn btn-outline-secondary">
+                                Skip - I'll browse courses myself
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .onboarding-steps {
+        display: flex;
+        align-items: center;
+    }
+    .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bs-light);
+        border: 2px solid var(--bs-gray-300);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: var(--bs-gray-500);
+    }
+    .step.active {
+        background: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+    .step.completed {
+        background: var(--bs-success);
+        border-color: var(--bs-success);
+        color: white;
+    }
+    .step-line {
+        width: 40px;
+        height: 2px;
+        background: var(--bs-gray-300);
+    }
+    .step-line.completed {
+        background: var(--bs-success);
+    }
+    .btn-check:checked + .btn-outline-primary {
+        background: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-success {
+        background: var(--bs-success);
+        border-color: var(--bs-success);
+        color: white;
+    }
+    .btn-check:checked + .btn-outline-warning {
+        background: var(--bs-warning);
+        border-color: var(--bs-warning);
+        color: var(--bs-dark);
+    }
+    .btn-check:checked + .btn-outline-info {
+        background: var(--bs-info);
+        border-color: var(--bs-info);
+        color: white;
+    }
+</style>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check login
+        if (!Auth.isLoggedIn()) {
+            window.location.href = '/Home/Login';
+            return;
+        }
+
+        // Get placement band from localStorage
+        const placementBand = localStorage.getItem('placement_band');
+        if (placementBand) {
+            console.log('Placement test band:', placementBand);
+        }
+
+        // Form submission
+        document.getElementById('goalsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating your plan...';
+
+            try {
+                // Get form values
+                const learningReason = document.querySelector('input[name="learningReason"]:checked').value;
+                const targetBand = parseFloat(document.querySelector('input[name="targetBand"]:checked').value);
+                const examTiming = document.querySelector('input[name="examTiming"]:checked').value;
+                const studyHours = parseInt(document.querySelector('input[name="studyHours"]:checked').value);
+                const exactDate = document.getElementById('exactExamDate').value;
+
+                // Calculate exam date
+                let examDate = null;
+                if (exactDate) {
+                    examDate = exactDate;
+                } else {
+                    const now = new Date();
+                    const months = examTiming === '1month' ? 1 : examTiming === '3months' ? 3 : 6;
+                    now.setMonth(now.getMonth() + months);
+                    examDate = now.toISOString().split('T')[0];
+                }
+
+                // Save goals
+                await api('/users/goals', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        targetBand: targetBand,
+                        examDate: examDate,
+                        studyHoursPerDay: studyHours,
+                        learningReason: learningReason
+                    })
+                });
+
+                // Generate AI learning path
+                const roadmapResponse = await api('/ai/generate-learning-path', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        targetBand: targetBand,
+                        examDate: examDate,
+                        studyHoursPerDay: studyHours,
+                        focusAreas: []
+                    })
+                });
+
+                if (roadmapResponse.success) {
+                    showToast('Your personalized learning plan is ready!', 'success');
+                    localStorage.setItem('onboarding_completed', 'true');
+                    setTimeout(() => {
+                        window.location.href = '/Home/AiRoadmap';
+                    }, 1000);
+                } else {
+                    throw new Error(roadmapResponse.message || 'Failed to generate learning path');
+                }
+
+            } catch (error) {
+                console.error('Error saving goals:', error);
+                showToast('Error: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    });
+</script>
+}

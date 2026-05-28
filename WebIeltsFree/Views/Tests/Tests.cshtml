@@ -1,0 +1,375 @@
+@{
+    ViewData["Title"] = "Practice Tests";
+    ViewData["Page"] = "tests";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                <li class="breadcrumb-item active">Practice Tests</li>
+            </ol>
+        </nav>
+        <h2 class="mb-1">Practice Tests</h2>
+        <p class="text-muted">Take full mock tests and get your estimated band score</p>
+    </div>
+</div>
+
+<!-- Placement Test CTA -->
+<div class="card mb-4" style="background: linear-gradient(135deg, var(--ielts-accent), #dd6b20); color: white; border: none;">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="mb-2"><i class="bi bi-stars me-2"></i>Placement Test</h4>
+                <p class="mb-0 opacity-75">Discover your current level and get a personalized study plan tailored to your goals.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="#" class="btn btn-light btn-lg" id="startPlacementBtn">
+                    <i class="bi bi-play-fill me-1"></i>Start (30 min)
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teacher Assignments Section -->
+<div id="teacherAssignmentsSection" class="card mb-4 d-none" style="border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-radius: 12px; overflow: hidden;">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
+        <span class="fw-bold text-dark"><i class="bi bi-journal-check text-primary me-2"></i>Assignments from Teacher</span>
+        <span class="badge bg-primary rounded-pill" id="assignmentCount">0 Pending</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush" id="assignmentsListContainer">
+            <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                Loading assignments...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Filters -->
+<div class="row mb-4 g-3">
+    <div class="col-md-4">
+        <select class="form-select" id="skillFilter">
+            <option value="">All Skills</option>
+            <option value="listening">🎧 Listening</option>
+            <option value="reading">📖 Reading</option>
+            <option value="writing">✍️ Writing</option>
+            <option value="speaking">🗣️ Speaking</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <select class="form-select" id="difficultyFilter">
+            <option value="">All Levels</option>
+            <option value="easy">Easy (Band 5-6)</option>
+            <option value="medium">Medium (Band 6-7)</option>
+            <option value="hard">Hard (Band 7+)</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" placeholder="Search tests..." id="searchTests">
+        </div>
+    </div>
+</div>
+
+<!-- Tests Grid -->
+<div class="row g-4" id="testsContainer">
+    <div class="col-12 text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading tests...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Test History -->
+<div class="card mt-5">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clock-history me-2"></i>Test History</span>
+        <small class="text-white-50">Recent 10 attempts</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Test</th>
+                        <th>Date</th>
+                        <th>Score</th>
+                        <th>Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            Login and complete tests to view your latest attempts
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let allTests = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadTests();
+        bindFilters();
+        if (Auth.isLoggedIn()) {
+            await loadHistory();
+            await loadAssignments();
+        }
+    });
+
+    document.getElementById('startPlacementBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!Auth.isLoggedIn()) {
+            Toast.show('Please login to take the placement test', 'info');
+            setTimeout(() => window.location.href = '@Url.Action("Login", "Home")', 1000);
+            return;
+        }
+        window.location.href = '@Url.Action("PlacementTest", "Home")';
+    });
+
+    function startTest(testId) {
+        if (!Auth.isLoggedIn()) {
+            Toast.show('Please login to take tests', 'info');
+            setTimeout(() => window.location.href = '@Url.Action("Login", "Home")', 1000);
+            return;
+        }
+        window.location.href = '@Url.Action("TakeTest", "Home")?id=' + testId;
+    }
+
+    async function loadTests() {
+        const container = document.getElementById('testsContainer');
+        try {
+            const response = await api('/tests', { method: 'GET' });
+            allTests = response?.success ? (response.data || []) : [];
+            renderTests(allTests);
+        } catch {
+            container.innerHTML = '<div class="col-12 alert alert-danger">Failed to load tests.</div>';
+        }
+    }
+
+    function renderTests(tests) {
+        const container = document.getElementById('testsContainer');
+        if (!tests.length) {
+            container.innerHTML = '<div class="col-12 alert alert-info">No tests available.</div>';
+            return;
+        }
+
+        container.innerHTML = tests.map(test => {
+            const skill = (test.skillType || 'mixed').toLowerCase();
+            const badgeClass = skill === 'reading' ? 'skill-reading'
+                : skill === 'listening' ? 'skill-listening'
+                : skill === 'writing' ? 'skill-writing'
+                : skill === 'speaking' ? 'skill-speaking'
+                : 'bg-secondary';
+            const icon = skill === 'reading' ? 'book' :
+                skill === 'listening' ? 'headphones' :
+                skill === 'writing' ? 'pencil' :
+                skill === 'speaking' ? 'mic' : 'layers';
+            const level = resolveLevel(test.difficulty);
+            const attempted = test.hasAttempted && test.bestScore != null;
+
+            return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 test-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="skill-badge ${badgeClass}">
+                                    <i class="bi bi-${icon}"></i> ${capitalize(skill)}
+                                </div>
+                                <span class="badge ${level.badgeClass}">${level.label}</span>
+                            </div>
+                            <h5 class="fw-bold">${test.title || `IELTS Test #${test.testId}`}</h5>
+                            <p class="text-muted small mb-3">
+                                <i class="bi bi-clock me-1"></i>${test.durationMinutes || 60} minutes
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-collection me-1"></i>Official IELTS-style section format
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="${attempted ? 'text-success' : 'text-muted'}">
+                                    ${attempted ? `<i class="bi bi-trophy me-1"></i>Best: ${Number(test.bestScore).toFixed(1)}` : '<i class="bi bi-circle me-1"></i>Not attempted'}
+                                </small>
+                                <button class="btn btn-sm btn-ielts" onclick="startTest(${test.testId})">
+                                    Start <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function loadHistory() {
+        const body = document.getElementById('historyBody');
+        try {
+            const response = await api('/tests/history', { method: 'GET' });
+            const history = response?.success ? (response.data || []) : [];
+            if (!history.length) return;
+
+            body.innerHTML = history.slice(0, 10).map(item => `
+                <tr>
+                    <td>${item.testTitle || 'IELTS Test'}</td>
+                    <td>${new Date(item.startedAt).toLocaleDateString()}</td>
+                    <td><span class="badge bg-success fs-6">${(item.bandScore ?? 0).toFixed(1)}</span></td>
+                    <td>${formatDuration(item.startedAt, item.finishedAt)}</td>
+                    <td><button class="btn btn-sm btn-outline-primary" disabled>View</button></td>
+                </tr>
+            `).join('');
+        } catch {
+            // Keep default placeholder
+        }
+    }
+
+    async function loadAssignments() {
+        const section = document.getElementById('teacherAssignmentsSection');
+        const container = document.getElementById('assignmentsListContainer');
+        const countBadge = document.getElementById('assignmentCount');
+        
+        try {
+            const response = await api('/tests/assignments', { method: 'GET' });
+            const assignments = response?.success ? (response.data || []) : [];
+            
+            if (!assignments.length) {
+                section.classList.add('d-none');
+                return;
+            }
+            
+            section.classList.remove('d-none');
+            
+            const pendingCount = assignments.filter(a => a.status === 'pending' || a.status === 'overdue').length;
+            countBadge.textContent = `${pendingCount} Active`;
+            if (pendingCount === 0) {
+                countBadge.className = 'badge bg-success rounded-pill';
+            } else {
+                countBadge.className = 'badge bg-danger rounded-pill';
+            }
+            
+            container.innerHTML = assignments.map(a => {
+                const isCompleted = a.status === 'completed';
+                const isOverdue = a.status === 'overdue';
+                
+                let statusBadge = '<span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending</span>';
+                if (isCompleted) {
+                    statusBadge = '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Completed</span>';
+                } else if (isOverdue) {
+                    statusBadge = '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Overdue</span>';
+                }
+                
+                // Format deadline
+                let deadlineText = '';
+                if (a.deadline) {
+                    const dl = new Date(a.deadline);
+                    const now = new Date();
+                    const diffMs = dl - now;
+                    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                    
+                    if (isCompleted) {
+                        deadlineText = `<span class="text-muted small">Completed at: ${new Date(a.completedAt).toLocaleString()}</span>`;
+                    } else if (diffMs < 0) {
+                        deadlineText = `<span class="text-danger small fw-bold">Missed deadline: ${dl.toLocaleString()}</span>`;
+                    } else if (diffHours <= 24) {
+                        deadlineText = `<span class="text-warning small fw-bold"><i class="bi bi-hourglass-split me-1"></i>Due in ${diffHours} hour(s) (${dl.toLocaleDateString()})</span>`;
+                    } else {
+                        deadlineText = `<span class="text-muted small">Deadline: ${dl.toLocaleDateString()}</span>`;
+                    }
+                } else {
+                    deadlineText = '<span class="text-muted small">No deadline</span>';
+                }
+                
+                let actionBtn = '';
+                if (isCompleted) {
+                    actionBtn = `<button class="btn btn-sm btn-outline-success" disabled><i class="bi bi-check-lg me-1"></i>Done</button>`;
+                } else {
+                    actionBtn = `<button class="btn btn-sm btn-primary" onclick="startTest(${a.testId})">Take Test <i class="bi bi-arrow-right"></i></button>`;
+                }
+                
+                return `
+                    <div class="list-group-item p-3 border-0 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="transition: background-color 0.2s; background: transparent;">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <h6 class="mb-0 fw-bold text-dark">${a.title || 'Assignment'}</h6>
+                                ${statusBadge}
+                            </div>
+                            <div class="text-muted small mb-2" style="font-size: 0.85rem;">
+                                <i class="bi bi-person me-1"></i>Assigned by <strong>${a.teacherName}</strong>
+                                <span class="mx-1">•</span>
+                                <i class="bi bi-journal-text me-1"></i>${a.durationMinutes} mins
+                            </div>
+                            ${a.instructions ? `<p class="mb-2 text-secondary small bg-light p-2 rounded" style="border-left: 3px solid var(--ielts-primary); font-size: 0.85rem;">${a.instructions}</p>` : ''}
+                            <div>${deadlineText}</div>
+                        </div>
+                        <div class="text-md-end">
+                            ${actionBtn}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+        } catch (e) {
+            console.error('Failed to load assignments:', e);
+            section.classList.add('d-none');
+        }
+    }
+
+    function bindFilters() {
+        document.getElementById('skillFilter').addEventListener('change', applyFilters);
+        document.getElementById('difficultyFilter').addEventListener('change', applyFilters);
+        document.getElementById('searchTests').addEventListener('input', applyFilters);
+    }
+
+    function applyFilters() {
+        const skill = (document.getElementById('skillFilter').value || '').toLowerCase();
+        const difficulty = document.getElementById('difficultyFilter').value || '';
+        const keyword = (document.getElementById('searchTests').value || '').trim().toLowerCase();
+
+        const filtered = allTests.filter(test => {
+            const testSkill = (test.skillType || '').toLowerCase();
+            const level = resolveLevelKey(test.difficulty);
+            const title = (test.title || '').toLowerCase();
+            if (skill && testSkill !== skill) return false;
+            if (difficulty && level !== difficulty) return false;
+            if (keyword && !title.includes(keyword)) return false;
+            return true;
+        });
+
+        renderTests(filtered);
+    }
+
+    function resolveLevel(diff) {
+        const key = resolveLevelKey(diff);
+        if (key === 'easy') return { label: 'Easy (Band 5-6)', badgeClass: 'bg-success' };
+        if (key === 'hard') return { label: 'Hard (Band 7+)', badgeClass: 'bg-danger' };
+        return { label: 'Medium (Band 6-7)', badgeClass: 'bg-warning text-dark' };
+    }
+
+    function resolveLevelKey(diff) {
+        if ((diff || 0) <= 1) return 'easy';
+        if ((diff || 0) >= 3) return 'hard';
+        return 'medium';
+    }
+
+    function capitalize(text) {
+        if (!text) return 'Mixed';
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function formatDuration(startedAt, finishedAt) {
+        if (!startedAt || !finishedAt) return '-';
+        const secs = Math.max(0, Math.floor((new Date(finishedAt) - new Date(startedAt)) / 1000));
+        const mm = String(Math.floor(secs / 60)).padStart(2, '0');
+        const ss = String(secs % 60).padStart(2, '0');
+        return `${mm}:${ss}`;
+    }
+</script>
+}

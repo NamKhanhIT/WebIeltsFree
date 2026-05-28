@@ -1,0 +1,93 @@
+@*
+    Practice Mode — Advisory Timer Partial
+    Shows elapsed time, recommended IELTS limits, warning colors
+    Never auto-submits
+*@
+
+<div class="exam-timer" id="examTimer">
+    <i class="bi bi-clock"></i>
+    <div>
+        <div class="exam-timer-label">Elapsed</div>
+        <span id="examTimerDisplay">00:00</span>
+    </div>
+    <div class="mx-2 opacity-25">|</div>
+    <div>
+        <div class="exam-timer-label">Recommended</div>
+        <span id="examTimerRecommended">--:--</span>
+    </div>
+</div>
+
+<div id="examTimerWarning" class="d-none" style="position:fixed;top:120px;right:20px;z-index:200;max-width:340px;">
+    <div class="exam-card p-3" style="border-left:4px solid var(--ex-warning);animation:slideInRight .3s ease;">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+            <small class="fw-bold">You are exceeding the recommended IELTS timing</small>
+        </div>
+        <small class="text-muted d-block mt-1">In the real exam, you would have run out of time. Practice managing your pace.</small>
+    </div>
+</div>
+
+<script>
+(function() {
+    const RECOMMENDED_TIMES = {
+        listening: 30 * 60,
+        reading:   60 * 60,
+        writing:   60 * 60,
+        speaking:  14 * 60
+    };
+
+    let startTime = null;
+    let timerInterval = null;
+    let warningShown = false;
+
+    window.ExamTimer = {
+        start(skillType) {
+            startTime = Date.now();
+            warningShown = false;
+            const rec = RECOMMENDED_TIMES[skillType] || 60 * 60;
+            const recMin = Math.floor(rec / 60);
+            const recSec = rec % 60;
+            document.getElementById('examTimerRecommended').textContent =
+                `${String(recMin).padStart(2,'0')}:${String(recSec).padStart(2,'0')}`;
+
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const min = Math.floor(elapsed / 60);
+                const sec = elapsed % 60;
+                document.getElementById('examTimerDisplay').textContent =
+                    `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+
+                const timerEl = document.getElementById('examTimer');
+                const ratio = elapsed / rec;
+                if (ratio >= 1) {
+                    timerEl.className = 'exam-timer danger';
+                    if (!warningShown) {
+                        warningShown = true;
+                        document.getElementById('examTimerWarning').classList.remove('d-none');
+                        setTimeout(() => {
+                            document.getElementById('examTimerWarning')?.classList.add('d-none');
+                        }, 8000);
+                    }
+                } else if (ratio >= 0.85) {
+                    timerEl.className = 'exam-timer warning';
+                } else {
+                    timerEl.className = 'exam-timer';
+                }
+            }, 1000);
+        },
+        stop() {
+            if (timerInterval) clearInterval(timerInterval);
+        },
+        getElapsed() {
+            return startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+        }
+    };
+})();
+</script>
+
+<style>
+    @@keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>

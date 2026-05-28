@@ -1,0 +1,70 @@
+@model WebIeltsFree.Models.RoadmapSuggestion
+
+@{
+    ViewData["Title"] = "Suggest Roadmap Change";
+    var students = ViewBag.Students as IEnumerable<WebIeltsFree.Models.User>;
+}
+
+<div class="mb-6">
+    <h1 class="fs-3 mb-1">Suggest Roadmap Change</h1>
+    <p>Suggest a modification to a student's learning path.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <form asp-action="Suggest" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label for="studentId" class="form-label">Select Student</label>
+                    <select id="studentId" name="studentId" class="form-select" required>
+                        <option value="">-- Choose Student --</option>
+                        @foreach (var student in students!)
+                        {
+                            <option value="@student.UserId">@(student.Profile?.FullName ?? student.Email)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="suggestionTitle" class="form-label">Suggestion Title</label>
+                    <input type="text" id="suggestionTitle" name="suggestionTitle" class="form-control" required placeholder="e.g. Add more Writing practice" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message to Student</label>
+                    <textarea id="message" name="message" class="form-control" rows="3" required placeholder="Explain why you suggest this change..."></textarea>
+                </div>
+
+                <hr class="my-4">
+                <h5 class="mb-3">Specific Change</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="actionType" class="form-label">Action</label>
+                        <select id="actionType" name="actionType" class="form-select" required>
+                            <option value="modify">Modify</option>
+                            <option value="add">Add</option>
+                            <option value="remove">Remove</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="weekNumber" class="form-label">Week Number</label>
+                        <input type="number" id="weekNumber" name="weekNumber" class="form-control" required min="1" placeholder="e.g. 1" />
+                    </div>
+                </div>
+
+                <div class="mb-3 mt-3">
+                    <label for="changeDescription" class="form-label">Change Description</label>
+                    <textarea id="changeDescription" name="changeDescription" class="form-control" rows="2" required placeholder="e.g. Focus on Task 1 charts instead of Task 2."></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Send Suggestion</button>
+                    <a asp-action="Index" class="btn btn-light">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

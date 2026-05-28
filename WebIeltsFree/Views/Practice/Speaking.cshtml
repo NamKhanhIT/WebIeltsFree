@@ -1,0 +1,10 @@
+@{
+    ViewData["Title"] = "Speaking Practice — AI Examiner";
+    ViewData["SkillType"] = "speaking";
+}
+
+@await Html.PartialAsync("~/Views/Practice/_PracticeSpeaking.cshtml")
+
+@section Scripts {
+@await Html.PartialAsync("~/Views/Practice/_PracticeScripts.cshtml")
+}

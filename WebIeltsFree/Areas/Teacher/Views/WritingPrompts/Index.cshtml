@@ -1,0 +1,149 @@
+@model IEnumerable<WebIeltsFree.Models.WritingPrompt>
+@{
+    ViewData["Title"] = "Writing Prompts";
+    var activeTab = ViewBag.ActiveTab as string ?? "all";
+    var creators = ViewBag.Creators as Dictionary<int, string>;
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0 fw-bold">Writing Prompts</h4>
+            <a asp-action="Create" class="btn btn-primary btn-sm px-3 rounded-pill">
+                <i class="ti ti-plus me-1"></i> Create Prompt
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-6">
+        <a href="?activeTab=all" class="text-decoration-none">
+            <div class="card p-3 @(activeTab == "all" ? "bg-primary text-white" : "bg-light text-dark") border-0 shadow-sm rounded-3 h-100 transition-all">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-semibold text-uppercase opacity-75">All Content</small>
+                        <h3 class="mb-0 fw-bold">@ViewBag.AllCount</h3>
+                    </div>
+                    <div class="icon-shape icon-md rounded-circle @(activeTab == "all" ? "bg-white text-primary" : "bg-primary-subtle text-primary")">
+                        <i class="ti ti-files fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-lg-3 col-6">
+        <a href="?activeTab=draft" class="text-decoration-none">
+            <div class="card p-3 @(activeTab == "draft" ? "bg-secondary text-white" : "bg-light text-dark") border-0 shadow-sm rounded-3 h-100 transition-all">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-semibold text-uppercase opacity-75">Drafts</small>
+                        <h3 class="mb-0 fw-bold">@ViewBag.DraftCount</h3>
+                    </div>
+                    <div class="icon-shape icon-md rounded-circle @(activeTab == "draft" ? "bg-white text-secondary" : "bg-secondary-subtle text-secondary")">
+                        <i class="ti ti-edit fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-lg-3 col-6">
+        <a href="?activeTab=pending_review" class="text-decoration-none">
+            <div class="card p-3 @(activeTab == "pending_review" ? "bg-warning text-dark" : "bg-light text-dark") border-0 shadow-sm rounded-3 h-100 transition-all">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-semibold text-uppercase opacity-75">Pending Review</small>
+                        <h3 class="mb-0 fw-bold">@ViewBag.PendingCount</h3>
+                    </div>
+                    <div class="icon-shape icon-md rounded-circle @(activeTab == "pending_review" ? "bg-white text-warning" : "bg-warning-subtle text-warning")">
+                        <i class="ti ti-clock fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-lg-3 col-6">
+        <a href="?activeTab=published" class="text-decoration-none">
+            <div class="card p-3 @(activeTab == "published" ? "bg-success text-white" : "bg-light text-dark") border-0 shadow-sm rounded-3 h-100 transition-all">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-semibold text-uppercase opacity-75">Published</small>
+                        <h3 class="mb-0 fw-bold">@ViewBag.PublishedCount</h3>
+                    </div>
+                    <div class="icon-shape icon-md rounded-circle @(activeTab == "published" ? "bg-white text-success" : "bg-success-subtle text-success")">
+                        <i class="ti ti-check fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary">
+                    <tr>
+                        <th class="ps-4">Prompt</th>
+                        <th>Task Type</th>
+                        <th>Difficulty</th>
+                        <th>Status</th>
+                        <th>Created By</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <span class="d-inline-block text-truncate fw-medium text-dark" style="max-width: 300px;" title="@item.PromptText">
+                                    @item.PromptText
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@item.TaskType.ToUpper()</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                    @item.TargetBand
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(item.Status == "published" ? "bg-success-subtle text-success" : item.Status == "pending_review" ? "bg-warning-subtle text-warning" : "bg-secondary-subtle text-secondary") rounded-pill">
+                                    @item.Status.Replace("_", " ").ToUpper()
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                @(item.CreatedBy.HasValue && creators.ContainsKey(item.CreatedBy.Value) ? creators[item.CreatedBy.Value] : "System")
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a asp-action="Details" asp-route-id="@item.PromptId" class="btn btn-sm btn-light btn-icon" title="View Details">
+                                        <i class="ti ti-eye text-primary"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.PromptId" class="btn btn-sm btn-light btn-icon" title="Edit">
+                                        <i class="ti ti-edit text-warning"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.PromptId" class="btn btn-sm btn-light btn-icon" title="Archive">
+                                        <i class="ti ti-archive text-danger"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="ti ti-notes fs-1 mb-2 d-block"></i>
+                                No prompts found in this category.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

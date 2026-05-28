@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>@ViewData["Title"] - Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" crossorigin href="~/dashboard/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+  <div id="overlay" class="overlay"></div>
+  <!-- TOPBAR -->
+  <nav id="topbar" class="navbar bg-white border-bottom fixed-top topbar px-3">
+    <button id="toggleBtn" class="d-none d-lg-inline-flex btn btn-light btn-icon btn-sm ">
+      <i class="ti ti-layout-sidebar-left-expand"></i>
+    </button>
+    <button id="mobileBtn" class="btn btn-light btn-icon btn-sm d-lg-none me-2">
+      <i class="ti ti-layout-sidebar-left-expand"></i>
+    </button>
+    <div class="ms-auto">
+      <ul class="list-unstyled d-flex align-items-center mb-0 gap-1">
+        <li class="ms-3 dropdown">
+          <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="avatar avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center">A</div>
+          </a>
+          <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 200px;">
+            <div class="p-3 d-flex flex-column gap-1 small lh-lg">
+              <a href="/" class="text-decoration-none text-dark"><i class="ti ti-world me-2"></i>Back to Site</a>
+              <hr class="my-1">
+              <a href="/Account/Logout" class="text-decoration-none text-danger"><i class="ti ti-logout me-2"></i>Logout</a>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar">
+    <div class="logo-area">
+      <a href="/Admin" class="d-inline-flex align-items-center text-decoration-none">
+        <i class="ti ti-shield-lock text-primary fs-2"></i>
+        <span class="logo-text ms-2 fw-bold text-dark fs-4">Admin Area</span>
+      </a>
+    </div>
+    <ul class="nav flex-column mt-3 pb-5">
+      <li class="px-4 py-2"><small class="nav-text text-muted">Core</small></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")" href="/Admin"><i class="ti ti-home"></i><span class="nav-text">Dashboard</span></a></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")" href="/Admin/Users"><i class="ti ti-users"></i><span class="nav-text">Users</span></a></li>
+      
+      <li class="px-4 pt-4 pb-2"><small class="nav-text text-muted">Content</small></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Courses" ? "active" : "")" href="/Admin/Courses"><i class="ti ti-books"></i><span class="nav-text">IELTS Vault</span></a></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "RoadmapSuggestions" ? "active" : "")" href="/Admin/RoadmapSuggestions"><i class="ti ti-route"></i><span class="nav-text">Roadmap Suggestions</span></a></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Questions" ? "active" : "")" href="/Admin/Questions"><i class="ti ti-help-circle"></i><span class="nav-text">Question Bank</span></a></li>
+
+      <li class="px-4 pt-4 pb-2"><small class="nav-text text-muted">Support</small></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")" href="/Admin/Reports"><i class="ti ti-flag"></i><span class="nav-text">User Reports</span></a></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Announcements" ? "active" : "")" href="/Admin/Announcements"><i class="ti ti-speakerphone"></i><span class="nav-text">Announcements</span></a></li>
+
+      <li class="px-4 pt-4 pb-2"><small class="nav-text text-muted">System</small></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Settings" ? "active" : "")" href="/Admin/Settings"><i class="ti ti-settings"></i><span class="nav-text">Settings</span></a></li>
+      <li><a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Logs" ? "active" : "")" href="/Admin/Logs"><i class="ti ti-activity"></i><span class="nav-text">System Logs</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main id="content" class="content py-10">
+    <div class="container-fluid">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
+                <i class="ti ti-check me-2"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Warning"] != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0" role="alert">
+                <i class="ti ti-alert-triangle me-2"></i> @TempData["Warning"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert">
+                <i class="ti ti-alert-circle me-2"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @RenderBody()
+    </div>
+  </main>
+
+  <script type="module" crossorigin src="~/dashboard/js/main.js"></script>
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

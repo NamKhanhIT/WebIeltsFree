@@ -1,0 +1,337 @@
+@{
+    ViewData["Title"] = "Speaking Tutor — Lesson Library";
+    ViewData["SkillType"] = "speaking";
+}
+
+@await Html.PartialAsync("~/Views/Learn/_LearnStyles.cshtml")
+
+<style>
+    /* ─── Speaking: Card-based Tutor Design ─── */
+    .speaking-tutor {
+        --sp-bg: #f8fafc;
+        --sp-card: #ffffff;
+        --sp-ink: #334155;
+        --sp-border: #e2e8f0;
+        --sp-primary: #8b5cf6;
+        --sp-primary-light: #ede9fe;
+        --sp-accent: #f59e0b;
+        font-family: 'Inter', -apple-system, sans-serif;
+        background: var(--sp-bg);
+        min-height: calc(100vh - 60px);
+        color: var(--sp-ink);
+    }
+    .sp-container { max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; }
+    
+    .sp-grid { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+    
+    /* Sidebar */
+    .sp-sidebar { background: transparent; }
+    .sp-section-title { font-size: .8rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: .05em; margin-bottom: 16px; }
+    
+    .sp-lesson-item {
+        background: #fff; border: 1px solid var(--sp-border); border-radius: 12px;
+        padding: 12px 14px; margin-bottom: 10px; cursor: pointer; transition: all .2s;
+        display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.02);
+    }
+    .sp-lesson-item:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,.05); border-color: #cbd5e1; }
+    .sp-lesson-item.active { border-color: var(--sp-primary); background: var(--sp-primary-light); box-shadow: none; }
+    
+    .sp-lesson-icon {
+        width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9;
+        display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 1.1rem;
+    }
+    .sp-lesson-item.active .sp-lesson-icon { background: var(--sp-primary); color: #fff; }
+    
+    .sp-lesson-title { font-weight: 600; font-size: .9rem; line-height: 1.3; color: var(--sp-ink); }
+    .sp-lesson-meta { font-size: .75rem; color: #64748b; margin-top: 2px; }
+
+    /* Main Tutor Area */
+    .sp-tutor-area { position: relative; perspective: 1000px; }
+    
+    .sp-card-stack {
+        position: relative; width: 100%; max-width: 600px; margin: 0 auto; height: 420px;
+    }
+    
+    .sp-flashcard {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: var(--sp-card); border-radius: 20px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,.08), 0 8px 10px -6px rgba(0,0,0,.04);
+        border: 1px solid var(--sp-border); padding: 32px;
+        display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+        background-image: radial-gradient(circle at top right, rgba(139,92,246,0.03), transparent 300px);
+    }
+    .sp-flashcard.inactive { transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; }
+    
+    .sp-card-type {
+        position: absolute; top: 20px; left: 24px; font-size: .75rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .06em; color: var(--sp-primary);
+        display: flex; align-items: center; gap: 6px;
+    }
+    
+    .sp-card-counter {
+        position: absolute; top: 20px; right: 24px; font-size: .8rem; font-weight: 600; color: #94a3b8;
+    }
+    
+    .sp-card-content { font-size: 1.35rem; line-height: 1.6; font-weight: 500; color: var(--sp-ink); max-width: 85%; }
+    .sp-card-hint { margin-top: 24px; font-size: .95rem; color: #64748b; font-style: italic; opacity: 0; transition: opacity .3s; }
+    .sp-flashcard.show-hint .sp-card-hint { opacity: 1; }
+    
+    .sp-card-controls {
+        display: flex; justify-content: center; gap: 16px; margin-top: 32px;
+    }
+    
+    .sp-btn {
+        width: 50px; height: 50px; border-radius: 50%; border: none;
+        display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        cursor: pointer; transition: all .2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1);
+    }
+    .sp-btn-prev { background: #fff; color: #64748b; border: 1px solid #e2e8f0; }
+    .sp-btn-prev:hover { background: #f8fafc; color: var(--sp-ink); }
+    .sp-btn-next { background: var(--sp-primary); color: #fff; }
+    .sp-btn-next:hover { background: #7c3aed; transform: translateY(-2px); box-shadow: 0 6px 8px -1px rgba(139,92,246,.3); }
+    .sp-btn-hint { width: auto; border-radius: 20px; padding: 0 16px; font-size: .9rem; font-weight: 600; background: #fff; color: var(--sp-accent); border: 1px solid #fde68a; }
+    .sp-btn-hint:hover { background: #fef3c7; }
+
+    /* Progress bar */
+    .sp-progress-container { width: 100%; max-width: 600px; margin: 0 auto 32px; }
+    .sp-progress-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+    .sp-progress-fill { height: 100%; background: var(--sp-primary); transition: width .3s ease; }
+
+    .sp-empty-state { text-align: center; padding: 60px 20px; }
+    .sp-empty-icon { font-size: 3.5rem; color: #cbd5e1; margin-bottom: 16px; }
+
+    @@media (max-width: 768px) {
+        .sp-grid { grid-template-columns: 1fr; }
+        .sp-sidebar { order: 2; }
+        .sp-tutor-area { order: 1; }
+        .sp-card-content { font-size: 1.15rem; }
+    }
+</style>
+
+<div class="speaking-tutor">
+    <div class="sp-container">
+        
+        <div class="d-flex align-items-center gap-3 mb-5 mt-2">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: var(--sp-primary-light); color: var(--sp-primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                <i class="bi bi-mic"></i>
+            </div>
+            <div>
+                <h1 class="mb-0" style="font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em;">Interactive Speaking Tutor</h1>
+                <p class="mb-0 text-muted" style="font-size: .9rem;">Practice with conversation cards, examiner questions, and cue cards.</p>
+            </div>
+        </div>
+
+        <div class="sp-grid">
+            <!-- Sidebar: Lesson List -->
+            <aside class="sp-sidebar">
+                <div class="sp-section-title">Speaking Lessons</div>
+                <div id="spLessonList">
+                    <div class="text-center py-3"><div class="spinner-border text-secondary spinner-border-sm"></div></div>
+                </div>
+            </aside>
+
+            <!-- Main: Card Tutor -->
+            <main class="sp-tutor-area">
+                <div id="spTutorContent">
+                    <div class="sp-empty-state">
+                        <div class="sp-empty-icon"><i class="bi bi-layers"></i></div>
+                        <h4>Select a lesson</h4>
+                        <p class="text-muted">Choose a lesson from the sidebar to start swiping through study cards.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentCards = [];
+    let currentCardIndex = 0;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const listEl = document.getElementById('spLessonList');
+        try {
+            const res = await api('/lessons/skills/speaking', { method: 'GET' });
+            const lessons = res?.data || [];
+
+            if (lessons.length === 0) {
+                listEl.innerHTML = '<div class="text-muted small">No speaking lessons found.</div>';
+                return;
+            }
+
+            listEl.innerHTML = lessons.map((l, i) => `
+                <div class="sp-lesson-item ${i === 0 ? 'active' : ''}" onclick="loadSpeakingLesson(${l.lessonId}, this)">
+                    <div class="sp-lesson-icon"><i class="bi bi-chat-quote"></i></div>
+                    <div>
+                        <div class="sp-lesson-title">${escapeHtml(l.title || 'Untitled Lesson')}</div>
+                        <div class="sp-lesson-meta">${l.estimatedMinutes || 15} min • Level ${l.difficultyLevel || 1}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (lessons[0]) loadSpeakingLesson(lessons[0].lessonId, listEl.firstElementChild);
+        } catch {
+            listEl.innerHTML = '<div class="text-danger small">Failed to load lessons.</div>';
+        }
+    });
+
+    async function loadSpeakingLesson(lessonId, el) {
+        document.querySelectorAll('.sp-lesson-item').forEach(i => i.classList.remove('active'));
+        if (el) el.classList.add('active');
+
+        const tutorEl = document.getElementById('spTutorContent');
+        tutorEl.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-secondary"></div></div>';
+
+        try {
+            const res = await api(`/lessons/${lessonId}`, { method: 'GET' });
+            const lesson = res?.data;
+
+            if (!lesson || !lesson.contents || lesson.contents.length === 0) {
+                tutorEl.innerHTML = `
+                    <div class="sp-empty-state">
+                        <div class="sp-empty-icon"><i class="bi bi-journal-x"></i></div>
+                        <h4>Lesson is empty</h4>
+                        <p class="text-muted">No cards available for this lesson yet.</p>
+                    </div>`;
+                return;
+            }
+
+            // Convert lesson contents to cards
+            currentCards = lesson.contents.map(c => {
+                let type = 'Theory';
+                let icon = 'book';
+                if (c.contentType?.toLowerCase().includes('exercise')) { type = 'Practice'; icon = 'mic'; }
+                if (c.contentType?.toLowerCase().includes('vocab')) { type = 'Vocabulary'; icon = 'translate'; }
+                
+                return {
+                    id: c.contentId,
+                    type: type,
+                    icon: icon,
+                    content: c.contentBody,
+                    hint: extractHint(c.contentBody) || "Focus on fluency and using connective words."
+                };
+            });
+
+            currentCardIndex = 0;
+            renderTutor();
+
+        } catch (e) {
+            tutorEl.innerHTML = '<div class="text-danger">Failed to load lesson content.</div>';
+        }
+    }
+
+    // Helper to extract a hint from content if it exists (e.g. bolded text)
+    function extractHint(text) {
+        if(!text) return null;
+        const match = text.match(/\*\*(.*?)\*\*/);
+        return match ? match[1] : null;
+    }
+
+    function renderTutor() {
+        if (currentCards.length === 0) return;
+        const tutorEl = document.getElementById('spTutorContent');
+        
+        const card = currentCards[currentCardIndex];
+        const progress = ((currentCardIndex + 1) / currentCards.length) * 100;
+
+        let contentHtml = card.content || '';
+        // Basic markdown cleanup for display
+        contentHtml = contentHtml.replace(/###|##/g, '').replace(/\*\*/g, '').trim();
+
+        tutorEl.innerHTML = `
+            <div class="sp-progress-container">
+                <div class="d-flex justify-content-between mb-2">
+                    <small class="fw-bold text-muted">Progress</small>
+                    <small class="fw-bold text-muted">${currentCardIndex + 1} / ${currentCards.length}</small>
+                </div>
+                <div class="sp-progress-bar">
+                    <div class="sp-progress-fill" style="width: ${progress}%"></div>
+                </div>
+            </div>
+
+            <div class="sp-card-stack">
+                <div class="sp-flashcard" id="activeCard">
+                    <div class="sp-card-type"><i class="bi bi-${card.icon}"></i> ${card.type}</div>
+                    
+                    <div class="sp-card-content">
+                        ${escapeHtml(contentHtml)}
+                    </div>
+                    
+                    <div class="sp-card-hint">
+                        <i class="bi bi-lightbulb text-warning me-1"></i> Hint: ${escapeHtml(card.hint)}
+                    </div>
+                </div>
+            </div>
+
+            <div class="sp-card-controls">
+                <button class="sp-btn sp-btn-prev" onclick="prevCard()" ${currentCardIndex === 0 ? 'disabled style="opacity:0.5"' : ''} title="Previous Card">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <button class="sp-btn sp-btn-hint" onclick="toggleHint()">
+                    <i class="bi bi-eye"></i> Show Hint
+                </button>
+                <button class="sp-btn sp-btn-next" onclick="nextCard()" title="${currentCardIndex === currentCards.length - 1 ? 'Finish Lesson' : 'Next Card'}">
+                    <i class="bi bi-${currentCardIndex === currentCards.length - 1 ? 'check-lg' : 'arrow-right'}"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    window.nextCard = function() {
+        if (currentCardIndex < currentCards.length - 1) {
+            animateCardOut('left', () => {
+                currentCardIndex++;
+                renderTutor();
+            });
+        } else {
+            // Finish lesson
+            document.getElementById('spTutorContent').innerHTML = `
+                <div class="sp-empty-state" style="animation: fadeInUp 0.5s ease;">
+                    <div style="width: 80px; height: 80px; background: var(--sp-primary-light); color: var(--sp-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px;">
+                        <i class="bi bi-trophy-fill"></i>
+                    </div>
+                    <h3 class="fw-bold">Lesson Complete!</h3>
+                    <p class="text-muted">You've successfully reviewed all speaking cards.</p>
+                    <button class="btn mt-3 px-4" style="background: var(--sp-primary); color: #fff; border-radius: 99px; font-weight: 600;" onclick="currentCardIndex=0; renderTutor();">Review Again</button>
+                </div>
+            `;
+        }
+    };
+
+    window.prevCard = function() {
+        if (currentCardIndex > 0) {
+            animateCardOut('right', () => {
+                currentCardIndex--;
+                renderTutor();
+            });
+        }
+    };
+
+    window.toggleHint = function() {
+        const card = document.getElementById('activeCard');
+        if (card) {
+            card.classList.toggle('show-hint');
+        }
+    };
+
+    function animateCardOut(direction, callback) {
+        const card = document.getElementById('activeCard');
+        if (!card) { callback(); return; }
+        
+        const translateX = direction === 'left' ? '-50px' : '50px';
+        card.style.transform = `translateX(${translateX}) scale(0.95)`;
+        card.style.opacity = '0';
+        
+        setTimeout(callback, 200);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+}

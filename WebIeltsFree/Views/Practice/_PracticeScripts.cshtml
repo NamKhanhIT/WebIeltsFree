@@ -1,0 +1,2489 @@
+@{
+    var skillType = (ViewData["SkillType"]?.ToString() ?? "reading").ToLower();
+    var lessonId = ViewData["LessonId"]?.ToString() ?? "0";
+}
+<script>
+    const lessonId = Number('@lessonId');
+    const skillType = '@skillType';
+
+    // ─── Pure CSS Toast Notification (no Tailwind) ───
+    window.showToast = function(message, type = 'info') {
+        let container = document.getElementById('examToastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'examToastContainer';
+            container.className = 'exam-toast-container';
+            document.body.appendChild(container);
+        }
+
+        const iconMap = {
+            info:    'bi-info-circle-fill',
+            success: 'bi-check-circle-fill',
+            error:   'bi-exclamation-triangle-fill',
+            warning: 'bi-exclamation-triangle-fill'
+        };
+        const titleMap = { info: 'Info', success: 'Success', error: 'Error', warning: 'Warning' };
+
+        const toast = document.createElement('div');
+        toast.className = 'exam-toast';
+        toast.innerHTML = `
+            <div class="exam-toast-icon ${type}"><i class="bi ${iconMap[type] || iconMap.info}"></i></div>
+            <div class="exam-toast-body">
+                <div class="exam-toast-title">${titleMap[type] || 'Info'}</div>
+                <p class="exam-toast-msg">${message}</p>
+            </div>
+            <button class="exam-toast-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        `;
+
+        toast.querySelector('.exam-toast-close').addEventListener('click', () => {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(() => toast.remove(), 350);
+        });
+
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                setTimeout(() => { if (toast.parentNode) toast.remove(); }, 350);
+            }
+        }, 4000);
+    };
+
+    // ─── Results Popup Modal Helper ───
+    window.showResultsPopup = function({ iconClass = 'graded', title = 'Results', subtitle = '', stats = [], detailHtml = '', onClose = null }) {
+        // Remove any existing popup
+        document.getElementById('examResultsOverlay')?.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'examResultsOverlay';
+        overlay.className = 'exam-results-overlay active';
+
+        const statsHtml = stats.map(s =>
+            `<div class="exam-stat-item">
+                <div class="stat-value ${s.color || ''}">${s.value}</div>
+                <div class="stat-label">${s.label}</div>
+            </div>`
+        ).join('');
+
+        overlay.innerHTML = `
+            <div class="exam-results-card">
+                <div class="exam-results-header">
+                    <div class="result-icon ${iconClass}">
+                        <i class="bi ${iconClass === 'correct' ? 'bi-check-lg' : iconClass === 'incorrect' ? 'bi-x-lg' : 'bi-bar-chart-fill'}"></i>
+                    </div>
+                    <h3>${title}</h3>
+                    ${subtitle ? `<p>${subtitle}</p>` : ''}
+                </div>
+                ${statsHtml ? `<div class="exam-results-stats">${statsHtml}</div>` : ''}
+                ${detailHtml ? `<div class="exam-results-detail">${detailHtml}</div>` : ''}
+                <div class="exam-results-footer">
+                    <button class="exam-btn exam-btn-primary" id="closeResultsPopupBtn">
+                        <i class="bi bi-arrow-right me-1"></i>Continue
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Close on button click
+        document.getElementById('closeResultsPopupBtn').addEventListener('click', () => {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.remove(), 350);
+            if (typeof onClose === 'function') onClose();
+        });
+
+        // Close on backdrop click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+                setTimeout(() => overlay.remove(), 350);
+                if (typeof onClose === 'function') onClose();
+            }
+        });
+    };
+
+    let speakingSeconds = 0;
+    let speakingInterval = null;
+    let speechRecognition = null;
+    let finalTranscript = '';
+    let micStream = null;
+    let speakingActive = false;
+    let currentReadingQuestion = null;
+    let readingPracticeData = null; // Store current reading practice set
+    let userReadingAnswers = {};     // Store reading answers
+    let currentListeningQuestion = null;
+    let listeningPracticeData = {};
+    let userListeningAnswers = {};
+    let activeListeningSection = 1;
+    let writingPrompts = [];
+    let speakingTopicsByPart = { "1": [], "2": [], "3": [] };
+    let activeWritingPrompt = null;
+    let activeSpeakingTopic = null;
+    let activeSpeakingSessionId = 0;
+    let writingHistoryCache = [];
+    let speakingWs = null;
+    let speakingWsConnected = false;
+    let speakingCurrentPart = 1;
+    let speakingStreamBuffer = '';
+    let speakingTtsSentenceBuffer = '';
+    let speakingWarningCount = 0;
+    let speakingSafetyTerminated = false;
+    let speakingLastModeratedLength = 0;
+    let speakingLastSubmittedLength = 0;
+    let speakingAiIsTalking = false;
+    let speakingIsAwaitingExaminer = false;
+    let speakingAutoNextEnabled = true;
+    let speakingAutoNextDelayMs = 2000;
+    let speakingAutoNextTimer = null;
+    let speakingWsReconnectTimer = null;
+    let speakingWsManualClose = false;
+    const speakingLiveModerationEnabled = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        setupSkillLayout();
+        await loadLesson();
+        bindCommonActions();
+    });
+
+    function setupSkillLayout() { console.log("skillType is:", skillType);
+        const listeningHub = document.getElementById('listeningHub');
+        if (listeningHub) listeningHub.classList.toggle('d-none', skillType !== 'listening');
+        const readingHub = document.getElementById('readingHub');
+        if (readingHub) readingHub.classList.toggle('d-none', skillType !== 'reading');
+        const writingHub = document.getElementById('writingHub');
+        if (writingHub) writingHub.classList.toggle('d-none', skillType !== 'writing');
+        const speakingHub = document.getElementById('speakingHub');
+        if (speakingHub) speakingHub.classList.toggle('d-none', skillType !== 'speaking');
+
+        if (skillType === 'reading') {
+            loadReadingPassageList().then(() => {
+                loadReadingPractice();
+            });
+            document.getElementById('readingPassageSelect')?.addEventListener('change', function() {
+                loadReadingPractice(this.value);
+            });
+        }
+        if (skillType === 'listening') loadListeningPractice();
+
+        if (skillType === 'writing') {
+            if (document.getElementById('editor')) {
+                const refreshHistoryBtn = document.getElementById('refreshWritingHistoryBtn');
+                if (refreshHistoryBtn) refreshHistoryBtn.addEventListener('click', loadWritingHistory);
+                loadWritingPrompts();
+                loadWritingHistory();
+                return;
+            }
+            const textArea = document.getElementById('writingAnswer');
+            const taskTypeSelect = document.getElementById('writingTaskType');
+            taskTypeSelect.addEventListener('change', () => bindWritingPromptByTaskType(taskTypeSelect.value));
+            textArea.addEventListener('input', () => {
+                const words = (textArea.value.trim().match(/\S+/g) || []).length;
+                document.getElementById('writingWordCount').textContent = `${words} words`;
+                
+                const errBanner = document.getElementById('writingValidationError');
+                if (errBanner && !errBanner.classList.contains('hidden')) {
+                    errBanner.classList.add('hidden');
+                }
+            });
+            const refreshHistoryBtn = document.getElementById('refreshWritingHistoryBtn');
+            if (refreshHistoryBtn) refreshHistoryBtn.addEventListener('click', loadWritingHistory);
+            loadWritingPrompts();
+            loadWritingHistory();
+        }
+
+        if (skillType === 'speaking') {
+            console.log("Binding start btn:", document.getElementById("startSpeakingBtn")); document.getElementById("startSpeakingBtn")?.addEventListener("click", startSpeakingSession);
+            document.getElementById('stopSpeakingBtn')?.addEventListener('click', stopSpeakingTimer);
+            document.getElementById('nextQuestionBtn')?.addEventListener('click', requestNextSpeakingQuestion);
+            document.getElementById('interruptSpeakingBtn')?.addEventListener('click', interruptSpeakingStream);
+            document.getElementById('speakingPart')?.addEventListener('change', onSpeakingPartChanged);
+            document.getElementById('speakingAutoNextToggle')?.addEventListener('change', syncSpeakingAutoNextSettings);
+            document.getElementById('speakingAutoNextDelay')?.addEventListener('change', syncSpeakingAutoNextSettings);
+            
+            const avatarInput = document.getElementById('speakingAvatarFallbackUrl');
+            const previewContainer = document.getElementById('avatarPreviewContainer');
+            const previewImg = document.getElementById('speakingAvatarPreviewImg');
+            if (avatarInput && previewContainer && previewImg) {
+                const updatePreview = () => {
+                    const val = (avatarInput.value || '').trim();
+                    if (val) {
+                        previewImg.src = normalizeGoogleDriveAvatarUrl(val);
+                        previewContainer.style.display = 'block';
+                    } else {
+                        previewContainer.style.display = 'none';
+                    }
+                };
+                avatarInput.addEventListener('input', updatePreview);
+                avatarInput.addEventListener('change', updatePreview);
+                updatePreview(); // initial bind
+            }
+
+            document.getElementById('toggleCameraBtn')?.addEventListener('click', async () => {
+                const video = document.getElementById('speakingCameraPreview');
+                const placeholder = document.getElementById('speakingCameraPlaceholder');
+                const btn = document.getElementById('toggleCameraBtn');
+                if (video && video.style.display === 'none') {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        if (placeholder) placeholder.style.display = 'none';
+                        if (btn) btn.innerHTML = '<i class="bi bi-camera-video-fill"></i>';
+                    } catch { console.warn('Camera not available'); }
+                } else if (video) {
+                    const tracks = video.srcObject?.getTracks();
+                    tracks?.forEach(t => t.stop());
+                    video.srcObject = null;
+                    video.style.display = 'none';
+                    if (placeholder) placeholder.style.display = 'flex';
+                    if (btn) btn.innerHTML = '<i class="bi bi-camera-video-off-fill"></i>';
+                }
+            });
+
+            document.getElementById('toggleMicBtn')?.addEventListener('click', () => {
+                const btn = document.getElementById('toggleMicBtn');
+                if (micStream) {
+                    const audioTracks = micStream.getAudioTracks();
+                    if (audioTracks.length > 0) {
+                        const isEnabled = audioTracks[0].enabled;
+                        audioTracks[0].enabled = !isEnabled;
+                        if (btn) {
+                            btn.innerHTML = !isEnabled ? '<i class="bi bi-mic-fill"></i>' : '<i class="bi bi-mic-mute-fill"></i>';
+                            btn.classList.toggle('danger', isEnabled);
+                        }
+                    }
+                }
+            });
+
+            initializeSpeechRecognition();
+            syncSpeakingAutoNextSettings();
+            updateSpeakingButtons();
+            loadSpeakingTopics();
+            initializeSpeakingRealtime();
+        }
+    }
+
+    async function loadReadingPractice(passageId = null) {
+        const target = document.getElementById('readingDynamic');
+        target.innerHTML = '<p class="text-muted mb-0">Loading reading set...</p>';
+        try {
+            userReadingAnswers = {};
+            const url = passageId ? `/reading/passage/${passageId}` : '/reading/practice/band_5_6';
+            const response = await api(url, { method: 'GET' });
+            const set = response?.data;
+            if (!response?.success || !set || !set.questions || set.questions.length === 0) {
+                target.innerHTML = '<div class="alert alert-warning mb-0">No reading practice item available.</div>';
+                return;
+            }
+            
+            readingPracticeData = set;
+            
+            // Sync dropdown value to reflect selection
+            const selectEl = document.getElementById('readingPassageSelect');
+            if (selectEl && !passageId) {
+                selectEl.value = set.passage?.passageId || '';
+            }
+            
+            // Set passage details
+            const content = document.getElementById('lessonContentReading');
+            if (set.passage?.passageTitle || set.passage?.passageText) {
+                content.innerHTML = `<h5 class="fw-bold">${set.passage.passageTitle || 'Reading passage'}</h5><div>${set.passage.passageText || ''}</div>`;
+            }
+            
+            // Handle image rendering
+            const imageWrap = document.getElementById('readingPassageImageWrap');
+            const imgEl = document.getElementById('readingPassageImage');
+            const captionEl = document.getElementById('readingPassageImageCaption');
+            if (imageWrap && imgEl) {
+                if (set.passage?.imageUrl) {
+                    imgEl.src = set.passage.imageUrl;
+                    if (captionEl) {
+                        captionEl.textContent = set.passage.passageTitle || 'Passage Illustration';
+                    }
+                    imageWrap.style.display = 'block';
+                } else {
+                    imageWrap.style.display = 'none';
+                    imgEl.src = '';
+                }
+            }
+
+            // Render all questions and navigation
+            renderReadingQuestions(set.questions);
+            renderReadingQuestionNav(set.questions);
+        } catch (err) {
+            console.error(err);
+            target.innerHTML = '<div class="alert alert-danger mb-0">Failed to load reading set.</div>';
+        }
+    }
+
+    async function loadReadingPassageList() {
+        const selectEl = document.getElementById('readingPassageSelect');
+        if (!selectEl) return;
+        try {
+            const response = await api('/reading/passages', { method: 'GET' });
+            if (response?.success && Array.isArray(response.data)) {
+                selectEl.innerHTML = '';
+                response.data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.passageId;
+                    opt.textContent = `[${p.difficultyLevel?.toUpperCase()?.replace('BAND_', 'Band ') || 'Practice'}] ${p.passageTitle}`;
+                    selectEl.appendChild(opt);
+                });
+            } else {
+                selectEl.innerHTML = '<option value="">-- No tests found --</option>';
+            }
+        } catch (e) {
+            console.error("Failed to load reading passages list:", e);
+            selectEl.innerHTML = '<option value="">-- Failed to load tests --</option>';
+        }
+    }
+
+
+
+    function renderReadingQuestions(questions) {
+        const target = document.getElementById('readingDynamic');
+        if (!questions || questions.length === 0) {
+            target.innerHTML = '<p class="text-muted">No questions found.</p>';
+            return;
+        }
+
+        let html = '<div class="d-flex flex-column gap-4">';
+        questions.forEach(question => {
+            const options = Array.isArray(question.options) ? question.options : [];
+            const savedAnswer = userReadingAnswers[question.questionId] || '';
+
+            let optionGroup = '';
+            if (options.length > 0) {
+                optionGroup = `
+                    <div class="d-flex flex-column gap-2 mt-3">
+                        ${options.map((opt, idx) => {
+                            const optionLetter = String.fromCharCode(65 + idx);
+                            const isChecked = savedAnswer === optionLetter ? 'checked' : '';
+                            const isSelectedClass = savedAnswer === optionLetter ? 'selected' : '';
+                            return `
+                                <label class="exam-option w-100 mb-0 ${isSelectedClass}" data-q-id="${question.questionId}">
+                                    <input class="d-none" type="radio" name="reading_ans_${question.questionId}" value="${optionLetter}" ${isChecked}>
+                                    <div class="exam-option-label">${optionLetter}</div>
+                                    <div style="padding-top:2px;">${opt}</div>
+                                </label>`;
+                        }).join('')}
+                    </div>`;
+            } else {
+                optionGroup = `
+                    <div class="mt-3">
+                        <input id="reading_ans_${question.questionId}" 
+                               class="form-control exam-input reading-text-input" 
+                               type="text"
+                               placeholder="Type your answer here..." 
+                               value="${escapeHtml(savedAnswer)}"
+                               data-q-id="${question.questionId}">
+                    </div>`;
+            }
+
+            html += `
+                <div class="reading-question-card exam-card p-4" id="reading_q_card_${question.questionId}">
+                    <div class="d-flex align-items-start gap-2">
+                        <span class="badge bg-secondary me-2">Q${question.questionNumber}</span>
+                        <div class="flex-grow-1">
+                            <label class="form-label fw-bold mb-1" style="font-size:1.05rem;">${question.questionText || ''}</label>
+                            ${optionGroup}
+                            <div class="mt-2 text-muted" style="font-size: 0.75rem;">
+                                <i class="bi bi-tag me-1"></i>Type: ${question.questionType || 'reading'}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        html += '</div>';
+
+        target.innerHTML = html;
+
+        // Bind radio change event
+        target.querySelectorAll('.exam-option input').forEach((input) => {
+            input.addEventListener('change', function() {
+                const qId = this.getAttribute('name').replace('reading_ans_', '');
+                target.querySelectorAll(`.exam-option[data-q-id="${qId}"]`).forEach(el => el.classList.remove('selected'));
+                const selected = this.closest('.exam-option');
+                if (selected) selected.classList.add('selected');
+                userReadingAnswers[qId] = this.value;
+                updateReadingQuestionNav();
+            });
+        });
+
+        // Bind text input event
+        target.querySelectorAll('.reading-text-input').forEach((input) => {
+            input.addEventListener('input', function() {
+                const qId = this.getAttribute('data-q-id');
+                userReadingAnswers[qId] = this.value.trim();
+                updateReadingQuestionNav();
+            });
+        });
+    }
+
+    function renderReadingQuestionNav(questions) {
+        const navEl = document.getElementById('readingQuestionNav');
+        if (!navEl) return;
+
+        let btnHtml = '';
+        questions.forEach(question => {
+            const qId = question.questionId;
+            const isAnswered = !!userReadingAnswers[qId];
+            
+            let btnClass = 'btn btn-sm m-1 rounded-circle ';
+            if (isAnswered) {
+                btnClass += 'btn-success text-white';
+            } else {
+                btnClass += 'btn-outline-secondary';
+            }
+            
+            btnHtml += `
+                <button class="${btnClass}" style="width:36px;height:36px;font-size:0.75rem;" 
+                        onclick="scrollToReadingQuestion(${qId})">
+                    ${question.questionNumber}
+                </button>`;
+        });
+
+        navEl.innerHTML = `
+            <div class="d-flex align-items-center gap-3 border-bottom pb-2 mb-3">
+                <span class="small fw-bold text-primary" style="min-width:75px;">Questions</span>
+                <div class="d-flex flex-wrap flex-grow-1">
+                    ${btnHtml}
+                </div>
+            </div>`;
+    }
+
+    function updateReadingQuestionNav() {
+        if (!readingPracticeData || !readingPracticeData.questions) return;
+        renderReadingQuestionNav(readingPracticeData.questions);
+    }
+
+    window.scrollToReadingQuestion = function(qId) {
+        const targetCard = document.getElementById(`reading_q_card_${qId}`);
+        if (targetCard) {
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetCard.classList.add('highlight-flash');
+            setTimeout(() => {
+                targetCard.classList.remove('highlight-flash');
+            }, 1500);
+        }
+    };
+
+    async function loadListeningPractice(sectionNum = 1) {
+        saveCurrentListeningSectionAnswers();
+        activeListeningSection = sectionNum;
+
+        // Ensure section buttons reflect active state
+        document.querySelectorAll('.listening-section-btn').forEach(btn => {
+            const sec = Number(btn.getAttribute('data-section'));
+            if (sec === sectionNum) {
+                btn.classList.add('active', 'exam-btn-primary');
+                btn.classList.remove('exam-btn-outline');
+            } else {
+                btn.classList.remove('active', 'exam-btn-primary');
+                btn.classList.add('exam-btn-outline');
+            }
+        });
+
+        const target = document.getElementById('listeningDynamic');
+        target.innerHTML = '<p class="text-muted mb-0">Loading Section ' + sectionNum + ' questions...</p>';
+
+        try {
+            let set;
+            if (listeningPracticeData[sectionNum]) {
+                set = listeningPracticeData[sectionNum];
+            } else {
+                const response = await api(`/listening/material/${2000 + sectionNum}`, { method: 'GET' });
+                if (!response?.success || !response.data) {
+                    target.innerHTML = '<div class="alert alert-warning mb-0">No listening practice item available for Section ' + sectionNum + '.</div>';
+                    return;
+                }
+                set = response.data;
+                listeningPracticeData[sectionNum] = set;
+            }
+
+            const audioEl = document.getElementById('listeningAudio');
+            if (audioEl) {
+                if (set.material?.audioUrl) {
+                    audioEl.src = set.material.audioUrl;
+                    audioEl.load();
+                } else {
+                    audioEl.removeAttribute('src');
+                }
+                const speedEl = document.getElementById('audioSpeed');
+                if (speedEl && audioEl.src) {
+                    audioEl.playbackRate = parseFloat(speedEl.value || '1');
+                }
+            }
+
+            renderListeningQuestions(set.questions);
+            renderListeningQuestionNav();
+        } catch (err) {
+            console.error(err);
+            target.innerHTML = '<div class="alert alert-danger mb-0">Failed to load listening set for Section ' + sectionNum + '.</div>';
+        }
+    }
+
+    function saveCurrentListeningSectionAnswers() {
+        if (!listeningPracticeData[activeListeningSection]) return;
+        const questions = listeningPracticeData[activeListeningSection].questions || [];
+        questions.forEach(q => {
+            if (q.options && q.options.length > 0) {
+                const checkedRadio = document.querySelector(`input[name="listening_ans_${q.questionId}"]:checked`);
+                if (checkedRadio) {
+                    userListeningAnswers[q.questionId] = checkedRadio.value;
+                }
+            } else {
+                const textInput = document.getElementById(`listening_ans_${q.questionId}`);
+                if (textInput) {
+                    userListeningAnswers[q.questionId] = textInput.value.trim();
+                }
+            }
+        });
+    }
+
+    function renderListeningQuestions(questions) {
+        const target = document.getElementById('listeningDynamic');
+        if (!questions || questions.length === 0) {
+            target.innerHTML = '<p class="text-muted">No questions found in this section.</p>';
+            return;
+        }
+
+        let html = '<div class="d-flex flex-column gap-4">';
+        questions.forEach(question => {
+            const options = Array.isArray(question.options) ? question.options : [];
+            const savedAnswer = userListeningAnswers[question.questionId] || '';
+
+            let optionGroup = '';
+            if (options.length > 0) {
+                optionGroup = `
+                    <div class="d-flex flex-column gap-2 mt-3">
+                        ${options.map((opt, idx) => {
+                            const optionLetter = String.fromCharCode(65 + idx);
+                            const isChecked = savedAnswer === optionLetter ? 'checked' : '';
+                            const isSelectedClass = savedAnswer === optionLetter ? 'selected' : '';
+                            return `
+                                <label class="exam-option w-100 mb-0 ${isSelectedClass}" data-q-id="${question.questionId}">
+                                    <input class="d-none" type="radio" name="listening_ans_${question.questionId}" value="${optionLetter}" ${isChecked}>
+                                    <div class="exam-option-label">${optionLetter}</div>
+                                    <div style="padding-top:2px;">${opt}</div>
+                                </label>`;
+                        }).join('')}
+                    </div>`;
+            } else {
+                optionGroup = `
+                    <div class="mt-3">
+                        <input id="listening_ans_${question.questionId}" 
+                               class="form-control exam-input listening-text-input" 
+                               type="text"
+                               placeholder="Type your answer here..." 
+                               value="${escapeHtml(savedAnswer)}"
+                               data-q-id="${question.questionId}">
+                    </div>`;
+            }
+
+            html += `
+                <div class="listening-question-card border-bottom pb-4 mb-2" id="q_card_${question.questionId}">
+                    <div class="d-flex align-items-start gap-2">
+                        <span class="badge bg-secondary me-2">Q${question.questionOrder}</span>
+                        <div class="flex-grow-1">
+                            <label class="form-label fw-bold mb-1" style="font-size:1.05rem;">${question.questionText || ''}</label>
+                            ${optionGroup}
+                        </div>
+                    </div>
+                </div>`;
+        });
+        html += '</div>';
+
+        target.innerHTML = html;
+
+        target.querySelectorAll('.exam-option input').forEach((input) => {
+            input.addEventListener('change', function() {
+                const qId = this.getAttribute('name').replace('listening_ans_', '');
+                target.querySelectorAll(`.exam-option[data-q-id="${qId}"]`).forEach(el => el.classList.remove('selected'));
+                const selected = this.closest('.exam-option');
+                if (selected) selected.classList.add('selected');
+                userListeningAnswers[qId] = this.value;
+                renderListeningQuestionNav();
+            });
+        });
+
+        target.querySelectorAll('.listening-text-input').forEach((input) => {
+            input.addEventListener('input', function() {
+                const qId = this.getAttribute('data-q-id');
+                userListeningAnswers[qId] = this.value.trim();
+                renderListeningQuestionNav();
+            });
+        });
+    }
+
+    function renderListeningQuestionNav() {
+        const navEl = document.getElementById('listeningQuestionNav');
+        if (!navEl) return;
+
+        let html = '<div class="d-flex flex-column gap-3 w-100">';
+        for (let sec = 1; sec <= 4; sec++) {
+            const startQ = (sec - 1) * 5 + 1;
+            const endQ = sec * 5;
+            
+            let btnHtml = '';
+            for (let q = startQ; q <= endQ; q++) {
+                const qId = 2000 + q;
+                const isAnswered = !!userListeningAnswers[qId];
+                const isActiveSection = sec === activeListeningSection;
+                
+                let btnClass = 'btn btn-sm m-1 rounded-circle ';
+                if (isAnswered) {
+                    btnClass += 'btn-success text-white';
+                } else if (isActiveSection) {
+                    btnClass += 'btn-outline-primary';
+                } else {
+                    btnClass += 'btn-outline-secondary';
+                }
+                
+                btnHtml += `
+                    <button class="${btnClass}" style="width:36px;height:36px;font-size:0.75rem;" 
+                            onclick="switchListeningSectionAndFocus(${sec}, ${qId})">
+                        ${q}
+                    </button>`;
+            }
+            
+            const isSecActive = sec === activeListeningSection;
+            html += `
+                <div class="d-flex align-items-center gap-3 border-bottom pb-2">
+                    <span class="small fw-bold ${isSecActive ? 'text-primary' : 'text-muted'}" style="min-width:75px;">Section ${sec}</span>
+                    <div class="d-flex flex-wrap flex-grow-1">
+                        ${btnHtml}
+                    </div>
+                </div>`;
+        }
+        
+        html += '</div>';
+        navEl.innerHTML = html;
+    }
+
+    window.switchListeningSectionAndFocus = function(sec, qId) {
+        if (sec !== activeListeningSection) {
+            loadListeningPractice(sec).then(() => {
+                setTimeout(() => {
+                    const card = document.getElementById(`q_card_${qId}`);
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.classList.add('bg-primary-light');
+                        setTimeout(() => card.classList.remove('bg-primary-light'), 1500);
+                    }
+                }, 100);
+            });
+        } else {
+            const card = document.getElementById(`q_card_${qId}`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.add('bg-primary-light');
+                setTimeout(() => card.classList.remove('bg-primary-light'), 1500);
+            }
+        }
+    };
+
+    function estimateIeltsListeningBand(correctCount) {
+        if (correctCount >= 19) return "9.0";
+        if (correctCount >= 17) return "8.5";
+        if (correctCount >= 15) return "8.0";
+        if (correctCount >= 14) return "7.5";
+        if (correctCount >= 12) return "7.0";
+        if (correctCount >= 10) return "6.5";
+        if (correctCount >= 8) return "6.0";
+        if (correctCount >= 6) return "5.5";
+        if (correctCount >= 5) return "5.0";
+        if (correctCount >= 4) return "4.5";
+        if (correctCount >= 3) return "4.0";
+        if (correctCount >= 1) return "3.5";
+        return "1.0";
+    }
+
+    async function loadWritingPrompts() {
+        const select = document.getElementById('writingTaskType');
+        const promptBox = document.getElementById('writingPromptBox');
+        select.innerHTML = '<option value="">Loading...</option>';
+        try {
+            const response = await api('/writing/prompts', { method: 'GET' });
+            writingPrompts = response?.success ? (response.data || []) : [];
+            if (!writingPrompts.length) {
+                select.innerHTML = '<option value="">No prompts</option>';
+                promptBox.textContent = 'No writing prompt available.';
+                return;
+            }
+            select.innerHTML = `
+                <option value="1">Task 1 - Describe visual information (>=150 words)</option>
+                <option value="2">Task 2 - Essay (>=250 words)</option>
+            `;
+            bindWritingPromptByTaskType('1');
+        } catch {
+            select.innerHTML = '<option value="">Load failed</option>';
+            promptBox.textContent = 'Failed to load writing prompts.';
+        }
+    }
+
+    function formatIeltsBand(val) {
+        if (val === null || val === undefined || val === '') return '-';
+        const num = Number(val);
+        if (isNaN(num) || num <= 0) return '-';
+        return (Math.round(num * 2) / 2).toFixed(1);
+    }
+
+    function openChartModal() {
+        const modal = document.getElementById('chartZoomModal');
+        const box = document.getElementById('chartZoomModalBox');
+        const img = document.getElementById('writingModalChartImg');
+        const fallback = document.getElementById('writingModalChartFallback');
+        
+        if (activeWritingPrompt && activeWritingPrompt.promptImageUrl) {
+            img.src = activeWritingPrompt.promptImageUrl;
+            img.style.display = 'block';
+            fallback.style.display = 'none';
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            fallback.style.display = 'block';
+        }
+        
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            box.classList.remove('scale-95', 'opacity-0');
+            box.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeChartModal() {
+        const modal = document.getElementById('chartZoomModal');
+        const box = document.getElementById('chartZoomModalBox');
+        box.classList.remove('scale-100', 'opacity-100');
+        box.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+
+    function bindWritingPromptByTaskType(taskType) {
+        const promptBox = document.getElementById('writingPromptBox');
+        const task = Number(taskType || 1);
+        const pool = writingPrompts.filter(p => p.taskType === task);
+        activeWritingPrompt = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+        promptBox.textContent = activeWritingPrompt?.prompt || 'No prompt available for this task.';
+
+        const chartContainer = document.getElementById('writingChartContainer');
+        if (chartContainer) {
+            if (task === 1) {
+                chartContainer.style.display = 'block';
+                const chartImg = document.getElementById('writingChartImg');
+                const chartOverlay = document.getElementById('writingChartOverlay');
+                const chartFallback = document.getElementById('writingChartFallback');
+                
+                if (activeWritingPrompt && activeWritingPrompt.promptImageUrl) {
+                    if (chartImg) {
+                        chartImg.src = activeWritingPrompt.promptImageUrl;
+                        chartImg.style.display = 'block';
+                    }
+                    if (chartOverlay) {
+                        chartOverlay.style.display = '';
+                    }
+                    if (chartFallback) {
+                        chartFallback.style.display = 'none';
+                    }
+                } else {
+                    if (chartImg) {
+                        chartImg.src = '';
+                        chartImg.style.display = 'none';
+                    }
+                    if (chartOverlay) {
+                        chartOverlay.style.display = 'none';
+                    }
+                    if (chartFallback) {
+                        chartFallback.style.display = 'flex';
+                    }
+                }
+            } else {
+                chartContainer.style.display = 'none';
+            }
+        }
+    }
+
+    async function loadWritingHistory() {
+        if (skillType !== 'writing' || !Auth.isLoggedIn()) return;
+        const listEl = document.getElementById('writingHistoryList');
+        const emptyEl = document.getElementById('writingHistoryEmpty');
+        if (!listEl || !emptyEl) return;
+
+        listEl.innerHTML = '<div class="small text-muted">Loading history...</div>';
+        try {
+            const response = await api('/writing/history', { method: 'GET' });
+            writingHistoryCache = response?.success ? (response.data || []) : [];
+            if (!writingHistoryCache.length) {
+                listEl.innerHTML = '';
+                emptyEl.classList.remove('d-none');
+                return;
+            }
+
+            emptyEl.classList.add('d-none');
+            listEl.innerHTML = writingHistoryCache.map(item => {
+                const subId = item.submissionId ?? item.SubmissionId ?? 0;
+                const promptVal = item.prompt ?? item.Prompt ?? 'Writing submission';
+                const bandVal = item.bandScore ?? item.BandScore ?? 0;
+                const createdVal = item.createdAt ?? item.CreatedAt ?? '';
+                return `
+                    <button class="btn btn-sm text-start writing-history-item w-100"
+                        data-id="${subId}">
+                        <div class="fw-semibold text-truncate">${escapeHtml(promptVal.slice(0, 80))}</div>
+                        <div class="small text-muted d-flex justify-content-between mt-1">
+                            <span>Band ${formatIeltsBand(bandVal)}</span>
+                            <span>${formatDate(createdVal)}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            listEl.querySelectorAll('.writing-history-item').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = Number(btn.getAttribute('data-id'));
+                    if (id) await loadWritingHistoryItem(id);
+                });
+            });
+        } catch {
+            listEl.innerHTML = '<div class="small text-danger">Failed to load history.</div>';
+        }
+    }
+
+    async function loadWritingHistoryItem(id) {
+        try {
+            const response = await api(`/writing/history/${id}`, { method: 'GET' });
+            if (!response?.success || !response.data) return;
+            const promptText = response.data.prompt ?? response.data.Prompt ?? '';
+            renderWritingFeedback(response.data, null, promptText);
+        } catch {
+            showToast('Cannot load writing history detail', 'error');
+        }
+    }
+
+    function renderWritingFeedback(result, essayText, promptText) {
+        if (result && result.submissionId) {
+            window.lastWritingSubmissionId = result.submissionId;
+        } else if (result && result.SubmissionId) {
+            window.lastWritingSubmissionId = result.SubmissionId;
+        }
+
+        const feedbackPanel = document.getElementById('writingFeedbackPanel');
+        const modelPanel = document.getElementById('writingModelPanel');
+        if (!feedbackPanel || !modelPanel) return;
+
+        feedbackPanel.style.display = 'flex';
+        modelPanel.style.display = 'block';
+
+        const band = Number(result?.bandScore ?? result?.BandScore ?? 0);
+        const targetBand = Math.min(9, Math.max(7, Math.ceil((band || 6) * 2) / 2 + 0.5));
+
+        document.getElementById('writingBandScore').textContent = formatIeltsBand(result?.bandScore ?? result?.BandScore);
+        document.getElementById('writingScoreTA').textContent = formatIeltsBand(result?.taskAchievementScore ?? result?.TaskAchievementScore);
+        document.getElementById('writingScoreCC').textContent = formatIeltsBand(result?.coherenceCohesionScore ?? result?.CoherenceCohesionScore);
+        document.getElementById('writingScoreLR').textContent = formatIeltsBand(result?.lexicalResourceScore ?? result?.LexicalResourceScore);
+        document.getElementById('writingScoreGA').textContent = formatIeltsBand(result?.grammarAccuracyScore ?? result?.GrammarAccuracyScore);
+        
+        const feedbackVal = result?.aiFeedback ?? result?.AiFeedback ?? 'No detailed AI feedback available.';
+        document.getElementById('writingFeedbackText').textContent = feedbackVal;
+
+        const tips = extractTipsFromFeedback(feedbackVal);
+        const tipsEl = document.getElementById('writingTipsList');
+        tipsEl.innerHTML = tips.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+
+        document.getElementById('writingModelBand').textContent = targetBand.toFixed(1);
+        document.getElementById('writingModelAnswerPrompt').textContent = promptText ? `Prompt: ${promptText}` : 'Prompt unavailable';
+        document.getElementById('writingModelAnswerText').textContent = buildModelAnswer(promptText, targetBand, essayText);
+    }
+
+    function extractTipsFromFeedback(feedback) {
+        const lines = String(feedback || '')
+            .split('\n')
+            .map(x => x.trim())
+            .filter(x => x.length > 0);
+
+        const candidates = lines.filter(x =>
+            x.includes('⚠') ||
+            x.toLowerCase().includes('improvement') ||
+            x.toLowerCase().includes('try ') ||
+            x.toLowerCase().includes('ensure ')
+        );
+
+        const result = candidates.length ? candidates.slice(0, 5) : [
+            'Use a clear thesis statement in the introduction.',
+            'Develop each body paragraph with one main idea and concrete support.',
+            'Use topic-specific vocabulary and vary sentence structures.'
+        ];
+        return result;
+    }
+
+    function buildModelAnswer(promptText, targetBand, essayText) {
+        const styleHint = essayText && essayText.length > 0
+            ? 'Based on your submission, this version strengthens coherence and lexical range while keeping ideas balanced.'
+            : 'This sample demonstrates stronger coherence, lexical resource, and grammatical range.';
+
+        return [
+            `Target band ${targetBand.toFixed(1)} sample`,
+            '',
+            styleHint,
+            '',
+            'It is often argued that modern technology is transforming education in ways that may either weaken or improve learning outcomes. While some people fear that digital tools reduce meaningful classroom interaction, I believe that, when used appropriately, technology can significantly enhance both academic performance and learner autonomy.',
+            '',
+            'On the one hand, critics point out that excessive dependence on devices can discourage direct communication between students and teachers. In highly digital classrooms, learners may focus more on screens than on collaborative discussion, which can limit the development of social confidence and interpersonal skills. Furthermore, unrestricted access to online content may distract students from core learning objectives.',
+            '',
+            'On the other hand, educational technology offers substantial benefits. Interactive platforms provide immediate feedback, allowing learners to identify weaknesses and improve faster than with traditional methods alone. In addition, digital resources such as simulations, recorded lectures, and adaptive exercises make complex concepts easier to understand, especially for students with different learning speeds. These tools can also increase motivation by making lessons more engaging and personalized.',
+            '',
+            'In my view, technology should be regarded as a complement rather than a substitute for teaching. If schools combine digital innovation with strong pedagogical guidance, students can enjoy the advantages of both efficient knowledge acquisition and meaningful human interaction. Therefore, the key issue is not whether technology should be used, but how it should be integrated responsibly into the learning process.'
+        ].join('\n');
+    }
+
+    function formatDate(input) {
+        const date = new Date(input);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleDateString();
+    }
+
+    async function loadSpeakingTopics() {
+        try {
+            const [p1, p2, p3] = await Promise.all([
+                api('/speaking/topics?part=1', { method: 'GET' }),
+                api('/speaking/topics?part=2', { method: 'GET' }),
+                api('/speaking/topics?part=3', { method: 'GET' })
+            ]);
+            speakingTopicsByPart["1"] = p1?.success ? (p1.data || []) : [];
+            speakingTopicsByPart["2"] = p2?.success ? (p2.data || []) : [];
+            speakingTopicsByPart["3"] = p3?.success ? (p3.data || []) : [];
+            onSpeakingPartChanged();
+        } catch {
+            document.getElementById('speakingPrompt').textContent = 'Could not load speaking topic.';
+        }
+    }
+
+    function onSpeakingPartChanged() {
+        const partValue = (document.getElementById('speakingPart').value || 'part1').replace('part', '');
+        const pool = speakingTopicsByPart[partValue] || [];
+        activeSpeakingTopic = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+        document.getElementById('speakingPrompt').textContent = activeSpeakingTopic?.topic || 'Describe a memorable event in your life.';
+        speakingCurrentPart = Number(partValue);
+        updateSpeakingPartStatus();
+        if (speakingWsConnected && speakingWs) {
+            speakingWs.send(JSON.stringify({
+                type: 'state_sync',
+                force_part: speakingCurrentPart,
+                topic: activeSpeakingTopic?.topic || ''
+            }));
+        }
+    }
+
+    async function loadLesson() {
+        const titleEl = document.getElementById('lessonTitle');
+        const metaEl = document.getElementById('lessonMeta');
+        const contentEl = document.getElementById('lessonContentCommon');
+
+        if (!lessonId || lessonId <= 0) {
+            if (titleEl) titleEl.textContent = `${skillType.charAt(0).toUpperCase()}${skillType.slice(1)} Practice`;
+            if (metaEl) metaEl.textContent = 'General practice mode';
+            if (contentEl) contentEl.innerHTML = '<p class="mb-0 text-muted">No lesson selected. You can still practice and submit normally.</p>';
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) progressBar.style.width = '0%';
+            const progressLabel = document.getElementById('progressLabel');
+            if (progressLabel) progressLabel.textContent = '0%';
+            return;
+        }
+
+        try {
+            const response = await api(`/lessons/${lessonId}`, { method: 'GET' });
+            const lesson = response?.data;
+            if (!response?.success || !lesson) {
+                if (titleEl) titleEl.textContent = 'Lesson unavailable';
+                if (metaEl) metaEl.textContent = '';
+                if (contentEl) contentEl.innerHTML = '<div class="alert alert-warning mb-0">Lesson not found.</div>';
+                return;
+            }
+
+            if (titleEl) titleEl.textContent = lesson.title || `Lesson #${lessonId}`;
+            if (metaEl) metaEl.textContent = `${lesson.estimatedMinutes || 30} minutes • Difficulty ${lesson.difficultyLevel || 1}`;
+            const blocks = (lesson.contents || [])
+                .map(item => `<div class="mb-3"><h6 class="mb-1">${item.contentType || 'Content'}</h6><div>${item.contentBody || ''}</div></div>`)
+                .join('');
+            if (contentEl) contentEl.innerHTML = blocks || '<p class="mb-0">No detailed content yet. Continue with the task format below.</p>';
+
+            if (skillType === 'listening') {
+                const lc = document.getElementById('lessonContent');
+                if (lc && contentEl) lc.innerHTML = contentEl.innerHTML;
+            }
+            if (skillType === 'reading') {
+                const lr = document.getElementById('lessonContentReading');
+                if (lr && contentEl && !lr.innerHTML.includes('<h5')) lr.innerHTML = contentEl.innerHTML;
+            }
+
+            const progress = Math.max(0, Math.min(100, lesson.completionPercent || 0));
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            const progressLabel = document.getElementById('progressLabel');
+            if (progressLabel) progressLabel.textContent = `${progress}%`;
+        } catch {
+            if (titleEl) titleEl.textContent = 'Could not load lesson';
+            if (metaEl) metaEl.textContent = '';
+            if (contentEl) contentEl.innerHTML = '<div class="alert alert-danger mb-0">Failed to load lesson data.</div>';
+        }
+    }
+
+    function bindCommonActions() {
+        const draftKey = `practice_draft_${skillType}_${lessonId}`;
+        const buttonMap = {
+            listening: { save: 'saveDraftBtnListening', submit: 'submitBtnListening' },
+            reading: { save: 'saveDraftBtnReading', submit: 'submitBtnReading' },
+            writing: { save: 'saveDraftBtnWriting', submit: 'submitBtnWriting' },
+            speaking: { save: null, submit: 'submitBtnSpeaking' }
+        };
+        const currentButtons = buttonMap[skillType] || { save: 'saveDraftBtn', submit: 'submitBtn' };
+        const saveBtn = currentButtons.save ? document.getElementById(currentButtons.save) : document.getElementById('saveDraftBtn');
+        const submitBtn = currentButtons.submit ? document.getElementById(currentButtons.submit) : document.getElementById('submitBtn');
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                localStorage.setItem(draftKey, collectSkillAnswer());
+                showToast('Draft saved', 'success');
+            });
+        }
+
+        const cached = localStorage.getItem(draftKey);
+        if (cached) restoreSkillAnswer(cached);
+
+        if (!submitBtn) return;
+        submitBtn.setAttribute('type', 'button');
+        submitBtn.addEventListener('click', async () => {
+            let answer = '';
+            if (skillType === 'reading') {
+                const hasAnswers = Object.values(userReadingAnswers).some(val => val && val.trim());
+                if (!hasAnswers) {
+                    showToast('Please answer at least one question before submitting.', 'error');
+                    return;
+                }
+            } else {
+                answer = collectSkillAnswer().trim();
+                if (!answer) {
+                    showToast('Please complete your task before submit', 'error');
+                    return;
+                }
+            }
+
+            if (!Auth.isLoggedIn()) {
+                showToast('Please log in to submit practice exercises and view scoring.', 'error');
+                return;
+            }
+
+            try {
+                if (skillType === 'writing') {
+                    // Hide any existing validation banner first
+                    const errBanner = document.getElementById('writingValidationError');
+                    const errMessage = document.getElementById('writingValidationMessage');
+                    if (errBanner) errBanner.classList.add('hidden');
+
+                    if (!activeWritingPrompt?.prompt) {
+                        showToast('Writing prompt is not ready. Please wait and try again.', 'error');
+                        return;
+                    }
+                    const taskType = Number(document.getElementById('writingTaskType').value || '2');
+                    
+                    // Frontend word count validation
+                    const words = answer.trim() ? answer.trim().split(/\s+/).length : 0;
+                    if (taskType === 1 && words < 150) {
+                        if (errBanner && errMessage) {
+                            errMessage.textContent = `Your Task 1 essay must be at least 150 words to be analyzed. Current count: ${words} words.`;
+                            errBanner.classList.remove('hidden');
+                            errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        } else {
+                            showToast(`Your Task 1 essay must be at least 150 words to be analyzed. Current count: ${words} words.`, 'error');
+                        }
+                        return;
+                    }
+                    if (taskType === 2 && words < 250) {
+                        if (errBanner && errMessage) {
+                            errMessage.textContent = `Your Task 2 essay must be at least 250 words to be analyzed. Current count: ${words} words.`;
+                            errBanner.classList.remove('hidden');
+                            errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        } else {
+                            showToast(`Your Task 2 essay must be at least 250 words to be analyzed. Current count: ${words} words.`, 'error');
+                        }
+                        return;
+                    }
+
+                    const result = await api('/writing/submit', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            prompt: activeWritingPrompt.prompt,
+                            essayText: answer,
+                            taskType: taskType
+                        })
+                    });
+                    if (!result?.success || !result?.data) {
+                        if (errBanner && errMessage) {
+                            errMessage.textContent = result?.message || 'Writing submit failed. Please try again.';
+                            errBanner.classList.remove('hidden');
+                            errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        } else {
+                            showToast(result?.message || 'Writing submit failed', 'error');
+                        }
+                        return;
+                    }
+                    const band = formatIeltsBand(result.data?.bandScore);
+                    showToast(`Writing submitted. Estimated band: ${band}`, 'success');
+                    renderWritingFeedback(result.data, answer, activeWritingPrompt.prompt);
+                    await loadWritingHistory();
+                } else if (skillType === 'reading' && readingPracticeData) {
+                    const questions = readingPracticeData.questions || [];
+                    const submitPromises = [];
+                    let unansweredCount = 0;
+
+                    questions.forEach(q => {
+                        const ans = userReadingAnswers[q.questionId] || '';
+                        if (!ans) {
+                            unansweredCount++;
+                        }
+
+                        submitPromises.push(
+                            api('/reading/submit', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    questionId: q.questionId,
+                                    userAnswer: ans,
+                                    timeSpentSeconds: 15
+                                })
+                            }).then(res => res?.success ? res.data : null).catch(() => null)
+                        );
+                    });
+
+                    showToast('Grading your IELTS Reading practice...', 'info');
+
+                    const results = await Promise.all(submitPromises);
+                    const validResults = results.filter(r => r !== null);
+
+                    if (validResults.length === 0) {
+                        showToast('Failed to grade reading test. Please try again.', 'error');
+                        return;
+                    }
+
+                    let correctCount = 0;
+                    let incorrectCount = 0;
+
+                    validResults.forEach(r => {
+                        if (r.isCorrect) {
+                            correctCount++;
+                        } else {
+                            incorrectCount++;
+                        }
+                    });
+
+                    // Estimate band target
+                    const avgBandTarget = questions.reduce((sum, q) => sum + (q.bandTarget || 6.0), 0) / questions.length;
+                    let estimatedBand = '5.0';
+                    const pct = correctCount / questions.length;
+                    if (pct >= 0.9) estimatedBand = (avgBandTarget + 0.5).toFixed(1);
+                    else if (pct >= 0.75) estimatedBand = avgBandTarget.toFixed(1);
+                    else if (pct >= 0.5) estimatedBand = (avgBandTarget - 0.5).toFixed(1);
+                    else if (pct >= 0.3) estimatedBand = (avgBandTarget - 1.0).toFixed(1);
+                    else estimatedBand = '4.0';
+
+                    // Build detail review HTML
+                    let detailHtml = '';
+                    validResults.forEach(r => {
+                        const matchingQ = questions.find(q => q.questionId === r.questionId);
+                        const qNum = matchingQ ? matchingQ.questionNumber : r.questionNumber;
+                        const qText = matchingQ ? matchingQ.questionText : 'Question';
+                        const isCorrect = r.isCorrect;
+                        const bg = isCorrect ? '#f0fdf4' : '#fef2f2';
+                        const border = isCorrect ? '#bbf7d0' : '#fecaca';
+                        const icon = isCorrect ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+                        const iconColor = isCorrect ? '#059669' : '#dc2626';
+
+                        detailHtml += `
+                            <div class="p-3 rounded mb-3" style="background:${bg}; border:1px solid ${border}; font-size:.85rem;">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="bi ${icon}" style="color:${iconColor}; font-size:1.1rem;"></i>
+                                    <strong>Q${qNum}. ${escapeHtml(qText)}</strong>
+                                </div>
+                                <div class="mb-2"><strong>Your Answer:</strong> <span class="badge ${isCorrect ? 'bg-success' : 'bg-danger'}">${escapeHtml(r.userAnswer || '[Blank]')}</span></div>
+                                <div class="mb-2"><strong>Correct Answer:</strong> <span class="badge bg-success">${escapeHtml(r.correctAnswer)}</span></div>
+                                <div class="pt-2 mt-2" style="border-top:1px solid ${border}; font-size:.8rem;">
+                                    <strong>Explanation:</strong> ${escapeHtml(r.explanation || 'No explanation available.')}
+                                </div>
+                            </div>`;
+                    });
+
+                    showResultsPopup({
+                        iconClass: 'graded',
+                        title: 'Reading Test Results',
+                        subtitle: `You scored ${correctCount} out of ${questions.length} questions`,
+                        stats: [
+                            { label: 'Correct', value: String(correctCount), color: 'success' },
+                            { label: 'Incorrect', value: String(incorrectCount), color: 'danger' },
+                            { label: 'Unanswered', value: String(unansweredCount), color: 'warning' },
+                            { label: 'Band Estimate', value: estimatedBand, color: 'primary' }
+                        ],
+                        detailHtml: detailHtml
+                    });
+                } else if (skillType === 'listening') {
+                    saveCurrentListeningSectionAnswers();
+                    const submitPromises = [];
+                    let unansweredCount = 0;
+                    
+                    for (let qId = 2001; qId <= 2020; qId++) {
+                        const ans = userListeningAnswers[qId] || '';
+                        if (!ans) {
+                            unansweredCount++;
+                        }
+                        
+                        submitPromises.push(
+                            api('/listening/submit', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    questionId: qId,
+                                    userAnswer: ans,
+                                    timeSpentSeconds: 15
+                                })
+                            }).then(res => res?.success ? res.data : null).catch(() => null)
+                        );
+                    }
+
+                    showToast('Analyzing and scoring your IELTS listening test...', 'info');
+
+                    const results = await Promise.all(submitPromises);
+                    const validResults = results.filter(r => r !== null);
+
+                    if (validResults.length === 0) {
+                        showToast('Failed to grade listening test. Please try again.', 'error');
+                        return;
+                    }
+
+                    let correctCount = 0;
+                    let incorrectCount = 0;
+                    
+                    validResults.forEach(r => {
+                        if (r.isCorrect) {
+                            correctCount++;
+                        } else {
+                            incorrectCount++;
+                        }
+                    });
+
+                    const estimatedBand = estimateIeltsListeningBand(correctCount);
+
+                    // Build detail review HTML for popup
+                    let detailHtml = '';
+                    validResults.sort((a, b) => a.QuestionId - b.QuestionId);
+                    validResults.forEach((r, idx) => {
+                        const qNum = idx + 1;
+                        const isCorrect = r.isCorrect;
+                        const bg = isCorrect ? '#f0fdf4' : '#fef2f2';
+                        const border = isCorrect ? '#bbf7d0' : '#fecaca';
+                        const icon = isCorrect ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+                        const iconColor = isCorrect ? '#059669' : '#dc2626';
+                        detailHtml += `
+                            <div class="d-flex align-items-start gap-2 p-2 rounded mb-2" style="background:${bg}; border:1px solid ${border}; font-size:.82rem;">
+                                <i class="bi ${icon}" style="color:${iconColor}; margin-top:2px;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Q${qNum}</strong> —
+                                    Your: <span class="badge ${isCorrect ? 'bg-success' : 'bg-danger'}" style="font-size:.7rem;">${escapeHtml(r.userAnswer || '[Blank]')}</span>
+                                    Correct: <span class="badge bg-success" style="font-size:.7rem;">${escapeHtml(r.correctAnswer)}</span>
+                                    ${r.explanation ? `<div class="text-muted mt-1" style="font-size:.75rem;">${escapeHtml(r.explanation)}</div>` : ''}
+                                </div>
+                            </div>`;
+                    });
+
+                    showResultsPopup({
+                        iconClass: 'graded',
+                        title: 'Listening Test Results',
+                        subtitle: `You scored ${correctCount} out of 20 questions`,
+                        stats: [
+                            { label: 'Correct', value: String(correctCount), color: 'success' },
+                            { label: 'Incorrect', value: String(incorrectCount), color: 'danger' },
+                            { label: 'Unanswered', value: String(unansweredCount), color: 'warning' },
+                            { label: 'Band', value: estimatedBand, color: 'primary' }
+                        ],
+                        detailHtml: detailHtml
+                    });
+                } else if (skillType === 'speaking') {
+                    if (!activeSpeakingSessionId) {
+                        const started = await api('/speaking/start', {
+                            method: 'POST',
+                            body: JSON.stringify({ topic: activeSpeakingTopic?.topic || document.getElementById('speakingPrompt').textContent || 'General speaking topic' })
+                        });
+                        if (started?.success) activeSpeakingSessionId = started.data?.sessionId || 0;
+                    }
+                    if (activeSpeakingSessionId) {
+                        const result = await api('/speaking/submit-audio', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                sessionId: activeSpeakingSessionId,
+                                audioData: 'web-speech-transcript',
+                                transcript: answer
+                            })
+                        });
+                        if (result?.success) {
+                            const band = result.data?.overallBand ?? 'N/A';
+                            const fluency = result.data?.fluencyScore ?? '-';
+                            const pronunciation = result.data?.pronunciationScore ?? '-';
+                            const lexical = result.data?.lexicalScore ?? '-';
+
+                            showResultsPopup({
+                                iconClass: 'graded',
+                                title: 'Speaking Analysis',
+                                subtitle: `Your speaking session has been analyzed`,
+                                stats: [
+                                    { label: 'Overall Band', value: String(band), color: 'primary' },
+                                    { label: 'Fluency', value: String(fluency), color: 'success' },
+                                    { label: 'Pronunciation', value: String(pronunciation), color: 'warning' },
+                                    { label: 'Lexical', value: String(lexical), color: 'success' }
+                                ]
+                            });
+                        }
+                    }
+                } else if (lessonId > 0) {
+                    await api(`/lessons/${lessonId}/complete`, { method: 'POST' });
+                }
+                const pBar = document.getElementById('progressBar');
+                if (pBar) pBar.style.width = '100%';
+                const pLabel = document.getElementById('progressLabel');
+                if (pLabel) pLabel.textContent = '100%';
+                showToast('Submitted successfully', 'success');
+            } catch (err) {
+                console.error(err);
+                if (skillType === 'writing') {
+                    const errBanner = document.getElementById('writingValidationError');
+                    const errMessage = document.getElementById('writingValidationMessage');
+                    if (errBanner && errMessage) {
+                        errMessage.textContent = err.message || 'Submit failed. Please try again.';
+                        errBanner.classList.remove('hidden');
+                        errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        return;
+                    }
+                }
+                showToast(err.message || 'Submit failed', 'error');
+            }
+        });
+    }
+
+    function collectSkillAnswer() {
+        if (skillType === 'reading') {
+            return JSON.stringify(userReadingAnswers);
+        }
+        if (skillType === 'listening') {
+            return JSON.stringify(userListeningAnswers);
+        }
+        if (skillType === 'writing') {
+            const writingAnswer = document.getElementById('writingAnswer');
+            return writingAnswer ? (writingAnswer.value || '') : '';
+        }
+        if (skillType === 'speaking') {
+            const transcriptEl = document.getElementById('speakingCcText');
+            const transcript = (transcriptEl ? transcriptEl.textContent : '').trim();
+            const timerEl = document.getElementById('speakingCallTimer') || document.getElementById('speakingDuration');
+            const timerVal = timerEl ? timerEl.textContent : '00:00';
+            return transcript || `Speaking timer: ${timerVal}`;
+        }
+        return '';
+    }
+
+    function restoreSkillAnswer(saved) {
+        if (skillType === 'writing') {
+            if (document.getElementById('editor')) return;
+            const writingAnswer = document.getElementById('writingAnswer');
+            if (writingAnswer) {
+                writingAnswer.value = saved;
+                const words = (saved.trim().match(/\S+/g) || []).length;
+                const wordCountEl = document.getElementById('writingWordCount');
+                if (wordCountEl) wordCountEl.textContent = `${words} words`;
+            }
+        } else if (skillType === 'reading') {
+            try {
+                userReadingAnswers = JSON.parse(saved) || {};
+                if (readingPracticeData && readingPracticeData.questions) {
+                    renderReadingQuestions(readingPracticeData.questions);
+                    renderReadingQuestionNav(readingPracticeData.questions);
+                }
+            } catch (e) { console.error("Error restoring reading answers:", e); }
+        } else if (skillType === 'listening') {
+            try {
+                userListeningAnswers = JSON.parse(saved) || {};
+                if (listeningPracticeData[activeListeningSection]) {
+                    renderListeningQuestions(listeningPracticeData[activeListeningSection].questions);
+                    renderListeningQuestionNav();
+                }
+            } catch (e) { console.error("Error restoring listening answers:", e); }
+        }
+    }
+
+    async function startSpeakingSession() { console.log("startSpeakingSession triggered");
+        if (speakingActive) return;
+        const permission = await requestMicrophonePermission();
+        if (!permission) return;
+
+        // Create backend session first (so we have a sessionId for Submit)
+        if (!activeSpeakingSessionId && Auth.isLoggedIn()) {
+            try {
+                const started = await api('/speaking/start', {
+                    method: 'POST',
+                    body: JSON.stringify({ topic: activeSpeakingTopic?.topic || document.getElementById('speakingPrompt')?.textContent || 'General speaking topic' })
+                });
+                if (started?.success) {
+                    activeSpeakingSessionId = started.data?.sessionId || 0;
+                }
+            } catch (e) {
+                console.warn('Could not create backend speaking session:', e.message);
+            }
+        }
+
+        // D-ID WebRTC — fire and forget, don't block the session start
+        startDidWebRtcSession().catch(e => console.warn('D-ID WebRTC not available:', e.message));
+
+        // WebSocket realtime (Python AI) — optional
+        await startSpeakingRealtimeIfNeeded();
+
+        // Start the local timer and speech recognition
+        startSpeakingTimer();
+    }
+
+    function startSpeakingTimer() {
+        speakingActive = true;
+        speakingSafetyTerminated = false;
+        updateSpeakingButtons();
+        updateCallStatusPill('active');
+        startSpeechRecognition();
+        if (speakingInterval) clearInterval(speakingInterval);
+        speakingInterval = setInterval(() => {
+            speakingSeconds += 1;
+            const mm = String(Math.floor(speakingSeconds / 60)).padStart(2, '0');
+            const ss = String(speakingSeconds % 60).padStart(2, '0');
+            const timeStr = `${mm}:${ss}`;
+            // Update all timer elements (new UI has speakingCallTimer + speakingDuration, old had speakingTimer)
+            const timerEl = document.getElementById('speakingTimer');
+            const callTimerEl = document.getElementById('speakingCallTimer');
+            const durationEl = document.getElementById('speakingDuration');
+            if (timerEl) timerEl.textContent = timeStr;
+            if (callTimerEl) callTimerEl.textContent = timeStr;
+            if (durationEl) durationEl.textContent = timeStr;
+        }, 1000);
+    }
+
+    function stopSpeakingTimer() {
+        speakingActive = false;
+        updateSpeakingButtons();
+        updateCallStatusPill('idle');
+        clearSpeakingAutoNextTimer();
+        speakingIsAwaitingExaminer = false;
+        stopSpeechRecognition();
+        releaseMicrophone();
+        closeDidWebRtcSession();
+        if (speakingInterval) clearInterval(speakingInterval);
+        speakingInterval = null;
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        speakingTtsSentenceBuffer = '';
+    }
+
+    function resetSpeakingTimer() {
+        stopSpeakingTimer();
+        speakingSeconds = 0;
+        activeSpeakingSessionId = 0;
+        // Reset all timer displays
+        const timerEl = document.getElementById('speakingTimer');
+        const callTimerEl = document.getElementById('speakingCallTimer');
+        const durationEl = document.getElementById('speakingDuration');
+        if (timerEl) timerEl.textContent = '00:00';
+        if (callTimerEl) callTimerEl.textContent = '00:00';
+        if (durationEl) durationEl.textContent = '00:00';
+        finalTranscript = '';
+        speakingQuestionCount = 0;
+        const transcriptEl = document.getElementById('speakingTranscript');
+        if (transcriptEl) transcriptEl.value = '';
+        // Clear the closed captions
+        const ccText = document.getElementById('speakingCcText');
+        if (ccText) { ccText.textContent = ''; ccText.classList.remove('visible'); }
+        setMicStatus('Microphone: idle');
+        speakingStreamBuffer = '';
+        speakingTtsSentenceBuffer = '';
+        speakingWarningCount = 0;
+        speakingSafetyTerminated = false;
+        speakingLastModeratedLength = 0;
+        speakingLastSubmittedLength = 0;
+        speakingAiIsTalking = false;
+        speakingIsAwaitingExaminer = false;
+        clearSpeakingAutoNextTimer();
+        updateSpeakingStreamText('');
+        speakingCurrentPart = 1;
+        updateSpeakingPartStatus();
+        setSpeakingSafetyState('On-topic', false);
+        updateAutoNextStatus('Auto-next is ready.');
+        updateWarningCounter();
+        updateQuestionCounter();
+        appendSpeakingWarningLog('Safety monitor reset for a new interview.');
+        renderSpeakingPrefetchQuestions([]);
+        if (speakingWsConnected) {
+            speakingWsManualClose = true;
+            speakingWs.send(JSON.stringify({ type: 'reset' }));
+        }
+        updateSpeakingButtons();
+        updateCallStatusPill('idle');
+    }
+
+    function initializeSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            setMicStatus('Microphone: browser does not support speech recognition');
+            return;
+        }
+        speechRecognition = new SpeechRecognition();
+        speechRecognition.lang = 'en-US';
+        speechRecognition.continuous = true;
+        speechRecognition.interimResults = true;
+        speechRecognition.onstart = () => setMicStatus('Microphone: listening...');
+        speechRecognition.onerror = () => {
+            if (speakingActive) setMicStatus('Microphone: reconnecting...');
+            else setMicStatus('Microphone: error while listening');
+        };
+        speechRecognition.onend = () => {
+            if (speakingActive) {
+                setMicStatus('Microphone: reconnecting...');
+                startSpeechRecognition();
+            } else setMicStatus('Microphone: stopped');
+        };
+        speechRecognition.onresult = (event) => {
+            if (!speakingActive || speakingAiIsTalking) return;
+            let hasNewFinal = false;
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const text = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    const normalizedFinal = (text || '').trim();
+                    if (normalizedFinal) {
+                        if (isLikelyNoiseTranscript(normalizedFinal)) continue;
+                        finalTranscript += `${normalizedFinal} `;
+                        hasNewFinal = true;
+                    }
+                }
+                else interim += text;
+            }
+            const transcriptEl = document.getElementById('speakingCcText');
+            if (transcriptEl) {
+                const text = `${finalTranscript}${interim}`.trim();
+                transcriptEl.textContent = text;
+                if (text) transcriptEl.classList.add('visible');
+                else transcriptEl.classList.remove('visible');
+            }
+            if (hasNewFinal) {
+                sendLiveTranscriptForModeration();
+                scheduleAutoNextFromSpeech();
+            }
+        };
+    }
+
+    function startSpeechRecognition() { if (!speechRecognition) return; try { speechRecognition.start(); } catch {} }
+    function stopSpeechRecognition() { if (!speechRecognition) return; try { speechRecognition.stop(); } catch {} }
+    function setMicStatus(text) { const statusEl = document.getElementById('speakingMicStatus'); if (statusEl) statusEl.textContent = text; }
+
+    async function requestMicrophonePermission() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            setMicStatus('Microphone: browser does not support recording');
+            showToast('Browser does not support microphone access', 'error');
+            return false;
+        }
+        if (micStream) return true;
+        try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    channelCount: 1
+                }
+            });
+            setMicStatus('Microphone: permission granted');
+            return true;
+        } catch {
+            setMicStatus('Microphone: permission denied');
+            showToast('Please allow microphone access to start speaking', 'error');
+            return false;
+        }
+    }
+
+    function releaseMicrophone() {
+        if (!micStream) return;
+        micStream.getTracks().forEach(track => track.stop());
+        micStream = null;
+    }
+
+    let speakingQuestionCount = 0;
+
+    function updateSpeakingButtons() {
+        if (skillType !== 'speaking') return;
+        const startBtn = document.getElementById('startSpeakingBtn');
+        const stopBtn = document.getElementById('stopSpeakingBtn');
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        const interruptBtn = document.getElementById('interruptSpeakingBtn');
+        if (startBtn) startBtn.disabled = speakingActive || speakingSafetyTerminated;
+        if (stopBtn) stopBtn.disabled = !speakingActive;
+        if (nextBtn) nextBtn.disabled = !speakingActive || speakingSafetyTerminated;
+        if (interruptBtn) interruptBtn.disabled = !speakingActive;
+    }
+
+    function updateCallStatusPill(state) {
+        const pill = document.getElementById('speakingCallStatus');
+        if (!pill) return;
+        pill.classList.remove('idle', 'active', 'warning');
+        if (state === 'active') {
+            pill.classList.add('active');
+            pill.innerHTML = '<i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> Live';
+        } else if (state === 'warning') {
+            pill.classList.add('warning');
+            pill.innerHTML = '<i class="bi bi-exclamation-triangle-fill" style="font-size:0.5rem;"></i> Warning';
+        } else {
+            pill.classList.add('idle');
+            pill.innerHTML = '<i class="bi bi-circle-fill" style="font-size:0.5rem;"></i> Offline';
+        }
+    }
+
+    function updateQuestionCounter() {
+        const el = document.getElementById('speakingQCount');
+        if (el) el.textContent = String(speakingQuestionCount);
+    }
+
+    function initializeSpeakingRealtime() {
+        if (skillType !== 'speaking') return;
+        speakingWsManualClose = false;
+        connectSpeakingWebSocketWithFallback(buildSpeakingWsCandidates(), 0);
+    }
+
+    function buildSpeakingWsCandidates() {
+        const candidates = [];
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const explicit = (window.localStorage.getItem('speaking_ws_url') || '').trim();
+        if (explicit) candidates.push(explicit);
+
+        // Prefer same-origin websocket proxy to avoid HTTPS mixed-content issues.
+        candidates.push(`${protocol}://${window.location.host}/ws/speaking`);
+
+        const host = (window.location.hostname || '').toLowerCase();
+        if (host === 'localhost' || host === '127.0.0.1') {
+            candidates.push('ws://localhost:8000/ws/speaking');
+            candidates.push('ws://127.0.0.1:8000/ws/speaking');
+            candidates.push('wss://localhost:8000/ws/speaking');
+        }
+
+        return [...new Set(candidates.filter(Boolean))];
+    }
+
+    function connectSpeakingWebSocketWithFallback(candidates, index) {
+        if (skillType !== 'speaking') return;
+        if (index >= candidates.length) {
+            speakingWsConnected = false;
+            setSpeakingRealtimeStatus('Disconnected: Python AI WS unavailable');
+            appendSpeakingWarningLog('Could not connect to speaking websocket. Please start python_ai_service and retry.');
+            updateSpeakingButtons();
+            return;
+        }
+
+        const wsUrl = candidates[index];
+        let opened = false;
+        setSpeakingRealtimeStatus(`Connecting... (${index + 1}/${candidates.length})`);
+
+        try {
+            speakingWs = new WebSocket(wsUrl);
+        } catch {
+            connectSpeakingWebSocketWithFallback(candidates, index + 1);
+            return;
+        }
+
+        speakingWs.onopen = () => {
+            opened = true;
+            speakingWsConnected = true;
+            setSpeakingRealtimeStatus('Connected');
+            setAvatarStatus('Waiting for first question');
+            appendSpeakingWarningLog(`Connected via ${wsUrl}`);
+            updateSpeakingButtons();
+        };
+
+        speakingWs.onclose = () => {
+            speakingWsConnected = false;
+            updateSpeakingButtons();
+
+            if (!opened) {
+                connectSpeakingWebSocketWithFallback(candidates, index + 1);
+                return;
+            }
+
+            if (speakingWsManualClose || speakingSafetyTerminated) {
+                setSpeakingRealtimeStatus('Disconnected');
+                return;
+            }
+
+            setSpeakingRealtimeStatus('Reconnecting...');
+            if (speakingWsReconnectTimer) clearTimeout(speakingWsReconnectTimer);
+            speakingWsReconnectTimer = setTimeout(() => {
+                connectSpeakingWebSocketWithFallback(buildSpeakingWsCandidates(), 0);
+            }, 2000);
+        };
+
+        speakingWs.onerror = () => {
+            if (!opened) return;
+            setSpeakingRealtimeStatus('Connection error');
+        };
+
+        speakingWs.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.part) {
+                    speakingCurrentPart = Number(data.part);
+                    updateSpeakingPartStatus();
+                }
+                if (data.type === 'stream') {
+                    speakingIsAwaitingExaminer = true;
+                    const token = data.text || '';
+                    speakingStreamBuffer += token;
+                    updateSpeakingStreamText(speakingStreamBuffer);
+                    if (!didStreamId) {
+                        speakingTtsSentenceBuffer += token;
+                        speakCompletedSentencesFromBuffer();
+                    }
+                }
+                if (data.type === 'done') {
+                    speakingIsAwaitingExaminer = false;
+                    const promptEl = document.getElementById('speakingPrompt');
+                    const textToSpeak = speakingStreamBuffer;
+                    if (promptEl) promptEl.textContent = textToSpeak.trim() || promptEl.textContent;
+                    setSpeakingRealtimeStatus('Question ready');
+                    updateAutoNextStatus(speakingAutoNextEnabled ? 'Auto-next armed. Start answering when ready.' : 'Auto-next is off. Use Next Question manually.');
+                    
+                    // Increment question counter
+                    speakingQuestionCount += 1;
+                    updateQuestionCounter();
+                    
+                    // Call D-ID WebRTC to speak or use browser TTS fallback
+                    if (didStreamId) {
+                        sendDidTalkRequest(textToSpeak);
+                    } else {
+                        speakRemainingSentenceBuffer();
+                    }
+                    
+                    speakingStreamBuffer = '';
+                }
+                if (data.type === 'prefetch_part3') {
+                    renderSpeakingPrefetchQuestions(data.questions || []);
+                }
+                if (data.type === 'interrupted') {
+                    setSpeakingRealtimeStatus('Interrupted');
+                }
+                if (data.type === 'warning') {
+                    speakingIsAwaitingExaminer = false;
+                    speakingWarningCount += 1;
+                    updateWarningCounter();
+                    updateCallStatusPill('warning');
+                    setSpeakingSafetyState('Warning', true);
+                    appendSpeakingWarningLog(data.message || 'You are going off-topic. Please answer the current IELTS question.');
+                    showToast(data.message || 'Please stay on topic', 'error');
+                }
+                if (data.type === 'topic_ok') {
+                    setSpeakingSafetyState('On-topic', false);
+                }
+                if (data.type === 'avatar') {
+                    playAvatarVideo(data.video_url || '', data.status || 'Avatar updated');
+                }
+                if (data.type === 'terminated') {
+                    speakingIsAwaitingExaminer = false;
+                    clearSpeakingAutoNextTimer();
+                    speakingSafetyTerminated = true;
+                    setSpeakingSafetyState('Terminated', true);
+                    appendSpeakingWarningLog(data.message || 'Session terminated for safety reasons.');
+                    setSpeakingRealtimeStatus('Terminated');
+                    stopSpeakingTimer();
+                    updateSpeakingButtons();
+                    if (speakingWs) {
+                        speakingWsManualClose = true;
+                        speakingWs.close();
+                    }
+                }
+            } catch {
+                setSpeakingRealtimeStatus('Invalid stream data');
+            }
+        };
+    }
+
+    async function startSpeakingRealtimeIfNeeded() {
+        if (!speakingWsConnected || !speakingWs) return;
+        speakingStreamBuffer = '';
+        speakingTtsSentenceBuffer = '';
+        speakingLastModeratedLength = 0;
+        speakingLastSubmittedLength = (finalTranscript || '').trim().length;
+        speakingIsAwaitingExaminer = true;
+        clearSpeakingAutoNextTimer();
+        const topic = activeSpeakingTopic?.topic || document.getElementById('speakingPrompt')?.textContent || 'General IELTS speaking topic';
+        speakingWs.send(JSON.stringify({
+            type: 'start',
+            part: speakingCurrentPart,
+            band_estimate: 5.5,
+            topic: topic,
+            avatar_fallback_url: getAvatarFallbackUrl()
+        }));
+    }
+
+    function requestNextSpeakingQuestion(options = {}) {
+        const silent = Boolean(options.silent);
+        const source = options.source === 'auto' ? 'auto' : 'manual';
+
+        if (!speakingWsConnected || !speakingWs) {
+            if (!silent) showToast('Realtime speaking is not connected', 'error');
+            return false;
+        }
+        if (speakingIsAwaitingExaminer) {
+            return false;
+        }
+
+        const cleanFinal = (finalTranscript || '').trim();
+        if (!cleanFinal || cleanFinal.length <= speakingLastSubmittedLength) {
+            if (!silent) showToast('Please speak first, then request next question', 'error');
+            return false;
+        }
+
+        const delta = cleanFinal.slice(speakingLastSubmittedLength).trim();
+        if (!delta) {
+            if (!silent) showToast('No new speech detected yet. Please continue speaking.', 'error');
+            return false;
+        }
+
+        if (isLikelyNoiseTranscript(delta)) {
+            if (!silent) showToast('Detected noisy audio. Please speak again in a quieter environment.', 'error');
+            return false;
+        }
+
+        const deltaWords = delta.match(/[A-Za-z']+/g) || [];
+        if (deltaWords.length < 2) {
+            if (!silent) showToast('Please answer with at least one short sentence before continuing.', 'error');
+            return false;
+        }
+
+        speakingIsAwaitingExaminer = true;
+        clearSpeakingAutoNextTimer();
+        speakingLastSubmittedLength = cleanFinal.length;
+        speakingStreamBuffer = '';
+        speakingTtsSentenceBuffer = '';
+        updateSpeakingStreamText('');
+        speakingWs.send(JSON.stringify({
+            type: 'user_answer',
+            text: delta,
+            part: speakingCurrentPart,
+            band_estimate: 5.5,
+            topic: activeSpeakingTopic?.topic || document.getElementById('speakingPrompt')?.textContent || 'General IELTS speaking topic',
+            avatar_fallback_url: getAvatarFallbackUrl()
+        }));
+        setSpeakingRealtimeStatus(source === 'auto' ? 'Auto-next: generating next question...' : 'Generating next question...');
+        if (source === 'auto') updateAutoNextStatus('Auto-next sent your latest answer.');
+        return true;
+    }
+
+    async function interruptSpeakingStream() {
+        if (!speakingActive || speakingIsAwaitingExaminer) return;
+        
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        speakingTtsSentenceBuffer = '';
+
+        const videoEl = document.getElementById('speakingAvatarVideo');
+        if (videoEl) videoEl.classList.add('speaking-avatar-blur');
+        
+        const btn = document.getElementById('interruptSpeakingBtn');
+        if (btn) btn.classList.add('interrupt-active');
+
+        if (speakingWsConnected) {
+            speakingWs.send(JSON.stringify({ type: 'interrupt' }));
+            setSpeakingRealtimeStatus('Interrupting...');
+        }
+        
+        if (didStreamId) {
+            try {
+                // Send an empty talk task to stop current stream through our proxy
+                await fetch(`/api/speaking/did-stream/${didStreamId}/talk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        script: { type: 'text', input: ' ', provider: { type: 'microsoft', voice_id: 'en-US-JennyNeural' } },
+                        session_id: didSessionId
+                    })
+                });
+                speakingAiIsTalking = false;
+            } catch (e) { console.error('Error interrupting D-ID stream', e); }
+        }
+        
+        clearSpeakingAutoNextTimer();
+        
+        setTimeout(() => {
+            if (btn) btn.classList.remove('interrupt-active');
+            if (videoEl) videoEl.classList.remove('speaking-avatar-blur');
+        }, 1500); // Remove blur and active state
+    }
+
+    function syncSpeakingAutoNextSettings() {
+        const toggle = document.getElementById('speakingAutoNextToggle');
+        const delaySelect = document.getElementById('speakingAutoNextDelay');
+
+        speakingAutoNextEnabled = Boolean(toggle?.checked);
+        const parsedDelay = Number(delaySelect?.value || '2000');
+        speakingAutoNextDelayMs = Number.isFinite(parsedDelay) && parsedDelay >= 800 ? parsedDelay : 2000;
+
+        if (!speakingAutoNextEnabled) clearSpeakingAutoNextTimer();
+
+        updateAutoNextStatus(
+            speakingAutoNextEnabled
+                ? `Auto-next is enabled (${(speakingAutoNextDelayMs / 1000).toFixed(1)}s delay).`
+                : 'Auto-next is off. Use Next Question manually.'
+        );
+    }
+
+    function updateAutoNextStatus(text) {
+        const status = document.getElementById('speakingAutoNextStatus');
+        if (status) status.textContent = text;
+    }
+
+    function clearSpeakingAutoNextTimer() {
+        if (!speakingAutoNextTimer) return;
+        clearTimeout(speakingAutoNextTimer);
+        speakingAutoNextTimer = null;
+    }
+
+    function scheduleAutoNextFromSpeech() {
+        if (!speakingAutoNextEnabled || !speakingActive || speakingSafetyTerminated) return;
+        if (!speakingWsConnected || !speakingWs || speakingAiIsTalking || speakingIsAwaitingExaminer) return;
+
+        const cleanFinal = (finalTranscript || '').trim();
+        if (!cleanFinal || cleanFinal.length <= speakingLastSubmittedLength) return;
+
+        clearSpeakingAutoNextTimer();
+        speakingAutoNextTimer = setTimeout(() => {
+            speakingAutoNextTimer = null;
+            requestNextSpeakingQuestion({ silent: true, source: 'auto' });
+        }, speakingAutoNextDelayMs);
+
+        updateAutoNextStatus(`Auto-next armed. Sending in ${(speakingAutoNextDelayMs / 1000).toFixed(1)}s if you stay silent.`);
+    }
+
+    function updateSpeakingPartStatus() {
+        const partEl = document.getElementById('speakingCurrentPart');
+        if (partEl) partEl.textContent = String(speakingCurrentPart);
+    }
+
+    function setSpeakingRealtimeStatus(text) {
+        const el = document.getElementById('speakingRealtimeStatus');
+        if (el) el.textContent = text;
+    }
+
+    function setAvatarStatus(text) {
+        const el = document.getElementById('speakingAvatarStatus');
+        if (el) el.textContent = text;
+    }
+
+    function getAvatarFallbackUrl() {
+        const input = document.getElementById('speakingAvatarFallbackUrl');
+        return normalizeGoogleDriveAvatarUrl(input?.value || '');
+    }
+
+    function normalizeGoogleDriveAvatarUrl(url) {
+        const raw = (url || '').trim();
+        if (!raw) return '';
+
+        try {
+            const parsed = new URL(raw);
+            if (!parsed.hostname.includes('drive.google.com')) return raw;
+
+            let fileId = '';
+            const filePathMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/i);
+            if (filePathMatch?.[1]) fileId = filePathMatch[1];
+
+            if (!fileId) fileId = parsed.searchParams.get('id') || '';
+            if (!fileId) return raw;
+
+            return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+        } catch {
+            return raw;
+        }
+    }
+
+    function playAvatarVideo(videoUrl, statusText) {
+        const avatar = document.getElementById('speakingAvatarVideo');
+        if (!avatar) return;
+        if (videoUrl) {
+            avatar.src = videoUrl;
+            avatar.muted = true;
+            avatar.play().catch(() => {});
+            setAvatarStatus(statusText || 'Playing provider stream');
+            return;
+        }
+        const fallback = getAvatarFallbackUrl();
+        if (fallback) {
+            avatar.src = fallback;
+            avatar.muted = true;
+            avatar.play().catch(() => {});
+            setAvatarStatus('Playing fallback avatar');
+        } else {
+            setAvatarStatus('No avatar source configured');
+        }
+    }
+
+    function setSpeakingSafetyState(text, isAlert) {
+        const safety = document.getElementById('speakingSafetyStatus');
+        const inline = document.getElementById('speakingSafetyStateInline');
+        if (safety) {
+            safety.textContent = text;
+            safety.style.color = isAlert ? '#ffb4b4' : '#4bfc61';
+        }
+        if (inline) inline.textContent = text;
+    }
+
+    function updateWarningCounter() {
+        const el = document.getElementById('speakingTopicWarningCount');
+        if (el) el.textContent = String(speakingWarningCount);
+        // Also sync the analytics sidebar counter
+        const analyticsEl = document.getElementById('speakingWarnings');
+        if (analyticsEl) analyticsEl.textContent = String(speakingWarningCount);
+    }
+
+    function appendSpeakingWarningLog(message) {
+        const log = document.getElementById('speakingWarningLog');
+        if (!log || !message) return;
+        const li = document.createElement('li');
+        li.textContent = message;
+        log.prepend(li);
+        while (log.children.length > 6) {
+            log.removeChild(log.lastElementChild);
+        }
+    }
+
+    function sendLiveTranscriptForModeration() {
+        if (!speakingLiveModerationEnabled) return;
+        if (!speakingWsConnected || !speakingWs || speakingSafetyTerminated) return;
+        if (!speakingActive) return;
+
+        const clean = (finalTranscript || '').trim();
+        if (!clean || clean.length <= speakingLastModeratedLength) return;
+
+        if (window.speechSynthesis?.speaking) {
+            speakingLastModeratedLength = clean.length;
+            return;
+        }
+
+        const delta = clean.slice(speakingLastModeratedLength).trim();
+        if (!delta) return;
+
+        const deltaWords = delta.match(/[A-Za-z']+/g) || [];
+        if (deltaWords.length < 4 || delta.length < 18) return;
+
+        speakingLastModeratedLength = clean.length;
+        speakingWs.send(JSON.stringify({
+            type: 'candidate_live',
+            text: delta,
+            part: speakingCurrentPart,
+            topic: activeSpeakingTopic?.topic || document.getElementById('speakingPrompt')?.textContent || 'General IELTS speaking topic'
+        }));
+    }
+
+    function isLikelyNoiseTranscript(text) {
+        const raw = String(text || '').trim();
+        if (!raw) return true;
+
+        const words = raw.toLowerCase().match(/[a-z']+/g) || [];
+        if (!words.length) return true;
+        if (words.length <= 3) return false;
+
+        const meaningful = words.filter(w => w.length >= 2);
+        if (!meaningful.length) return true;
+
+        const vowelWords = meaningful.filter(w => /[aeiou]/.test(w));
+        const vowelRatio = vowelWords.length / meaningful.length;
+        if (vowelRatio < 0.35) return true;
+
+        const uniqueRatio = new Set(meaningful).size / meaningful.length;
+        if (meaningful.length >= 6 && uniqueRatio < 0.25) return true;
+
+        return /(.)\1{4,}/.test(raw.replace(/\s+/g, ''));
+    }
+
+    function updateSpeakingStreamText(text) {
+        const el = document.getElementById('speakingStreamText');
+        if (el) el.textContent = text || '';
+    }
+
+    function speakCompletedSentencesFromBuffer() {
+        if (!window.speechSynthesis || !speakingTtsSentenceBuffer) return;
+        const sentenceRegex = /[^.!?]+[.!?]+/g;
+        const matches = speakingTtsSentenceBuffer.match(sentenceRegex);
+        if (!matches || !matches.length) return;
+
+        const consumed = matches.join('');
+        speakingTtsSentenceBuffer = speakingTtsSentenceBuffer.slice(consumed.length);
+        for (const sentence of matches) {
+            const cleaned = sentence.trim();
+            if (!cleaned) continue;
+            const utter = new SpeechSynthesisUtterance(cleaned);
+            utter.lang = 'en-US';
+            utter.onstart = () => { speakingAiIsTalking = true; };
+            utter.onend = () => { speakingAiIsTalking = Boolean(window.speechSynthesis?.speaking); };
+            utter.onerror = () => { speakingAiIsTalking = Boolean(window.speechSynthesis?.speaking); };
+            speakingAiIsTalking = true;
+            window.speechSynthesis.speak(utter);
+        }
+    }
+
+    function speakRemainingSentenceBuffer() {
+        if (!window.speechSynthesis) return;
+        const text = (speakingTtsSentenceBuffer || '').trim();
+        if (!text) return;
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        utter.onstart = () => { speakingAiIsTalking = true; };
+        utter.onend = () => { speakingAiIsTalking = false; };
+        utter.onerror = () => { speakingAiIsTalking = false; };
+        speakingAiIsTalking = true;
+        window.speechSynthesis.speak(utter);
+    }
+
+    function renderSpeakingPrefetchQuestions(questions) {
+        const list = document.getElementById('speakingPrefetchList');
+        if (!list) return;
+        const safeList = Array.isArray(questions) ? questions.filter(Boolean).slice(0, 3) : [];
+        if (!safeList.length) {
+            list.innerHTML = '<li>Part 3 questions will be prepared during Part 2.</li>';
+            return;
+        }
+        list.innerHTML = safeList.map(q => `<li>${escapeHtml(String(q))}</li>`).join('');
+    }
+
+    function escapeHtml(input) {
+        return String(input ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    // --- D-ID WebRTC Integration ---
+    let didPeerConnection = null;
+    let didStreamId = null;
+    let didSessionId = null;
+    let didToken = null;
+
+    async function fetchDidToken() {
+        // [C# Backend Dev Note]: Implement GET /api/speaking/did-token in your ASP.NET Core Controller.
+        // It should call D-ID API with your API key to create a session token and return it.
+        // Example Response: { "token": "abc..." }
+        try {
+            const response = await fetch('/api/speaking/did-token');
+            if (response.ok) {
+                const data = await response.json();
+                return data.token;
+            }
+            console.warn('Backend /api/speaking/did-token not ready, using fallback local mock if available.');
+        } catch (e) {
+            console.warn('Failed to fetch D-ID token', e);
+        }
+        return '';
+    }
+
+    async function startDidWebRtcSession() {
+        didToken = 'proxy'; // bypass didToken since we use secure backend proxy
+        try {
+            const streamRes = await fetch('/api/speaking/did-stream/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    source_url: document.getElementById('speakingAvatarFallbackUrl')?.value || 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1600&q=80'
+                })
+            });
+
+            if (!streamRes.ok) {
+                let errorMsg = `HTTP Error ${streamRes.status}`;
+                try {
+                    const errData = await streamRes.json();
+                    errorMsg = errData.message || errData.error?.message || errorMsg;
+                } catch {}
+                throw new Error(`D-ID server returned error: ${errorMsg}`);
+            }
+
+            const streamData = await streamRes.json();
+            if (!streamData || !streamData.offer || !streamData.id) {
+                throw new Error("Invalid or empty stream offer received from D-ID API.");
+            }
+
+            didStreamId = streamData.id;
+            didSessionId = streamData.session_id;
+
+            didPeerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+            didPeerConnection.ontrack = (event) => {
+                const videoEl = document.getElementById('speakingAvatarVideo');
+                if (videoEl) {
+                    videoEl.srcObject = event.streams[0];
+                    videoEl.classList.remove('speaking-avatar-blur');
+                }
+            };
+
+            didPeerConnection.onicecandidate = async (event) => {
+                if (event.candidate && didStreamId) {
+                    try {
+                        await fetch(`/api/speaking/did-stream/${didStreamId}/ice`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                candidate: event.candidate.candidate,
+                                sdpMid: event.candidate.sdpMid,
+                                sdpMLineIndex: event.candidate.sdpMLineIndex,
+                                session_id: didSessionId
+                            })
+                        });
+                    } catch (e) {
+                        console.warn('Error sending ICE candidate', e);
+                    }
+                }
+            };
+
+            await didPeerConnection.setRemoteDescription(new RTCSessionDescription(streamData.offer));
+            const answer = await didPeerConnection.createAnswer();
+            await didPeerConnection.setLocalDescription(answer);
+
+            const sdpRes = await fetch(`/api/speaking/did-stream/${didStreamId}/sdp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answer: answer, session_id: didSessionId })
+            });
+
+            if (!sdpRes.ok) {
+                throw new Error("Failed to submit SDP answer to D-ID stream endpoint.");
+            }
+
+        } catch (e) {
+            console.warn('D-ID WebRTC session initialization failed. Falling back to browser TTS.', e);
+            // Ensure all D-ID properties are safely cleared to cleanly trigger the browser fallback speech
+            didStreamId = null;
+            didSessionId = null;
+            if (didPeerConnection) {
+                try { didPeerConnection.close(); } catch {}
+                didPeerConnection = null;
+            }
+            const videoEl = document.getElementById('speakingAvatarVideo');
+            if (videoEl) {
+                videoEl.srcObject = null;
+                videoEl.classList.add('speaking-avatar-blur');
+            }
+            setAvatarStatus('Offline (Using Browser TTS Fallback)');
+        }
+    }
+
+    async function sendDidTalkRequest(text) {
+        if (!text || !didStreamId) return;
+        speakingAiIsTalking = true;
+        try {
+            await fetch(`/api/speaking/did-stream/${didStreamId}/talk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    script: { type: 'text', input: text, provider: { type: 'microsoft', voice_id: 'en-US-JennyNeural' } },
+                    session_id: didSessionId
+                })
+            });
+        } catch (e) { console.error('Error sending talk request', e); }
+        setTimeout(() => { speakingAiIsTalking = false; }, text.split(' ').length * 400); // rough estimate
+    }
+
+    async function closeDidWebRtcSession() {
+        if (didStreamId) {
+            try {
+                await fetch(`/api/speaking/did-stream/${didStreamId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: didSessionId })
+                });
+            } catch (e) {
+                console.warn('Error closing D-ID stream session', e);
+            }
+        }
+        if (didPeerConnection) {
+            didPeerConnection.close();
+            didPeerConnection = null;
+        }
+        didStreamId = null;
+        didSessionId = null;
+        const videoEl = document.getElementById('speakingAvatarVideo');
+        if (videoEl) {
+            videoEl.srcObject = null;
+            videoEl.classList.add('speaking-avatar-blur');
+        }
+    }
+
+    // ── Grade Dispute System ──
+    window.lastWritingSubmissionId = null;
+
+    window.openDisputeModal = function(type) {
+        if (type === 'writing') {
+            const modal = document.getElementById('disputeModal');
+            if (!modal) return;
+            const scoreEl = document.getElementById('disputeCurrentScore');
+            const typeEl = document.getElementById('disputeSubmissionType');
+            const idEl = document.getElementById('disputeSubmissionId');
+            const reasonEl = document.getElementById('disputeReason');
+
+            if (typeEl) typeEl.value = 'writing';
+            if (reasonEl) reasonEl.value = '';
+
+            const bandEl = document.getElementById('writingBandScore');
+            if (scoreEl) scoreEl.textContent = 'Band ' + (bandEl ? bandEl.textContent : '--') + ' (Writing)';
+            
+            if (idEl) idEl.value = window.lastWritingSubmissionId || '';
+
+            if (!idEl.value) {
+                if (typeof showToast === 'function') {
+                    showToast('No submission found to dispute. Please submit your work first.', 'error');
+                } else {
+                    alert('No submission found to dispute. Please submit your work first.');
+                }
+                return;
+            }
+
+            modal.style.display = 'flex';
+        } else if (type === 'speaking') {
+            const modalEl = document.getElementById('disputeSpeakingModal');
+            if (!modalEl) return;
+            const scoreEl = document.getElementById('disputeSpeakingCurrentScore');
+            const idEl = document.getElementById('disputeSpeakingSubmissionId');
+            const reasonEl = document.getElementById('disputeSpeakingReason');
+
+            if (reasonEl) reasonEl.value = '';
+            
+            const sessionId = activeSpeakingSessionId || 0;
+            if (idEl) idEl.value = sessionId || '';
+
+            if (!idEl.value || idEl.value === '0') {
+                if (typeof showToast === 'function') {
+                    showToast('No submission found to dispute. Please submit your work first.', 'error');
+                } else {
+                    alert('No submission found to dispute. Please submit your work first.');
+                }
+                return;
+            }
+
+            const bsModal = new bootstrap.Modal(modalEl);
+            bsModal.show();
+        }
+    };
+
+    window.closeDisputeModal = function() {
+        const modal = document.getElementById('disputeModal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.submitGradeDispute = async function() {
+        const reason = document.getElementById('disputeReason').value.trim();
+        const submissionId = parseInt(document.getElementById('disputeSubmissionId').value);
+        const submissionType = document.getElementById('disputeSubmissionType').value;
+        const submitBtn = document.getElementById('disputeSubmitBtn');
+
+        if (!reason || reason.length < 20) {
+            showToast('Please provide a detailed reason (at least 20 characters).', 'error');
+            return;
+        }
+
+        if (!submissionId || !submissionType) {
+            showToast('Missing submission details. Please try again.', 'error');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Submitting...';
+
+        try {
+            const response = await fetch('/api/disputes/submit', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    submissionType: submissionType,
+                    submissionId: submissionId,
+                    reason: reason
+                })
+            });
+
+            const json = await response.json();
+
+            if (response.ok && json.success) {
+                closeDisputeModal();
+                showToast('Dispute submitted successfully! A teacher will review your score.', 'success');
+            } else {
+                showToast(json.message || 'Failed to submit dispute. You may already have an open dispute for this submission.', 'error');
+            }
+        } catch (err) {
+            console.error('Dispute submission error:', err);
+            showToast('Network error. Please try again.', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg> Submit Dispute';
+        }
+    };
+
+    window.submitGradeDisputeSpeaking = async function() {
+        const reason = document.getElementById('disputeSpeakingReason').value.trim();
+        const submissionId = parseInt(document.getElementById('disputeSpeakingSubmissionId').value);
+        const submitBtn = document.getElementById('disputeSpeakingSubmitBtn');
+
+        if (!reason || reason.length < 20) {
+            showToast('Please provide a detailed reason (at least 20 characters).', 'error');
+            return;
+        }
+
+        if (!submissionId) {
+            showToast('Missing submission details. Please try again.', 'error');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+
+        try {
+            const response = await fetch('/api/disputes/submit', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    submissionType: 'speaking',
+                    submissionId: submissionId,
+                    reason: reason
+                })
+            });
+
+            const json = await response.json();
+
+            if (response.ok && json.success) {
+                const modalEl = document.getElementById('disputeSpeakingModal');
+                if (window.jQuery && typeof window.jQuery(modalEl).modal === 'function') {
+                    window.jQuery(modalEl).modal('hide');
+                } else {
+                    const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    bsModal.hide();
+                }
+                showToast('Dispute submitted successfully! A teacher will review your score.', 'success');
+            } else {
+                showToast(json.message || 'Failed to submit dispute. You may already have an open dispute for this submission.', 'error');
+            }
+        } catch (err) {
+            console.error('Dispute submission error:', err);
+            showToast('Network error. Please try again.', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Submit Dispute';
+        }
+    };
+</script>

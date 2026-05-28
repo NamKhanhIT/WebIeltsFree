@@ -1,0 +1,168 @@
+@await Html.PartialAsync("~/Views/Practice/_PracticeStyles.cshtml")
+
+<div id="readingHub" class="exam-shell">
+    <!-- Exam Header -->
+    <div class="exam-header">
+        <div class="container exam-header-inner">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span class="exam-skill-badge reading"><i class="bi bi-book me-1"></i>Reading</span>
+                <h1 class="exam-title" id="readingExamTitle">Academic Reading Test</h1>
+                
+                <!-- Passage Selection Dropdown -->
+                <div class="ms-md-3 d-flex align-items-center gap-2">
+                    <label for="readingPassageSelect" class="small text-muted fw-bold mb-0 text-nowrap">
+                        <i class="bi bi-journal-text me-1"></i>Select Test:
+                    </label>
+                    <select id="readingPassageSelect" class="form-select form-select-sm" style="max-width: 320px; font-size: 0.82rem; font-weight: 600; border-radius: var(--ex-radius-sm); border-color: var(--ex-border); cursor: pointer;">
+                        <option value="">-- Loading tests... --</option>
+                    </select>
+                </div>
+            </div>
+            @await Html.PartialAsync("~/Views/Practice/_PracticeTimer.cshtml")
+        </div>
+    </div>
+
+    <!-- Question Navigation (Sticky) -->
+    <div class="container sticky-top bg-white py-2 shadow-sm" style="z-index: 1020; border-radius: var(--ex-radius-sm); border: 1px solid var(--ex-border); margin-top: 15px; margin-bottom: 15px;">
+        <div class="exam-qnav mb-0 py-1" id="readingQuestionNav"></div>
+    </div>
+
+    <!-- Continuous Stacked Layout -->
+    <div class="container my-4">
+        <!-- Passage Panel -->
+        <div class="exam-card p-4 mb-4" id="readingPassagePanel" style="background: #fdfcfa; border: 1px solid var(--ex-border); border-radius: var(--ex-radius);">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <span class="exam-panel-title mb-0" style="font-size: .95rem; font-weight: 700; color: var(--ex-primary);"><i class="bi bi-file-earmark-text me-1"></i>Reading Passage</span>
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="exam-btn exam-btn-outline btn-sm py-1 px-2" onclick="toggleHighlighter()" title="Highlighter">
+                        <i class="bi bi-highlighter"></i>
+                    </button>
+                    <select id="readingFontSize" class="form-select form-select-sm py-1" style="width:auto; font-size:0.8rem;" onchange="setPassageFontSize(this.value)">
+                        <option value="0.88">Small</option>
+                        <option value="1" selected>Normal</option>
+                        <option value="1.15">Large</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Passage Image (shown if available) -->
+            <div id="readingPassageImageWrap" class="mb-4 text-center" style="display:none; max-width: 800px; margin: 0 auto;">
+                <img id="readingPassageImage" src="" alt="Passage illustration"
+                     style="width:100%; max-height:360px; object-fit:cover; border-radius:var(--ex-radius); border:1px solid var(--ex-border); box-shadow:var(--ex-shadow);">
+                <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                    <small id="readingPassageImageCaption" class="text-muted" style="font-size:.72rem;"></small>
+                    <small class="text-muted" style="font-size:.68rem;"><i class="bi bi-image me-1"></i>Illustration</small>
+                </div>
+            </div>
+            <!-- lessonContentReading will hold both title and text of passage -->
+            <div id="lessonContentReading" style="line-height:1.9; font-size:1.05rem; max-width: 900px; margin: 0 auto; font-family: 'Georgia', serif; color: #1a1a1a;">
+                <p class="text-muted">Loading passage...</p>
+            </div>
+        </div>
+
+        <!-- Questions Panel -->
+        <div class="exam-card p-4" id="readingQuestionsPanel" style="background: var(--ex-surface); border: 1px solid var(--ex-border); border-radius: var(--ex-radius);">
+            <div class="border-bottom pb-2 mb-4">
+                <span class="exam-panel-title mb-0" style="font-size: .95rem; font-weight: 700; color: var(--ex-ink);"><i class="bi bi-question-circle me-1"></i>Questions</span>
+            </div>
+            <div id="readingDynamic">
+                <p class="text-muted">Loading questions...</p>
+            </div>
+
+            <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                <button id="submitBtnReading" class="exam-btn exam-btn-primary">
+                    <i class="bi bi-check2-circle me-1"></i>Submit All Answers
+                </button>
+                <button id="saveDraftBtnReading" class="exam-btn exam-btn-outline">Save Progress</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Panel (hidden initially) -->
+    <div class="container mt-3 d-none" id="readingResultsPanel">
+        <div class="exam-card p-4">
+            <h3 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2"></i>Results</h3>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Correct</div>
+                        <div class="fs-3 fw-bold text-success" id="readingCorrectCount">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Incorrect</div>
+                        <div class="fs-3 fw-bold text-danger" id="readingIncorrectCount">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Unanswered</div>
+                        <div class="fs-3 fw-bold text-warning" id="readingUnansweredCount">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Band Estimate</div>
+                        <div class="fs-3 fw-bold text-primary" id="readingBandEstimate">-</div>
+                    </div>
+                </div>
+            </div>
+            <div id="readingAnswerReview" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Highlighter toggle
+    let highlighterActive = false;
+    function toggleHighlighter() {
+        highlighterActive = !highlighterActive;
+        const panel = document.getElementById('readingPassagePanel');
+        const btn = document.querySelector('button[onclick="toggleHighlighter()"]');
+        if (highlighterActive) {
+            panel.style.cursor = 'text';
+            btn.classList.add('active');
+            btn.style.backgroundColor = 'var(--ex-primary-soft)';
+        } else {
+            panel.style.cursor = 'default';
+            btn.classList.remove('active');
+            btn.style.backgroundColor = '';
+        }
+    }
+    
+    function setPassageFontSize(size) {
+        const passage = document.getElementById('lessonContentReading');
+        if (passage) passage.style.fontSize = size + 'rem';
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        ExamTimer.start('reading');
+        
+        // Highlight logic
+        const passageContainer = document.getElementById('lessonContentReading');
+        if (passageContainer) {
+            passageContainer.addEventListener('mouseup', () => {
+                if (!highlighterActive) return;
+                const selection = window.getSelection();
+                if (!selection.isCollapsed && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    
+                    // Only highlight if selection is inside passageContainer
+                    if (passageContainer.contains(range.commonAncestorContainer)) {
+                        const span = document.createElement('span');
+                        span.style.backgroundColor = 'rgba(255, 255, 0, 0.4)';
+                        span.className = 'highlighted-text';
+                        
+                        try {
+                            range.surroundContents(span);
+                        } catch (e) {
+                            console.log("Could not highlight across elements.");
+                        }
+                        
+                        selection.removeAllRanges();
+                    }
+                }
+            });
+        }
+    });
+</script>

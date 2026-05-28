@@ -1,0 +1,144 @@
+@model WebIeltsFree.Models.TeacherProfile
+
+@{
+    var fullName = ViewBag.FullName ?? "IELTS Teacher";
+    var avatarUrl = ViewBag.AvatarUrl;
+    var email = ViewBag.Email ?? "";
+    var specialtiesList = (Model.Specialties ?? "")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    ViewData["Title"] = fullName + " — Public Profile Preview";
+    ViewData["Page"] = "teachers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="alert alert-info border-0 shadow-sm mb-4 d-flex align-items-center justify-content-between">
+    <div>
+        <i class="bi bi-eye-fill me-2 fs-5"></i>
+        <strong>Preview Mode:</strong> This is how your profile appears to students.
+    </div>
+    <a href="@Url.Action("Index", "TeacherProfiles", new { area = "Teacher" })" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil me-1"></i>Back to Editing
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- LEFT COLUMN: Identity & Credentials -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 text-center">
+            <div class="card-body p-4">
+                @if (!string.IsNullOrEmpty(avatarUrl))
+                {
+                    <img src="@avatarUrl" alt="@fullName"
+                         class="rounded-circle mb-3 border border-3 border-primary-subtle"
+                         style="width: 120px; height: 120px; object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="rounded-circle mb-3 mx-auto bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center border border-3 border-primary-subtle"
+                         style="width: 120px; height: 120px; font-size: 3rem; font-weight: 700;">
+                        @fullName[0]
+                    </div>
+                }
+
+                <h3 class="fw-bold mb-1">@fullName</h3>
+                <span class="badge bg-success bg-opacity-10 text-success mb-3">
+                    <i class="bi bi-patch-check-fill me-1"></i>Verified Teacher
+                </span>
+
+                <ul class="list-unstyled text-start mt-3 small">
+                    @if (Model.YearsExperience.HasValue)
+                    {
+                        <li class="d-flex align-items-center gap-2 mb-2 text-muted">
+                            <i class="bi bi-briefcase text-primary"></i>
+                            <span><strong>@Model.YearsExperience</strong> year@(Model.YearsExperience > 1 ? "s" : "") of teaching experience</span>
+                        </li>
+                    }
+                    @if (!string.IsNullOrEmpty(email))
+                    {
+                        <li class="d-flex align-items-center gap-2 mb-2 text-muted">
+                            <i class="bi bi-envelope text-primary"></i>
+                            <span>@email</span>
+                        </li>
+                    }
+                    <li class="d-flex align-items-center gap-2 text-muted">
+                        <i class="bi bi-calendar-check text-primary"></i>
+                        <span>Member since @Model.CreatedAt.ToString("MMMM yyyy")</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Certificates Card (Newly Added) -->
+        @if (Model.Certificates != null && Model.Certificates.Count > 0)
+        {
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-file-earmark-badge text-primary me-2"></i>Certificates
+                    </h5>
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var cert in Model.Certificates)
+                        {
+                            <div class="border rounded p-2">
+                                <p class="mb-1 small fw-bold">@cert.Title</p>
+                                @if (!string.IsNullOrEmpty(cert.ImageUrl))
+                                {
+                                    <a href="@cert.ImageUrl" target="_blank">
+                                        <img src="@cert.ImageUrl" alt="@cert.Title" class="img-fluid rounded border" style="max-height: 150px; width: 100%; object-fit: cover;" />
+                                    </a>
+                                }
+                                <small class="text-muted d-block mt-1">Issued: @cert.IssueDate?.ToString("yyyy-MM-dd")</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- RIGHT COLUMN: Strengths & Bio -->
+    <div class="col-lg-8">
+        <!-- Specialties Section -->
+        @if (specialtiesList.Length > 0)
+        {
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-star-fill text-warning me-2"></i>Core Teaching Strengths
+                    </h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var skill in specialtiesList)
+                        {
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-normal fs-6">
+                                <i class="bi bi-check-circle me-1"></i>@skill
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Bio Section -->
+        @if (!string.IsNullOrEmpty(Model.Bio))
+        {
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-person-vcard text-info me-2"></i>About This Teacher
+                    </h5>
+                    <div class="text-muted lh-lg" style="white-space: pre-line;">@Model.Bio</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 text-center text-muted">
+                    <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
+                    <p class="mb-0">This teacher hasn't added a detailed bio yet.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

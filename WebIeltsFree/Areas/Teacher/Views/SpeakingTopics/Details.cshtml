@@ -1,0 +1,92 @@
+@model WebIeltsFree.Models.SpeakingTopic
+@{
+    ViewData["Title"] = "Topic Details";
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    bool canApprove = Model.Status == "pending_review" && (User.IsInRole("admin") || Model.CreatedBy.ToString() != currentUserId);
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0 fw-bold">Topic Details</h4>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.TopicId" class="btn btn-outline-warning btn-sm me-2"><i class="ti ti-edit me-1"></i> Edit</a>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i> Back to List</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-dark">Topic Content</h5>
+                <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2">
+                    PART @Model.PartNumber
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3 text-uppercase small text-muted">Title / Prompt</h6>
+                <div class="bg-light p-4 rounded text-dark fs-5 mb-4" style="line-height: 1.8;">
+                    @Model.TopicName
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">Metadata</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-muted small text-uppercase">Status</span>
+                        <span class="badge @(Model.Status == "published" ? "bg-success" : Model.Status == "pending_review" ? "bg-warning text-dark" : Model.Status == "rejected" ? "bg-danger" : "bg-secondary") rounded-pill px-3">
+                            @Model.Status.Replace("_", " ").ToUpper()
+                        </span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-muted small text-uppercase">Target Band</span>
+                        <span class="fw-bold text-dark fs-5">@Model.TargetBand</span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-muted small text-uppercase">Author</span>
+                        <span class="fw-medium text-dark">@ViewBag.CreatorName</span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-muted small text-uppercase">Created At</span>
+                        <span class="fw-medium text-dark">@Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </li>
+                    @if (Model.ReviewedAt.HasValue)
+                    {
+                        <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold text-muted small text-uppercase">Reviewed At</span>
+                            <span class="fw-medium text-dark">@Model.ReviewedAt.Value.ToString("MMM dd, yyyy")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+            @if (canApprove)
+            {
+                <div class="card-footer bg-warning-subtle p-3 text-center border-top border-warning border-opacity-25">
+                    <h6 class="fw-bold text-dark mb-3">Peer Review</h6>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <form asp-action="Approve" asp-route-id="@Model.TopicId" method="post" class="w-50">
+                            <button type="submit" class="btn btn-success w-100 fw-bold shadow-sm"><i class="ti ti-check me-1"></i> Approve</button>
+                        </form>
+                        <form asp-action="Reject" asp-route-id="@Model.TopicId" method="post" class="w-50">
+                            <button type="submit" class="btn btn-danger w-100 fw-bold shadow-sm"><i class="ti ti-x me-1"></i> Reject</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (Model.Status == "pending_review")
+            {
+                <div class="card-footer bg-light p-3 text-center">
+                    <small class="text-muted"><i class="ti ti-lock me-1"></i> Waiting for another teacher to review this topic.</small>
+                </div>
+            }
+        </div>
+    </div>
+</div>

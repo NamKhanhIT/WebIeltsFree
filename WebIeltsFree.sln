@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36511.14 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebIeltsFree", "WebIeltsFree\WebIeltsFree.csproj", "{4F9F970F-44EF-40BA-BA8F-1EE4890565AD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F9F970F-44EF-40BA-BA8F-1EE4890565AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F9F970F-44EF-40BA-BA8F-1EE4890565AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F9F970F-44EF-40BA-BA8F-1EE4890565AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F9F970F-44EF-40BA-BA8F-1EE4890565AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CDA0C3C2-7CA9-4E33-9504-9CC73385B374}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,224 @@
+@{
+    var skillType = (ViewData["SkillType"]?.ToString() ?? Context.Request.Query["type"].ToString()).ToLower();
+    if (string.IsNullOrEmpty(skillType)) skillType = "reading";
+
+    var skillName = skillType switch {
+        "listening" => "Listening",
+        "reading" => "Reading",
+        "writing" => "Writing",
+        "speaking" => "Speaking",
+        _ => "Skill"
+    };
+    var skillIcon = skillType switch {
+        "listening" => "headphones",
+        "reading" => "book",
+        "writing" => "pencil",
+        "speaking" => "mic",
+        _ => "book"
+    };
+    var skillDesc = skillType switch {
+        "listening" => "Train your ear with structured lessons on audio comprehension, note-taking strategies, and form completion techniques.",
+        "reading" => "Build passage analysis skills with guided lessons on skimming, scanning, paraphrase recognition, and keyword strategies.",
+        "writing" => "Develop your academic writing through lessons on essay structure, Task 1 reports, coherence, and lexical range.",
+        "speaking" => "Prepare for the examiner interview with lessons on fluency, pronunciation, topic development, and Part 2 cue card strategies.",
+        _ => "Master your IELTS skills with structured lessons."
+    };
+    ViewData["Title"] = $"{skillName} — Lesson Library";
+}
+
+@await Html.PartialAsync("~/Views/Learn/_LearnStyles.cshtml")
+
+<div class="learn-shell">
+    <!-- Skill Hero -->
+    <div class="learn-hero">
+        <div class="container">
+            <span class="learn-hero-chip">
+                <i class="bi bi-@skillIcon"></i> @skillName Study Path
+            </span>
+            <h1>@skillName<br/>Lesson Library</h1>
+            <p>@skillDesc</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="learn-breadcrumb">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Courses", "Home")">Courses</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@skillName</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="d-flex flex-wrap gap-3 mt-4 mb-4">
+            <div class="learn-card" style="padding: 16px 22px; flex: 1; min-width: 180px;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="learn-skill-icon @skillType">
+                        <i class="bi bi-@skillIcon"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: var(--learn-muted);">Total Lessons</div>
+                        <div id="statTotalLessons" style="font-size: 1.4rem; font-weight: 700; color: var(--learn-ink);">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="learn-card" style="padding: 16px 22px; flex: 1; min-width: 180px;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(90,143,110,0.1);color:var(--learn-success);">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: var(--learn-muted);">Completed</div>
+                        <div id="statCompleted" style="font-size: 1.4rem; font-weight: 700; color: var(--learn-ink);">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="learn-card" style="padding: 16px 22px; flex: 1; min-width: 180px;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:rgba(196,154,108,0.12);color:var(--learn-accent);">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: var(--learn-muted);">Est. Hours</div>
+                        <div id="statHours" style="font-size: 1.4rem; font-weight: 700; color: var(--learn-ink);">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-2 flex-wrap gap-2">
+            <div>
+                <h2 class="learn-section-title mb-0">Lessons</h2>
+                <p class="learn-section-sub mb-0">Click any lesson to study its content inline.</p>
+            </div>
+        </div>
+
+        <!-- Lessons Grid -->
+        <div id="lessonsContainer" class="learn-grid-lessons">
+            <div style="grid-column: 1 / -1;" class="text-center py-4">
+                <div class="spinner-border" style="color: var(--learn-sage);" role="status">
+                    <span class="visually-hidden">Loading lessons...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inline Lesson Viewer -->
+        @await Html.PartialAsync("~/Views/Learn/_LessonViewer.cshtml")
+
+        <!-- Format Guide -->
+        <div class="learn-info-bar mt-4 learn-fade-in" id="skillFormatGuide">
+            <i class="bi bi-lightbulb"></i>
+            <span>Loading format guide...</span>
+        </div>
+        
+
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("~/Views/Learn/_LessonViewerScripts.cshtml")
+
+    <script>
+        const currentSkillType = '@skillType';
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            setFormatGuide();
+            try {
+                const response = await api(`/lessons/skills/${currentSkillType}`, { method: 'GET' });
+                if (response.success && response.data) {
+                    displayLessons(response.data);
+                } else {
+                    showError(response.message || 'Failed to load lessons');
+                }
+            } catch (error) {
+                console.error('Error loading lessons:', error);
+                showError('Failed to load lessons');
+            }
+        });
+
+        function displayLessons(lessons) {
+            const container = document.getElementById('lessonsContainer');
+
+            // Update stats
+            const total = lessons.length;
+            const completed = lessons.filter(l => (l.completionPercent || 0) >= 100).length;
+            const totalMinutes = lessons.reduce((sum, l) => sum + (l.estimatedMinutes || 30), 0);
+            document.getElementById('statTotalLessons').textContent = total;
+            document.getElementById('statCompleted').textContent = completed;
+            document.getElementById('statHours').textContent = (totalMinutes / 60).toFixed(1);
+
+            if (!lessons || lessons.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1;">
+                        <div class="learn-info-bar">
+                            <i class="bi bi-info-circle"></i>
+                            <span>No ${currentSkillType} lessons available yet. Teachers can add lessons from the Teacher Dashboard.</span>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            const difficultyMeta = {
+                1: { label: 'Beginner', badge: 'learn-badge-sage', icon: 'star' },
+                2: { label: 'Intermediate', badge: 'learn-badge-teal', icon: 'star-half' },
+                3: { label: 'Advanced', badge: 'learn-badge-accent', icon: 'stars' },
+                4: { label: 'Expert', badge: 'learn-badge-success', icon: 'trophy' }
+            };
+
+            container.innerHTML = lessons.map((lesson, index) => {
+                const diff = difficultyMeta[lesson.difficultyLevel] || difficultyMeta[1];
+                const completion = lesson.completionPercent || 0;
+                const isComplete = completion >= 100;
+
+                return `
+                    <div class="learn-card learn-fade-in" data-lesson-id="${lesson.lessonId}" style="animation-delay: ${index * 0.05}s; cursor: pointer;" onclick="openLessonViewer(${lesson.lessonId}, '${currentSkillType}')">
+                        <div class="learn-card-header">
+                            <div>
+                                <span class="learn-badge ${diff.badge}">
+                                    <i class="bi bi-${diff.icon}"></i> ${diff.label}
+                                </span>
+                            </div>
+                            ${isComplete ? '<span class="learn-badge learn-badge-success"><i class="bi bi-check-lg"></i> Done</span>' : ''}
+                        </div>
+                        <h3>${escapeHtml(lesson.title)}</h3>
+                        <div class="d-flex gap-3 mb-3">
+                            <span class="learn-stat"><i class="bi bi-clock"></i> <strong>${lesson.estimatedMinutes || 30}</strong> min</span>
+                        </div>
+                        <div class="learn-progress mb-2">
+                            <div class="lesson-progress-fill" style="width: ${completion}%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="lesson-completion" style="color: var(--learn-muted); font-size: 0.78rem;">${completion}% Complete</small>
+                            <span style="color: var(--learn-sage); font-size: 0.82rem; font-weight: 600;">
+                                <i class="bi bi-arrow-right"></i> Study
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showError(message) {
+            const container = document.getElementById('lessonsContainer');
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1;">
+                    <div class="alert alert-danger mb-0">${escapeHtml(message)}</div>
+                </div>`;
+        }
+
+        function setFormatGuide() {
+            const guide = document.getElementById('skillFormatGuide');
+            const guides = {
+                listening: '<strong>IELTS Listening Format:</strong> 4 parts, 40 questions, ~30 min audio. Focus on form completion, map labeling, matching, and note-taking.',
+                reading: '<strong>IELTS Reading Format:</strong> 3 sections, 40 questions in 60 min. Practice skimming/scanning, paraphrase recognition, and time allocation.',
+                writing: '<strong>IELTS Writing Format:</strong> 2 tasks in 60 min. Task 1 (≥150 words) + Task 2 (≥250 words). Scored on Task Response, Coherence, Lexical Resource, Grammar.',
+                speaking: '<strong>IELTS Speaking Format:</strong> 11–14 min. Part 1 interview, Part 2 cue card (1 min prep + 2 min), Part 3 abstract discussion.'
+            };
+            guide.innerHTML = `<i class="bi bi-lightbulb"></i><span>${guides[currentSkillType] || 'Follow the official 4-skill structure.'}</span>`;
+        }
+    </script>
+}

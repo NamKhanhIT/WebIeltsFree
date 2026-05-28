@@ -1,0 +1,416 @@
+@{
+    ViewData["Title"] = "Your Learning Roadmap";
+    ViewData["Page"] = "roadmap";
+}
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Home")">Dashboard</a></li>
+                    <li class="breadcrumb-item active">AI Learning Roadmap</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="stat-icon bg-ielts" style="flex-shrink: 0;">
+                    <i class="bi bi-map"></i>
+                </div>
+                <div>
+                    <h2 class="mb-0">Your Personalized Learning Path</h2>
+                    <p class="text-muted mb-0">AI-generated roadmap based on your goals</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="currentBandDisplay">--</div>
+                    <div class="stat-label">Current Level</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="bi bi-bullseye"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value text-success" id="targetBandDisplay">--</div>
+                    <div class="stat-label">Target Band</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value text-warning" id="weeksDisplay">--</div>
+                    <div class="stat-label">Weeks Plan</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="bi bi-journal-check"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value text-info" id="lessonsDisplay">--</div>
+                    <div class="stat-label">Total Lessons</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-ielts mb-3" role="status"></div>
+        <p class="text-muted">Loading your roadmap...</p>
+    </div>
+
+    <!-- Roadmap Content -->
+    <div id="roadmapContent" style="display: none;">
+        <div class="row g-4">
+            <!-- Weekly Plan -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-calendar3 me-2"></i>Weekly Study Plan</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary active" data-view="timeline">Timeline</button>
+                            <button class="btn btn-outline-secondary" data-view="list">List</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="weeklyPlanContainer">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skill Focus -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-pie-chart me-2"></i>Skill Focus Areas
+                    </div>
+                    <div class="card-body">
+                        <div id="skillFocusContainer">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Reading</span>
+                                    <span id="readingFocus">25%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="readingBar" class="progress-bar bg-info" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Listening</span>
+                                    <span id="listeningFocus">25%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="listeningBar" class="progress-bar bg-success" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Writing</span>
+                                    <span id="writingFocus">25%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="writingBar" class="progress-bar bg-warning" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Speaking</span>
+                                    <span id="speakingFocus">25%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="speakingBar" class="progress-bar bg-danger" style="width: 25%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-lightning me-2"></i>Quick Actions
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/Home/Tests" class="btn btn-outline-primary">
+                                <i class="bi bi-file-earmark-text me-2"></i>Take Practice Test
+                            </a>
+                            <a href="/Home/Skill?type=writing" class="btn btn-outline-success">
+                                <i class="bi bi-pencil me-2"></i>Learn Writing
+                            </a>
+                            <a href="/Home/Skill?type=speaking" class="btn btn-outline-warning">
+                                <i class="bi bi-mic me-2"></i>Learn Speaking
+                            </a>
+                            <a href="/Home/Courses" class="btn btn-outline-secondary">
+                                <i class="bi bi-collection me-2"></i>Browse All Courses
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle me-2"></i>Study Tips
+                    </div>
+                    <div class="card-body">
+                        <div id="studyTips" class="small">
+                            <div class="tip mb-2">
+                                <i class="bi bi-check-circle text-success me-1"></i>
+                                <span>Study consistently every day</span>
+                            </div>
+                            <div class="tip mb-2">
+                                <i class="bi bi-check-circle text-success me-1"></i>
+                                <span>Focus on your weak areas first</span>
+                            </div>
+                            <div class="tip mb-2">
+                                <i class="bi bi-check-circle text-success me-1"></i>
+                                <span>Practice under timed conditions</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No Roadmap State -->
+    <div id="noRoadmapState" style="display: none;">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-map text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">No Learning Plan Yet</h4>
+                <p class="text-muted mb-4">Take a placement test and set your goals to generate a personalized learning roadmap.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/Home/PlacementTest" class="btn btn-ielts">
+                        <i class="bi bi-clipboard-check me-2"></i>Take Placement Test
+                    </a>
+                    <a href="/Home/Courses" class="btn btn-outline-secondary">
+                        <i class="bi bi-collection me-2"></i>Browse Courses
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .week-item {
+        position: relative;
+        padding-left: 30px;
+        padding-bottom: 20px;
+        border-left: 2px solid var(--bs-gray-300);
+    }
+    .week-item:last-child {
+        border-left: none;
+    }
+    .week-item::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 0;
+        width: 14px;
+        height: 14px;
+        background: var(--ielts-blue);
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px var(--ielts-blue);
+    }
+    .week-item.completed::before {
+        background: var(--bs-success);
+        box-shadow: 0 0 0 2px var(--bs-success);
+    }
+    .week-item.current::before {
+        background: var(--bs-warning);
+        box-shadow: 0 0 0 2px var(--bs-warning);
+        animation: pulse 2s infinite;
+    }
+    @@keyframes pulse {
+        0% { box-shadow: 0 0 0 2px var(--bs-warning); }
+        50% { box-shadow: 0 0 0 6px rgba(var(--bs-warning-rgb), 0.3); }
+        100% { box-shadow: 0 0 0 2px var(--bs-warning); }
+    }
+    .lesson-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-radius: 8px;
+        background: var(--bs-light);
+        margin-bottom: 8px;
+    }
+    .lesson-item:hover {
+        background: var(--bs-gray-200);
+    }
+    .lesson-item .lesson-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+</style>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const progressResponse = await api('/users/progress', { suppressError: true }).catch(() => ({ data: null }));
+            const progress = progressResponse.data;
+            
+            if (progress) {
+                document.getElementById('currentBandDisplay').textContent = 
+                    (progress.currentBand || 5.0).toFixed(1);
+                document.getElementById('targetBandDisplay').textContent = 
+                    (progress.targetBand || 7.0).toFixed(1);
+            }
+
+            const roadmapResponse = await api('/ai/learning-path', { suppressError: true }).catch(async () => {
+                const goalsResponse = await api('/users/goals', { suppressError: true }).catch(() => ({ data: null }));
+                if (goalsResponse.data) {
+                    return await api('/ai/generate-learning-path', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            targetBand: goalsResponse.data.targetBand || 7.0,
+                            studyHoursPerDay: goalsResponse.data.studyHoursPerDay || 2
+                        })
+                    });
+                }
+                return { success: false };
+            });
+
+            document.getElementById('loadingState').style.display = 'none';
+
+            if (roadmapResponse.success && roadmapResponse.data) {
+                document.getElementById('roadmapContent').style.display = 'block';
+                renderRoadmap(roadmapResponse.data);
+            } else {
+                document.getElementById('noRoadmapState').style.display = 'block';
+            }
+
+        } catch (error) {
+            console.error('Error loading roadmap:', error);
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('noRoadmapState').style.display = 'block';
+        }
+    });
+
+    function renderRoadmap(roadmap) {
+        document.getElementById('weeksDisplay').textContent = roadmap.estimatedWeeks || 12;
+        
+        let totalLessons = 0;
+        const weeklyPlan = roadmap.weeklyPlan || [];
+        weeklyPlan.forEach(week => {
+            totalLessons += (week.lessons || []).length;
+        });
+        document.getElementById('lessonsDisplay').textContent = totalLessons;
+
+        const container = document.getElementById('weeklyPlanContainer');
+        container.innerHTML = '';
+
+        if (weeklyPlan.length === 0) {
+            const defaultPlan = generateDefaultPlan(roadmap.estimatedWeeks || 12);
+            renderWeeks(container, defaultPlan);
+        } else {
+            renderWeeks(container, weeklyPlan);
+        }
+    }
+
+    function generateDefaultPlan(weeks) {
+        const skills = ['Reading', 'Listening', 'Writing', 'Speaking'];
+        const plan = [];
+        
+        for (let i = 1; i <= Math.min(weeks, 12); i++) {
+            const focusSkill = skills[(i - 1) % 4];
+            plan.push({
+                weekNumber: i,
+                focusArea: focusSkill,
+                lessons: [
+                    { title: `${focusSkill} Fundamentals`, skill: focusSkill },
+                    { title: `${focusSkill} Practice`, skill: focusSkill },
+                    { title: `Vocabulary Building Week ${i}`, skill: 'Vocabulary' }
+                ]
+            });
+        }
+        return plan;
+    }
+
+    function renderWeeks(container, weeklyPlan) {
+        const currentWeek = 1; 
+
+        weeklyPlan.forEach((week, idx) => {
+            const weekNum = week.weekNumber || idx + 1;
+            const status = weekNum < currentWeek ? 'completed' : weekNum === currentWeek ? 'current' : '';
+            
+            const weekDiv = document.createElement('div');
+            weekDiv.className = `week-item ${status}`;
+            
+            let lessonsHtml = '';
+            const lessons = week.lessons || [];
+            lessons.forEach(lesson => {
+                const skillColors = {
+                    'Reading': 'bg-info',
+                    'Listening': 'bg-success',
+                    'Writing': 'bg-warning',
+                    'Speaking': 'bg-danger',
+                    'Vocabulary': 'bg-primary',
+                    'Grammar': 'bg-secondary'
+                };
+                const skillColor = skillColors[lesson.skill] || 'bg-secondary';
+                
+                lessonsHtml += `
+                    <div class="lesson-item">
+                        <div class="lesson-icon ${skillColor} text-white">
+                            <i class="bi bi-book"></i>
+                        </div>
+                        <div>
+                            <div class="fw-medium">${lesson.title}</div>
+                            <small class="text-muted">${lesson.skill || 'General'}</small>
+                        </div>
+                    </div>
+                `;
+            });
+
+            weekDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">
+                        <span class="badge ${status === 'current' ? 'bg-warning' : status === 'completed' ? 'bg-success' : 'bg-secondary'} me-2">
+                            Week ${weekNum}
+                        </span>
+                        ${week.focusArea || 'Mixed Skills'}
+                    </h6>
+                    ${status === 'current' ? '<span class="badge bg-warning-subtle text-warning">Current</span>' : ''}
+                </div>
+                <div class="lessons-list">
+                    ${lessonsHtml}
+                </div>
+            `;
+            
+            container.appendChild(weekDiv);
+        });
+    }
+</script>
+}

@@ -1,0 +1,550 @@
+@{
+    ViewData["Title"] = "Take IELTS Test";
+    var testId = ViewData["TestId"]?.ToString() ?? "0";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("Tests", "Home")">Practice Tests</a></li>
+                <li class="breadcrumb-item active">Take Test</li>
+            </ol>
+        </nav>
+        <h2 class="mb-1">IELTS Test Interface</h2>
+        <p class="text-muted mb-0">Structured by official IELTS format: Listening, Reading, Writing, Speaking</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-9">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-1" id="testTitle">Loading test...</h5>
+                        <small class="text-muted">Test ID: @testId</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary" id="skillBadge">mixed</span>
+                        <span class="badge bg-dark" id="timerDisplay">00:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Listening Layout -->
+        <div id="layoutListening" class="card d-none mb-4">
+            <div class="card-header"><i class="bi bi-headphones me-2"></i>Listening Section</div>
+            <div class="card-body">
+                <div class="alert alert-light border">
+                    <strong>Instructions:</strong> Listen to the audio, then answer all questions below. You may play the audio as many times as needed during the test.
+                </div>
+                <!-- Audio player - shown only when audio URL is available -->
+                <div id="listeningAudioContainer" class="mb-4 d-none">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-volume-up-fill text-primary fs-5"></i>
+                        <span class="fw-semibold text-primary">Listening Audio</span>
+                    </div>
+                    <audio id="listeningAudio" controls class="w-100" style="border-radius:8px;">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                <!-- No audio notice -->
+                <div id="listeningNoAudio" class="alert alert-warning mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    No audio file has been attached to this listening section. Answer based on the question text.
+                </div>
+                <div id="listeningQuestions"></div>
+            </div>
+        </div>
+
+        <!-- Reading Layout -->
+        <div id="layoutReading" class="card d-none mb-4">
+            <div class="card-header"><i class="bi bi-book me-2"></i>Reading (3 Sections - 40 Questions)</div>
+            <div class="card-body">
+                <div class="alert alert-light border">
+                    <strong>Format:</strong> 60 minutes. Common tasks: True/False/Not Given, matching headings, sentence/summary/table completion, multiple-choice.
+                </div>
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="mb-2">Passage</h6>
+                            <div id="readingPassage" style="max-height:420px; overflow:auto;"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="mb-2">Questions</h6>
+                            <div id="readingQuestions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Writing Layout -->
+        <div id="layoutWriting" class="card d-none mb-4">
+            <div class="card-header"><i class="bi bi-pencil-square me-2"></i>Writing (2 Tasks - 60 Minutes)</div>
+            <div class="card-body">
+                <div class="alert alert-light border">
+                    <strong>Format:</strong> Task 1 (>=150 words, chart/map/process), Task 2 (>=250 words, essay types: opinion/discussion/problem-solution/advantages-disadvantages).
+                </div>
+                <div class="mb-3">
+                    <h6>Task 1 Prompt</h6>
+                    <p id="writingTask1Prompt" class="mb-2">Describe the visual information presented in the chart.</p>
+                    <textarea id="writingTask1Answer" class="form-control" rows="6" placeholder="Write Task 1 response..."></textarea>
+                    <small class="text-muted" id="task1Count">0 words</small>
+                </div>
+                <hr />
+                <div>
+                    <h6>Task 2 Prompt</h6>
+                    <p id="writingTask2Prompt" class="mb-2">Some people think public transport should be free. Discuss both views and give your opinion.</p>
+                    <textarea id="writingTask2Answer" class="form-control" rows="10" placeholder="Write Task 2 essay..."></textarea>
+                    <small class="text-muted" id="task2Count">0 words</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Speaking Layout -->
+        <div id="layoutSpeaking" class="card d-none mb-4">
+            <div class="card-header"><i class="bi bi-mic me-2"></i>Speaking (3 Parts - 11 to 14 Minutes)</div>
+            <div class="card-body">
+                <div class="alert alert-light border">
+                    <strong>Format:</strong> Part 1 Interview, Part 2 Long Turn (1 min prepare + 1-2 min speak), Part 3 Discussion.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Speaking Part</label>
+                    <select id="speakingPart" class="form-select">
+                        <option value="part1">Part 1 - Introduction and Interview</option>
+                        <option value="part2">Part 2 - Individual Long Turn</option>
+                        <option value="part3">Part 3 - Two-way Discussion</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <strong>Prompt:</strong>
+                    <p id="speakingPrompt" class="mb-0">Describe a memorable event in your life.</p>
+                </div>
+                <textarea id="speakingTranscript" class="form-control" rows="6" placeholder="Transcript will appear here..." readonly></textarea>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-secondary" id="prevSectionBtn"><i class="bi bi-arrow-left me-1"></i>Previous</button>
+            <button class="btn btn-outline-primary" id="nextSectionBtn">Next<i class="bi bi-arrow-right ms-1"></i></button>
+            <button class="btn btn-ielts ms-auto" id="submitTestBtn"><i class="bi bi-send me-1"></i>Submit Test</button>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-grid-3x3-gap me-2"></i>Question Navigator</div>
+            <div class="card-body">
+                <div id="questionNav" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>IELTS Structure</div>
+            <div class="card-body">
+                <ul class="mb-0 ps-3">
+                    <li>Listening: 4 parts, 40 questions</li>
+                    <li>Reading: 3 sections, 40 questions</li>
+                    <li>Writing: 2 tasks (150/250 words)</li>
+                    <li>Speaking: 3 parts (11-14 min)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const testId = Number('@testId');
+    let currentSkill = 'mixed';
+    let durationSeconds = 0;
+    let timerInterval = null;
+    let testData = null;
+    let sectionKeys = ['listening', 'reading', 'writing', 'speaking'];
+    let sectionIndex = 0;
+    let writingPromptTask1 = null;
+    let writingPromptTask2 = null;
+    let speakingTopicsByPart = { "1": [], "2": [], "3": [] };
+
+    function cleanQuestionText(text) {
+        if (!text) return '';
+        return text.replace(/^(?:Q|Question)\s*\d+[:.\s]*/i, '').trim();
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadTest();
+        await preloadSkillContent();
+        bindEvents();
+    });
+
+    async function preloadSkillContent() {
+        try {
+            const [w1, w2, s1, s2, s3] = await Promise.all([
+                api('/writing/prompts?taskType=1', { method: 'GET' }),
+                api('/writing/prompts?taskType=2', { method: 'GET' }),
+                api('/speaking/topics?part=1', { method: 'GET' }),
+                api('/speaking/topics?part=2', { method: 'GET' }),
+                api('/speaking/topics?part=3', { method: 'GET' })
+            ]);
+            const p1 = w1?.success ? (w1.data || []) : [];
+            const p2 = w2?.success ? (w2.data || []) : [];
+            writingPromptTask1 = p1.length ? p1[0] : null;
+            writingPromptTask2 = p2.length ? p2[0] : null;
+            speakingTopicsByPart["1"] = s1?.success ? (s1.data || []) : [];
+            speakingTopicsByPart["2"] = s2?.success ? (s2.data || []) : [];
+            speakingTopicsByPart["3"] = s3?.success ? (s3.data || []) : [];
+            bindWritingPrompts();
+            bindSpeakingPromptByPart();
+        } catch {
+            // Keep default placeholder text
+        }
+    }
+
+    async function loadTest() {
+        try {
+            const response = await api(`/tests/${testId}`, { method: 'GET' });
+            if (!response?.success || !response?.data) {
+                showToast('Could not load test', 'error');
+                return;
+            }
+
+            testData = response.data;
+            document.getElementById('testTitle').textContent = testData.title || `IELTS Test #${testId}`;
+            currentSkill = detectSkill(testData.sections || []);
+            document.getElementById('skillBadge').textContent = currentSkill;
+
+            const minutes = testData.durationMinutes || getDefaultDuration(currentSkill);
+            durationSeconds = minutes * 60;
+            renderBySkill(currentSkill, testData);
+            buildQuestionNavigator(testData);
+            startTimer();
+        } catch {
+            showToast('Failed to load test data', 'error');
+        }
+    }
+
+    function detectSkill(sections) {
+        if (!sections.length) return 'mixed';
+        const first = (sections[0].skillType || '').toLowerCase();
+        if (['listening', 'reading', 'writing', 'speaking'].includes(first)) return first;
+        return 'mixed';
+    }
+
+    function getDefaultDuration(skill) {
+        if (skill === 'listening') return 40; // 30 + 10 transfer
+        if (skill === 'reading') return 60;
+        if (skill === 'writing') return 60;
+        if (skill === 'speaking') return 14;
+        return 60;
+    }
+
+    function renderBySkill(skill, data) {
+        ['layoutListening', 'layoutReading', 'layoutWriting', 'layoutSpeaking']
+            .forEach(id => document.getElementById(id).classList.add('d-none'));
+
+        if (skill === 'listening') {
+            document.getElementById('layoutListening').classList.remove('d-none');
+            renderListeningQuestions(data);
+            sectionKeys = ['listening'];
+            sectionIndex = 0;
+            return;
+        }
+
+        if (skill === 'reading') {
+            document.getElementById('layoutReading').classList.remove('d-none');
+            renderReadingQuestions(data);
+            sectionKeys = ['reading'];
+            sectionIndex = 0;
+            return;
+        }
+
+        if (skill === 'writing') {
+            document.getElementById('layoutWriting').classList.remove('d-none');
+            initWritingCounters();
+            bindWritingPrompts();
+            sectionKeys = ['writing'];
+            sectionIndex = 0;
+            return;
+        }
+
+        if (skill === 'speaking') {
+            document.getElementById('layoutSpeaking').classList.remove('d-none');
+            bindSpeakingPromptByPart();
+            sectionKeys = ['speaking'];
+            sectionIndex = 0;
+            return;
+        }
+
+        // Mixed: show sequential sections using next/prev
+        sectionKeys = ['listening', 'reading', 'writing', 'speaking'];
+        sectionIndex = 0;
+        showMixedSection(sectionKeys[sectionIndex], data);
+    }
+
+    function showMixedSection(section, data) {
+        ['layoutListening', 'layoutReading', 'layoutWriting', 'layoutSpeaking']
+            .forEach(id => document.getElementById(id).classList.add('d-none'));
+        if (section === 'listening') {
+            document.getElementById('layoutListening').classList.remove('d-none');
+            renderListeningQuestions(data);
+        } else if (section === 'reading') {
+            document.getElementById('layoutReading').classList.remove('d-none');
+            renderReadingQuestions(data);
+        } else if (section === 'writing') {
+            document.getElementById('layoutWriting').classList.remove('d-none');
+            initWritingCounters();
+            bindWritingPrompts();
+        } else if (section === 'speaking') {
+            document.getElementById('layoutSpeaking').classList.remove('d-none');
+            bindSpeakingPromptByPart();
+        }
+        document.getElementById('skillBadge').textContent = section;
+    }
+
+    function renderListeningQuestions(data) {
+        const container = document.getElementById('listeningQuestions');
+        const audioEl = document.getElementById('listeningAudio');
+        const audioContainer = document.getElementById('listeningAudioContainer');
+        const noAudioEl = document.getElementById('listeningNoAudio');
+
+        // Find the listening section and get its audioUrl
+        const listeningSections = (data.sections || []).filter(s =>
+            (s.skillType || '').toLowerCase() === 'listening'
+        );
+        const audioUrl = listeningSections.length > 0 ? listeningSections[0].audioUrl : null;
+
+        if (audioUrl) {
+            audioEl.src = audioUrl;
+            audioEl.load();
+            audioContainer.classList.remove('d-none');
+            noAudioEl.classList.add('d-none');
+        } else {
+            audioContainer.classList.add('d-none');
+            noAudioEl.classList.remove('d-none');
+        }
+
+        const questions = flattenQuestions(data);
+        container.innerHTML = questions.map((q, idx) => `
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Q${idx + 1}. ${cleanQuestionText(q.questionText)}</label>
+                <input class="form-control test-answer" data-question-id="${q.questionId}" placeholder="Type answer..." />
+            </div>
+        `).join('') || '<p class="text-muted mb-0">No listening questions.</p>';
+    }
+
+    function renderReadingQuestions(data) {
+        const questions = flattenQuestions(data);
+        document.getElementById('readingPassage').innerHTML = `
+            <p>This reading passage area follows IELTS format with scrollable text and side-by-side questions.</p>
+            <p>Use scanning and skimming strategies to answer accurately.</p>
+        `;
+        document.getElementById('readingQuestions').innerHTML = questions.map((q, idx) => `
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Q${idx + 1}. ${cleanQuestionText(q.questionText)}</label>
+                <input class="form-control test-answer" data-question-id="${q.questionId}" placeholder="Type answer..." />
+            </div>
+        `).join('') || '<p class="text-muted mb-0">No reading questions.</p>';
+    }
+
+    function initWritingCounters() {
+        const t1 = document.getElementById('writingTask1Answer');
+        const t2 = document.getElementById('writingTask2Answer');
+        const c1 = document.getElementById('task1Count');
+        const c2 = document.getElementById('task2Count');
+
+        const update = () => {
+            c1.textContent = `${countWords(t1.value)} words`;
+            c2.textContent = `${countWords(t2.value)} words`;
+        };
+        t1.addEventListener('input', update);
+        t2.addEventListener('input', update);
+        update();
+    }
+
+    function countWords(text) {
+        return (text.trim().match(/\S+/g) || []).length;
+    }
+
+    function flattenQuestions(data) {
+        return (data.sections || []).flatMap(s => s.questions || []);
+    }
+
+    function buildQuestionNavigator(data) {
+        const nav = document.getElementById('questionNav');
+        const questions = flattenQuestions(data);
+        nav.innerHTML = questions.map((q, idx) => `<button type="button" class="btn btn-sm btn-outline-secondary">${idx + 1}</button>`).join('');
+    }
+
+    function bindEvents() {
+        document.getElementById('prevSectionBtn').addEventListener('click', () => {
+            if (currentSkill !== 'mixed') return;
+            if (sectionIndex <= 0) return;
+            sectionIndex--;
+            showMixedSection(sectionKeys[sectionIndex], testData);
+        });
+
+        document.getElementById('nextSectionBtn').addEventListener('click', () => {
+            if (currentSkill !== 'mixed') return;
+            if (sectionIndex >= sectionKeys.length - 1) return;
+            sectionIndex++;
+            showMixedSection(sectionKeys[sectionIndex], testData);
+        });
+
+        document.getElementById('submitTestBtn').addEventListener('click', submitTest);
+        document.getElementById('speakingPart').addEventListener('change', bindSpeakingPromptByPart);
+    }
+
+    function collectAnswers() {
+        const answers = [];
+        document.querySelectorAll('.test-answer').forEach(input => {
+            const qid = Number(input.dataset.questionId);
+            answers.push({ questionId: qid, answer: input.value || '' });
+        });
+
+        // Writing pseudo answers if writing test
+        if (currentSkill === 'writing' || currentSkill === 'mixed') {
+            const task1 = document.getElementById('writingTask1Answer')?.value || '';
+            const task2 = document.getElementById('writingTask2Answer')?.value || '';
+            if (task1) answers.push({ questionId: -1001, answer: task1 });
+            if (task2) answers.push({ questionId: -1002, answer: task2 });
+        }
+
+        // Speaking transcript if present
+        if (currentSkill === 'speaking' || currentSkill === 'mixed') {
+            const transcript = document.getElementById('speakingTranscript')?.value || '';
+            if (transcript) answers.push({ questionId: -2001, answer: transcript });
+        }
+
+        return answers;
+    }
+
+    async function submitTest() {
+        if (!Auth.isLoggedIn()) {
+            showToast('Please login to submit test', 'info');
+            return;
+        }
+
+        const answers = collectAnswers().filter(a => a.questionId > 0); // submit only real question ids
+        if (!answers.length) {
+            showToast('Please answer at least one question', 'error');
+            return;
+        }
+
+        try {
+            const response = await api('/tests/submit', {
+                method: 'POST',
+                body: JSON.stringify({
+                    testId: testId,
+                    answers: answers
+                })
+            });
+
+            if (response?.success && response?.data) {
+                showToast(`Submitted. Estimated band: ${response.data.bandScore}`, 'success');
+                if (currentSkill === 'writing' || currentSkill === 'mixed') {
+                    await submitWritingForAiFeedback();
+                }
+                if (currentSkill === 'speaking' || currentSkill === 'mixed') {
+                    await submitSpeakingForAiFeedback();
+                }
+            } else {
+                showToast(response?.message || 'Submit failed', 'error');
+            }
+        } catch {
+            showToast('Submit failed', 'error');
+        }
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        renderTimer();
+        timerInterval = setInterval(() => {
+            if (durationSeconds <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                showToast('Time is up', 'info');
+                return;
+            }
+            durationSeconds -= 1;
+            renderTimer();
+        }, 1000);
+    }
+
+    function renderTimer() {
+        const mm = String(Math.floor(durationSeconds / 60)).padStart(2, '0');
+        const ss = String(durationSeconds % 60).padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = `${mm}:${ss}`;
+    }
+
+    function bindWritingPrompts() {
+        if (writingPromptTask1?.prompt) {
+            document.getElementById('writingTask1Prompt').textContent = writingPromptTask1.prompt;
+        }
+        if (writingPromptTask2?.prompt) {
+            document.getElementById('writingTask2Prompt').textContent = writingPromptTask2.prompt;
+        }
+    }
+
+    function bindSpeakingPromptByPart() {
+        const part = (document.getElementById('speakingPart').value || 'part1').replace('part', '');
+        const pool = speakingTopicsByPart[part] || [];
+        const prompt = pool.length ? pool[Math.floor(Math.random() * pool.length)].topic : null;
+        if (prompt) {
+            document.getElementById('speakingPrompt').textContent = prompt;
+        }
+    }
+
+    async function submitWritingForAiFeedback() {
+        if (!Auth.isLoggedIn()) return;
+        const task1Text = (document.getElementById('writingTask1Answer')?.value || '').trim();
+        const task2Text = (document.getElementById('writingTask2Answer')?.value || '').trim();
+        try {
+            if (task1Text && writingPromptTask1?.prompt) {
+                await api('/writing/submit', {
+                    method: 'POST',
+                    body: JSON.stringify({ prompt: writingPromptTask1.prompt, essayText: task1Text, taskType: 1 })
+                });
+            }
+            if (task2Text && writingPromptTask2?.prompt) {
+                await api('/writing/submit', {
+                    method: 'POST',
+                    body: JSON.stringify({ prompt: writingPromptTask2.prompt, essayText: task2Text, taskType: 2 })
+                });
+            }
+        } catch {
+            // Test submission already succeeded; skip secondary feedback failure
+        }
+    }
+
+    async function submitSpeakingForAiFeedback() {
+        if (!Auth.isLoggedIn()) return;
+        const transcript = (document.getElementById('speakingTranscript')?.value || '').trim();
+        if (!transcript) return;
+        const topic = document.getElementById('speakingPrompt')?.textContent || 'IELTS speaking topic';
+        try {
+            const started = await api('/speaking/start', {
+                method: 'POST',
+                body: JSON.stringify({ topic: topic })
+            });
+            const sessionId = started?.success ? started.data?.sessionId : 0;
+            if (!sessionId) return;
+            await api('/speaking/submit-audio', {
+                method: 'POST',
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    audioData: 'take-test-transcript',
+                    transcript: transcript
+                })
+            });
+        } catch {
+            // Keep primary test flow successful
+        }
+    }
+</script>
+}

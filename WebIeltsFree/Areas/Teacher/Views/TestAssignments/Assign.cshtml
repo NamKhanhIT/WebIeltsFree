@@ -1,0 +1,156 @@
+@model WebIeltsFree.Models.TeacherAssignment
+
+@{
+    ViewData["Title"] = "Assign Test / Peer Task";
+    var students = ViewBag.Students as IEnumerable<WebIeltsFree.Models.User>;
+    var tests = ViewBag.Tests as IEnumerable<WebIeltsFree.Models.Test>;
+    var selectedTestId = ViewBag.SelectedTestId as int?;
+    var isFromCreate = selectedTestId.HasValue;
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="ti ti-arrow-left me-1"></i>Back to Assignments
+    </a>
+    <div class="d-flex align-items-center gap-3 mb-1">
+        <h1 class="fs-3 mb-0">
+            @if (isFromCreate)
+            {
+                <i class="ti ti-send text-primary me-2"></i>@:Submit to Peer Teacher
+            }
+            else
+            {
+                <i class="ti ti-playlist-add text-primary me-2"></i>@:Assign Test / Peer Task
+            }
+        </h1>
+    </div>
+    <p class="text-muted mb-0">
+        @if (isFromCreate)
+        {
+            @:Your test template was created successfully. Now assign it to a peer teacher or candidate below.
+        }
+        else
+        {
+            @:Assign a test to a specific student, or send a P2P task to a peer teacher with instructions and a deadline.
+        }
+    </p>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="ti ti-circle-check me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 p-4">
+            @if (isFromCreate)
+            {
+                <div class="alert alert-info border-0 rounded-3 mb-4 d-flex align-items-start gap-2">
+                    <i class="ti ti-info-circle fs-5 mt-1 text-info flex-shrink-0"></i>
+                    <div>
+                        <strong>Test created!</strong> The test has been saved to the system. You can now assign it to a peer teacher or student below, or <a asp-action="Index" class="alert-link">skip and go back</a>.
+                    </div>
+                </div>
+            }
+
+            <form asp-action="Assign" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label for="testId" class="form-label fw-semibold">
+                        <i class="ti ti-clipboard-text me-1 text-primary"></i>Select Test
+                    </label>
+                    <select id="testId" name="testId" class="form-select form-select-lg border-2" required>
+                        <option value="">-- Choose a Test --</option>
+                        @foreach (var test in tests!)
+                        {
+                            var isSelected = selectedTestId.HasValue && selectedTestId.Value == test.TestId;
+                            <option value="@test.TestId" selected="@(isSelected ? "selected" : null)">
+                                @test.Title @(test.IsTeacherCreated == true ? "(Teacher Created)" : "")
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="studentId" class="form-label fw-semibold">
+                        <i class="ti ti-user me-1 text-primary"></i>Select Recipient
+                    </label>
+                    <select id="studentId" name="studentId" class="form-select form-select-lg border-2" required>
+                        <option value="">-- Choose Recipient --</option>
+                        @{
+                            var teachers = students!.Where(s => s.Role == "teacher" || s.Role == "admin").ToList();
+                            var learners = students!.Where(s => s.Role == "student").ToList();
+                        }
+                        @if (teachers.Any())
+                        {
+                            <optgroup label="Peer Teachers / Admins">
+                                @foreach (var t in teachers)
+                                {
+                                    <option value="@t.UserId">@(t.Profile?.FullName ?? t.Email) (@t.Email)</option>
+                                }
+                            </optgroup>
+                        }
+                        @if (learners.Any())
+                        {
+                            <optgroup label="Students">
+                                @foreach (var s in learners)
+                                {
+                                    <option value="@s.UserId">@(s.Profile?.FullName ?? s.Email) (@s.Email)</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="title" class="form-label fw-semibold">
+                        <i class="ti ti-tag me-1 text-primary"></i>Assignment Title
+                    </label>
+                    <input type="text" id="title" name="title" class="form-control form-control-lg border-2"
+                           required placeholder="e.g. Weekly Peer Review - Reading Test" />
+                </div>
+
+                <div class="mb-4">
+                    <label for="instructions" class="form-label fw-semibold">
+                        <i class="ti ti-notes me-1 text-primary"></i>Instructions <small class="text-muted fw-normal">(Optional)</small>
+                    </label>
+                    <textarea id="instructions" name="instructions" class="form-control border-2" rows="3"
+                              placeholder="Provide any specific instructions for the recipient..."></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="deadline" class="form-label fw-semibold">
+                        <i class="ti ti-calendar-due me-1 text-primary"></i>Deadline <small class="text-muted fw-normal">(Optional)</small>
+                    </label>
+                    <input type="datetime-local" id="deadline" name="deadline" class="form-control form-control-lg border-2" />
+                    <div class="form-text">Leave empty for a self-paced assignment.</div>
+                </div>
+
+                <div class="d-flex gap-2 pt-2 border-top mt-2">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="ti ti-send me-2"></i>
+                        @(isFromCreate ? "Send to Peer" : "Assign Test")
+                    </button>
+                    <a asp-action="Index" class="btn btn-light btn-lg">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4 d-none d-md-block">
+        <div class="card border-0 bg-light shadow-sm p-3" style="position: sticky; top: 100px;">
+            <h6 class="fw-bold mb-3"><i class="ti ti-info-circle text-info me-1"></i>Assignment Tips</h6>
+            <ul class="small text-muted ps-3 mb-0" style="line-height: 1.8;">
+                <li class="mb-2"><strong>Peer-to-Peer (P2P):</strong> Select a teacher to send them this test as a review or training task.</li>
+                <li class="mb-2"><strong>Student Assignment:</strong> Select a student to assign it for their practice or exam.</li>
+                <li class="mb-2"><strong>Deadline:</strong> Set a deadline to automatically mark it as overdue if not completed.</li>
+                <li><strong>Instructions:</strong> Use this field to provide notes, references, or marking criteria.</li>
+            </ul>
+        </div>
+    </div>
+</div>

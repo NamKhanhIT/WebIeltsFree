@@ -1,0 +1,610 @@
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    ViewData["Page"] = "dashboard";
+}
+
+
+<!-- Onboarding Tutorial Overlay -->
+<div id="tutorialOverlay" class="tutorial-overlay" style="display: none;">
+    <div class="tutorial-backdrop"></div>
+    <div class="tutorial-content">
+        <div class="tutorial-card">
+            <div class="tutorial-step" data-step="1">
+                <div class="text-center mb-4">
+                    <i class="bi bi-emoji-smile text-warning" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="text-center mb-3">Welcome to IELTS Learning Platform!</h3>
+                <p class="text-muted text-center">
+                    We'll help you achieve your IELTS goals with AI-powered learning. Let's take a quick tour!
+                </p>
+            </div>
+            <div class="tutorial-step" data-step="2" style="display: none;">
+                <div class="text-center mb-4">
+                    <i class="bi bi-speedometer2 text-primary" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="text-center mb-3">Your Dashboard</h3>
+                <p class="text-muted text-center">
+                    Track your progress, see your current band score, and get personalized recommendations here.
+                </p>
+            </div>
+            <div class="tutorial-step" data-step="3" style="display: none;">
+                <div class="text-center mb-4">
+                    <i class="bi bi-robot text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="text-center mb-3">AI-Powered Learning</h3>
+                <p class="text-muted text-center">
+                    Our AI tutor provides personalized feedback on Writing and Speaking, plus answers your IELTS questions.
+                </p>
+            </div>
+            <div class="tutorial-step" data-step="4" style="display: none;">
+                <div class="text-center mb-4">
+                    <i class="bi bi-file-earmark-text text-info" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="text-center mb-3">Practice Tests & Lessons</h3>
+                <p class="text-muted text-center">
+                    Take mock tests, practice writing essays, and improve your speaking with guided exercises.
+                </p>
+            </div>
+            <div class="tutorial-step" data-step="5" style="display: none;">
+                <div class="text-center mb-4">
+                    <i class="bi bi-clipboard-check text-warning" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="text-center mb-3">Let's Find Your Level!</h3>
+                <p class="text-muted text-center">
+                    Take a quick placement test so we can create a personalized learning path just for you.
+                </p>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <button id="tutorialPrev" class="btn btn-outline-secondary" style="visibility: hidden;">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </button>
+                <div class="tutorial-dots">
+                    <span class="dot active" data-step="1"></span>
+                    <span class="dot" data-step="2"></span>
+                    <span class="dot" data-step="3"></span>
+                    <span class="dot" data-step="4"></span>
+                    <span class="dot" data-step="5"></span>
+                </div>
+                <button id="tutorialNext" class="btn btn-ielts">
+                    Next<i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Placement Test Modal -->
+<div class="modal fade" id="placementModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-search text-ielts" style="font-size: 4rem;"></i>
+                </div>
+                <h3>Find Your IELTS Level</h3>
+                <p class="text-muted mb-4">
+                    Take a short placement test (10-15 min) so the AI can understand your English level and create a personalized study plan.
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="/Home/PlacementTest" class="btn btn-ielts btn-lg">
+                        <i class="bi bi-play-fill me-2"></i>Start Placement Test
+                    </a>
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="skipPlacement()">
+                        Skip for now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════ BLOCKING BANNER: Teacher Roadmap Suggestion ══════ -->
+<div id="blockingBanner" class="mb-4" style="display: none;">
+    <div class="card border-warning shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-warning">Action Required: Teacher Suggestion Pending</h5>
+                    <small class="text-muted">You cannot study until you accept or reject the suggestions below.</small>
+                </div>
+            </div>
+            <div id="suggestionsList"></div>
+        </div>
+    </div>
+</div>
+<!-- ══════ END BLOCKING BANNER ══════ -->
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-1" id="welcomeHeading">Welcome back, @User.GetFullName()!</h2>
+        <p class="text-muted">Continue your IELTS journey</p>
+    </div>
+</div>
+
+<!-- Progress Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-ielts">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="currentBand">--</div>
+                <div class="stat-label">Current Band</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-success">
+                <i class="bi bi-bullseye"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-success" id="targetBand">--</div>
+                <div class="stat-label">Target Band</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-info">
+                <i class="bi bi-journal-check"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-info" id="lessonsCompleted">0</div>
+                <div class="stat-label">Lessons Done</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning">
+                <i class="bi bi-fire"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-warning" id="streak">0</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Skills Progress -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bar-chart me-2"></i>Skills Progress</span>
+                <a href="@Url.Action("Tests", "Home")" class="btn btn-sm btn-ielts">Take Test</a>
+            </div>
+            <div class="card-body">
+                <div class="skill-progress-row">
+                    <div class="skill-badge skill-reading"><i class="bi bi-book"></i> Reading</div>
+                    <div class="progress flex-grow-1 mx-3">
+                        <div class="progress-bar bg-reading" id="readingProgress" style="width: 0%"></div>
+                    </div>
+                    <span class="fw-bold" id="readingScore">--</span>
+                </div>
+                <div class="skill-progress-row">
+                    <div class="skill-badge skill-listening"><i class="bi bi-headphones"></i> Listening</div>
+                    <div class="progress flex-grow-1 mx-3">
+                        <div class="progress-bar bg-listening" id="listeningProgress" style="width: 0%"></div>
+                    </div>
+                    <span class="fw-bold" id="listeningScore">--</span>
+                </div>
+                <div class="skill-progress-row">
+                    <div class="skill-badge skill-writing"><i class="bi bi-pencil"></i> Writing</div>
+                    <div class="progress flex-grow-1 mx-3">
+                        <div class="progress-bar bg-writing" id="writingProgress" style="width: 0%"></div>
+                    </div>
+                    <span class="fw-bold" id="writingScore">--</span>
+                </div>
+                <div class="skill-progress-row mb-0">
+                    <div class="skill-badge skill-speaking"><i class="bi bi-mic"></i> Speaking</div>
+                    <div class="progress flex-grow-1 mx-3">
+                        <div class="progress-bar bg-speaking" id="speakingProgress" style="width: 0%"></div>
+                    </div>
+                    <span class="fw-bold" id="speakingScore">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-robot me-2"></i>AI Recommendations
+            </div>
+            <div class="card-body" id="recommendations">
+                <div class="recommendation-item mb-3 p-3 rounded bg-light-danger">
+                    <div class="fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle me-1"></i>Focus: Speaking</div>
+                    <small>Practice speaking daily to reach your target.</small>
+                </div>
+                <div class="recommendation-item mb-3 p-3 rounded bg-light-warning">
+                    <div class="fw-bold text-warning mb-1"><i class="bi bi-pencil me-1"></i>Writing Practice</div>
+                    <small>Submit essays for AI feedback this week.</small>
+                </div>
+                <div class="recommendation-item p-3 rounded bg-light-blue">
+                    <div class="fw-bold text-primary mb-1"><i class="bi bi-book me-1"></i>Vocabulary</div>
+                    <small>Learn 10 academic words daily.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Learning Roadmap -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-map me-2"></i>My Learning Roadmap</span>
+                <a href="/Home/AiRoadmap" class="btn btn-sm btn-outline-primary">View Full Roadmap</a>
+            </div>
+            <div class="card-body" id="roadmapLessons">
+                <div class="text-center py-4" id="roadmapLoading">
+                    <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                    <span class="text-muted">Loading roadmap...</span>
+                </div>
+                <div id="roadmapContent" style="display: none;">
+                    <!-- Roadmap lessons will be loaded here -->
+                </div>
+                <div id="noRoadmap" style="display: none;" class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-signpost-split text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5>You don't have a learning roadmap yet</h5>
+                    <p class="text-muted mb-3">Take the placement test to get a personalized learning path!</p>
+                    <a href="/Home/PlacementTest" class="btn btn-ielts">
+                        <i class="bi bi-play-fill me-1"></i>Take Placement Test
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions & Recent Activity -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning me-2"></i>Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="@Url.Action("Tests", "Home")" class="action-card">
+                            <div class="action-icon bg-light-blue">
+                                <i class="bi bi-clipboard-check text-primary"></i>
+                            </div>
+                            <div class="action-label">Practice Test</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="@Url.Action("Practice", "Home", new { type = "writing" })" class="action-card">
+                            <div class="action-icon bg-light-success">
+                                <i class="bi bi-pencil text-success"></i>
+                            </div>
+                            <div class="action-label">Write Essay</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="@Url.Action("Practice", "Home", new { type = "speaking" })" class="action-card">
+                            <div class="action-icon bg-light-danger">
+                                <i class="bi bi-mic text-danger"></i>
+                            </div>
+                            <div class="action-label">Speaking</div>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="@Url.Action("AiTutor", "Home")" class="action-card">
+                            <div class="action-icon bg-light-warning">
+                                <i class="bi bi-robot text-warning"></i>
+                            </div>
+                            <div class="action-label">AI Tutor</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-2"></i>Recent Activity
+            </div>
+            <div class="card-body" id="recentActivity">
+                <div class="activity-item">
+                    <div class="activity-icon skill-writing"><i class="bi bi-pencil"></i></div>
+                    <div class="activity-content">
+                        <div class="fw-bold">Writing Task 2</div>
+                        <small class="text-muted">Band 6.5 • 2 hours ago</small>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon skill-reading"><i class="bi bi-book"></i></div>
+                    <div class="activity-content">
+                        <div class="fw-bold">Reading Lesson 5</div>
+                        <small class="text-muted">Completed • Yesterday</small>
+                    </div>
+                </div>
+                <div class="activity-item mb-0">
+                    <div class="activity-icon skill-listening"><i class="bi bi-headphones"></i></div>
+                    <div class="activity-content">
+                        <div class="fw-bold">Listening Test</div>
+                        <small class="text-muted">Band 5.5 • 2 days ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+    .tutorial-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2000;
+    }
+    .tutorial-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+    }
+    .tutorial-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 500px;
+    }
+    .tutorial-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .tutorial-dots {
+        display: flex;
+        gap: 8px;
+    }
+    .tutorial-dots .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--bs-gray-300);
+        cursor: pointer;
+    }
+    .tutorial-dots .dot.active {
+        background: var(--ielts-blue);
+    }
+    .lesson-card-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .lesson-card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+</style>
+<script>
+    // Onboarding Controller
+    const Onboarding = {
+        currentStep: 1,
+        totalSteps: 5,
+        
+        async init() {
+            try {
+                // Check onboarding status
+                const status = await api('/users/onboarding-status', { suppressError: true }).catch(() => ({ 
+                    data: { hasCompletedTutorial: true, hasPlacement: true, hasGoals: true, hasRoadmap: true }
+                }));
+                
+                if (status.data) {
+                    // Only show tutorial/placement if user has NO roadmap yet
+                    if (!status.data.hasRoadmap) {
+                        // Show tutorial if not completed
+                        if (!status.data.hasCompletedTutorial) {
+                            this.showTutorial();
+                        }
+                        // Show placement modal if tutorial done but no placement
+                        else if (!status.data.hasPlacement) {
+                            setTimeout(() => {
+                                new bootstrap.Modal(document.getElementById('placementModal')).show();
+                            }, 1000);
+                        }
+                    }
+                    // If user already has roadmap, hide the "no roadmap" section
+                    // (Dashboard.loadRoadmap will handle showing the lessons)
+                }
+            } catch (e) {
+                console.log('Onboarding check failed, continuing normally');
+            }
+        },
+        
+        showTutorial() {
+            document.getElementById('tutorialOverlay').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            
+            document.getElementById('tutorialNext').addEventListener('click', () => this.nextStep());
+            document.getElementById('tutorialPrev').addEventListener('click', () => this.prevStep());
+            
+            // Dot clicks
+            document.querySelectorAll('.tutorial-dots .dot').forEach(dot => {
+                dot.addEventListener('click', () => {
+                    this.goToStep(parseInt(dot.dataset.step));
+                });
+            });
+        },
+        
+        nextStep() {
+            if (this.currentStep < this.totalSteps) {
+                this.currentStep++;
+                this.updateDisplay();
+            } else {
+                this.completeTutorial();
+            }
+        },
+        
+        prevStep() {
+            if (this.currentStep > 1) {
+                this.currentStep--;
+                this.updateDisplay();
+            }
+        },
+        
+        goToStep(step) {
+            this.currentStep = step;
+            this.updateDisplay();
+        },
+        
+        updateDisplay() {
+            // Hide all steps
+            document.querySelectorAll('.tutorial-step').forEach(s => s.style.display = 'none');
+            // Show current
+            document.querySelector(`.tutorial-step[data-step="${this.currentStep}"]`).style.display = 'block';
+            
+            // Update dots
+            document.querySelectorAll('.tutorial-dots .dot').forEach(d => {
+                d.classList.toggle('active', parseInt(d.dataset.step) === this.currentStep);
+            });
+            
+            // Update buttons
+            document.getElementById('tutorialPrev').style.visibility = 
+                this.currentStep > 1 ? 'visible' : 'hidden';
+            document.getElementById('tutorialNext').innerHTML = 
+                this.currentStep === this.totalSteps 
+                    ? 'Get Started<i class="bi bi-check-lg ms-1"></i>'
+                    : 'Next<i class="bi bi-arrow-right ms-1"></i>';
+        },
+        
+        async completeTutorial() {
+            document.getElementById('tutorialOverlay').style.display = 'none';
+            document.body.style.overflow = '';
+            
+            try {
+                await api('/users/complete-tutorial', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+            } catch (e) {
+                console.log('Failed to mark tutorial complete');
+            }
+            
+            // Show placement modal
+            setTimeout(() => {
+                new bootstrap.Modal(document.getElementById('placementModal')).show();
+            }, 500);
+        }
+    };
+    
+    function skipPlacement() {
+        localStorage.setItem('placement_skipped', 'true');
+    }
+
+    // ── Blocking Check: Teacher Roadmap Suggestions ──
+    const BlockingCheck = {
+        async init() {
+            try {
+                const res = await fetch('/api/roadmap-suggestions/pending', {
+                    credentials: 'include',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) return; // Non-student or not logged in — skip
+                const json = await res.json();
+                const suggestions = json.data || [];
+                if (suggestions.length === 0) return;
+
+                // Show the blocking banner
+                document.getElementById('blockingBanner').style.display = 'block';
+
+                // Render each suggestion
+                const container = document.getElementById('suggestionsList');
+                container.innerHTML = suggestions.map(s => `
+                    <div class="border rounded-3 p-3 mb-3 bg-light" data-sid="${s.suggestionId}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="fw-bold mb-1">${this.escapeHtml(s.suggestionTitle)}</h6>
+                                <small class="text-muted">From <strong>${this.escapeHtml(s.teacherName)}</strong> · ${new Date(s.createdAt).toLocaleDateString()}</small>
+                            </div>
+                        </div>
+                        <p class="mb-3 text-muted">${this.escapeHtml(s.message)}</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" onclick="BlockingCheck.accept(${s.suggestionId})">
+                                <i class="bi bi-check-circle me-1"></i>Accept Changes
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="BlockingCheck.reject(${s.suggestionId})">
+                                <i class="bi bi-x-circle me-1"></i>Reject
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Disable study sections
+                this.disableStudying();
+            } catch (e) {
+                console.log('BlockingCheck: skipped —', e.message);
+            }
+        },
+
+        async accept(id) {
+            if (!confirm('Accept this suggestion? Your roadmap will be updated.')) return;
+            try {
+                const res = await fetch(`/api/roadmap-suggestions/${id}/accept`, {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (res.ok) window.location.reload();
+                else alert('Failed to accept. Please try again.');
+            } catch (e) { alert('Network error. Please try again.'); }
+        },
+
+        async reject(id) {
+            if (!confirm('Reject this suggestion? Your roadmap will stay unchanged.')) return;
+            try {
+                const res = await fetch(`/api/roadmap-suggestions/${id}/reject`, {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (res.ok) window.location.reload();
+                else alert('Failed to reject. Please try again.');
+            } catch (e) { alert('Network error. Please try again.'); }
+        },
+
+        disableStudying() {
+            // Grey out Quick Actions and Roadmap sections
+            const selectors = ['.action-card', '#roadmapLessons a', '#roadmapContent a'];
+            selectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                    el.style.pointerEvents = 'none';
+                    el.style.opacity = '0.4';
+                });
+            });
+        },
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        Dashboard.load();
+        Onboarding.init();
+        BlockingCheck.init();
+    });
+</script>
+}

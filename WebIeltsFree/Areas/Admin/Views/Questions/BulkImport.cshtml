@@ -1,0 +1,96 @@
+@{
+    ViewData["Title"] = "Bulk Import Questions";
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="fs-3 fw-bold mb-1">Bulk Import Questions</h1>
+            <p class="text-muted mb-0">Import large sets of Cambridge test questions safely.</p>
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="ti ti-arrow-left me-2"></i>Back to Question Bank
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">Direct SQL Import Guide</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="mb-3">
+                    To maintain database integrity and ensure relationships are correctly mapped (Questions &rarr; Answers &rarr; Passages &rarr; Modules), 
+                    bulk imports for full Cambridge tests are currently handled via direct SQL seeding in the <code>DatabaseScripts/</code> directory.
+                </p>
+                
+                <h6 class="fw-semibold mt-4 mb-3">ID Range Safety Requirements</h6>
+                <div class="alert alert-info border-0 bg-info bg-opacity-10 text-dark">
+                    <i class="ti ti-info-circle me-2 text-info"></i>
+                    <strong>Always use IDs &gt;= 10000</strong> for new Cambridge imports to avoid conflicting with the auto-increment primary keys of user-generated content or the original seed data.
+                </div>
+
+                <div class="table-responsive mt-3 border rounded-3">
+                    <table class="table table-borderless mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Test Series</th>
+                                <th>Course ID Range</th>
+                                <th>Module ID Range</th>
+                                <th>Question ID Range</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-medium">Original Seed Data</td>
+                                <td>1 - 10</td>
+                                <td>1 - 40</td>
+                                <td>1 - 1000</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-medium">Cambridge 20 (Test 1)</td>
+                                <td>2001</td>
+                                <td>2001 - 2004</td>
+                                <td>2001 - 2080</td>
+                            </tr>
+                            <tr class="bg-primary bg-opacity-10 border-top border-primary border-opacity-25">
+                                <td class="fw-bold text-primary">Future Imports (e.g. Cam 21)</td>
+                                <td>10000+</td>
+                                <td>10000+</td>
+                                <td>10000+</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 bg-light">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar avatar-xl bg-primary bg-opacity-10 text-primary rounded-circle mb-3 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="ti ti-database fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold">Database Admin Action Required</h5>
+                </div>
+                
+                <p class="text-muted small mb-4 text-center">
+                    Please use your database administration tool (like phpMyAdmin, DBeaver, or MySQL Workbench) to execute the `.sql` files.
+                </p>
+                
+                <ol class="small text-muted ps-3 mb-0">
+                    <li class="mb-2">Place your structured `.sql` file in the <code>DatabaseScripts</code> folder.</li>
+                    <li class="mb-2">Open the file and verify the ID ranges follow the &gt;10000 rule.</li>
+                    <li class="mb-2">Ensure `tb_questions` are inserted BEFORE `tb_answers`.</li>
+                    <li>Execute the script directly on the `ieltsdb` database.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>

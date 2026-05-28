@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ecc-universal": "github:affaan-m/everything-claude-code"
+  }
+}

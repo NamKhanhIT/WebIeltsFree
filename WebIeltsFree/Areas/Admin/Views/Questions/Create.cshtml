@@ -1,0 +1,97 @@
+@model WebIeltsFree.Models.Question
+
+@{
+    ViewData["Title"] = "Create Question";
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="fs-3 fw-bold mb-1">Create Question</h1>
+            <p class="text-muted mb-0">Add a new question and its correct answer to the bank.</p>
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="ti ti-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                    <h5 class="fw-bold mb-0">Question Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="Section" class="form-label fw-semibold">Section <span class="text-danger">*</span></label>
+                            <select asp-for="Section" class="form-select" required>
+                                <option value="listening">Listening</option>
+                                <option value="reading">Reading</option>
+                            </select>
+                            <span asp-validation-for="Section" class="text-danger small"></span>
+                        </div>
+
+
+
+                        <div class="col-12">
+                            <label asp-for="QuestionText" class="form-label fw-semibold">Question Text <span class="text-danger">*</span></label>
+                            <textarea asp-for="QuestionText" class="form-control" rows="3" required placeholder="Enter the question text here..."></textarea>
+                            <span asp-validation-for="QuestionText" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label asp-for="Difficulty" class="form-label fw-semibold">Difficulty (1-5)</label>
+                            <input asp-for="Difficulty" class="form-control" type="number" min="1" max="5" value="3" />
+                            <span asp-validation-for="Difficulty" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                    <h5 class="fw-bold mb-0">Correct Answer</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="correctAnswer" class="form-label fw-semibold">Correct Answer <span class="text-danger">*</span></label>
+                            <input type="text" id="correctAnswer" name="correctAnswer" class="form-control" required placeholder="The exact correct answer string" />
+                        </div>
+                        
+
+                        
+                        <div class="col-12 mt-4">
+                            <hr class="mb-4" />
+                            <div class="d-flex justify-content-end gap-2">
+                                <a asp-action="Index" class="btn btn-light">Cancel</a>
+                                <button type="submit" class="btn btn-primary px-4">Save Question & Answer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 bg-light">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3"><i class="ti ti-bulb text-warning me-2"></i>Tips for Questions</h5>
+                
+                <p class="text-muted small mb-0">Use the database scripts for complex bulk imports.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

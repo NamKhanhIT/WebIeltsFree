@@ -1,0 +1,42 @@
+@model WebIeltsFree.Models.User
+@{
+    ViewData["Title"] = "Delete User";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm border-danger border-top border-3">
+            <div class="card-body p-5 text-center">
+                <div class="icon-shape icon-xl bg-danger-subtle text-danger rounded-circle mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <i class="ti ti-alert-triangle fs-1"></i>
+                </div>
+                
+                <h3 class="fw-bold mb-3">Delete User Account</h3>
+                <p class="text-muted mb-4">
+                    You are about to permanently delete the account for <strong>@Model.Email</strong>. 
+                    This action <span class="text-danger fw-bold">cannot be undone</span> and will remove all associated profile data, goals, and sessions.
+                </p>
+
+                <div class="bg-light p-3 rounded text-start mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar avatar-md rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold">
+                            @(Model.Profile?.FullName?.FirstOrDefault().ToString() ?? Model.Email.FirstOrDefault().ToString().ToUpper())
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">@(Model.Profile?.FullName ?? "No Name")</h6>
+                            <small class="text-muted">@Model.Email • Joined @Model.CreatedAt.ToString("MMM dd, yyyy")</small>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="Delete" method="post">
+                    <input type="hidden" asp-for="UserId" />
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="submit" class="btn btn-danger px-4">Yes, Delete Permanently</button>
+                        <a asp-action="Index" class="btn btn-light px-4">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

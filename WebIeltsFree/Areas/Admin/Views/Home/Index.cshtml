@@ -1,0 +1,216 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="mb-6 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="fs-3 mb-1 fw-bold">Admin Dashboard</h1>
+                <p class="text-muted">Welcome to the WebIeltsFree Admin Area.</p>
+            </div>
+            <div>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 py-2 px-3 fs-6">
+                    <i class="ti ti-calendar me-1"></i> @DateTime.Now.ToString("dd MMM yyyy")
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Stat Card 1 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="card p-4 border-0 shadow-sm rounded-3 h-100 position-relative overflow-hidden">
+            <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                <i class="ti ti-users fs-1 text-primary"></i>
+            </div>
+            <div class="d-flex flex-column h-100">
+                <span class="text-muted small text-uppercase fw-semibold mb-2">Total Students</span>
+                <h2 class="fs-1 fw-bold text-dark mb-0">@ViewBag.TotalStudents</h2>
+                <div class="mt-auto pt-3">
+                    <a asp-controller="Users" asp-action="Index" asp-route-roleFilter="student" class="text-primary small text-decoration-none fw-medium stretched-link">Manage Students &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Card 2 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="card p-4 border-0 shadow-sm rounded-3 h-100 position-relative overflow-hidden">
+            <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                <i class="ti ti-chalkboard text-success fs-1"></i>
+            </div>
+            <div class="d-flex flex-column h-100">
+                <span class="text-muted small text-uppercase fw-semibold mb-2">Active Teachers</span>
+                <h2 class="fs-1 fw-bold text-dark mb-0">@ViewBag.ActiveTeachers</h2>
+                <div class="mt-auto pt-3">
+                    <a asp-controller="Users" asp-action="Index" asp-route-roleFilter="teacher" asp-route-statusFilter="active" class="text-success small text-decoration-none fw-medium stretched-link">Verify Teachers &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Card 3 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="card p-4 border-0 shadow-sm rounded-3 h-100 position-relative overflow-hidden">
+            <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                <i class="ti ti-route text-warning fs-1"></i>
+            </div>
+            <div class="d-flex flex-column h-100">
+                <span class="text-muted small text-uppercase fw-semibold mb-2">Pending Roadmaps</span>
+                <h2 class="fs-1 fw-bold text-dark mb-0">@ViewBag.PendingSuggestions</h2>
+                <div class="mt-auto pt-3">
+                    <a asp-controller="RoadmapSuggestions" asp-action="Index" class="text-warning small text-decoration-none fw-medium stretched-link">Review Pending &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Card 4 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="card p-4 border-0 shadow-sm rounded-3 h-100 position-relative overflow-hidden">
+            <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                <i class="ti ti-books text-info fs-1"></i>
+            </div>
+            <div class="d-flex flex-column h-100">
+                <span class="text-muted small text-uppercase fw-semibold mb-2">Active Tests</span>
+                <h2 class="fs-1 fw-bold text-dark mb-0">@ViewBag.ActiveTests</h2>
+                <div class="mt-auto pt-3">
+                    <a asp-controller="Courses" asp-action="Index" class="text-info small text-decoration-none fw-medium stretched-link">Manage Vault &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="card-title fw-bold mb-0">User Registration Trends (30 Days)</h5>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="registrationChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="card-title fw-bold mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-grid gap-3">
+                    <a href="/Admin/Courses/Create" class="btn btn-outline-primary d-flex align-items-center justify-content-start p-3 text-start">
+                        <div class="icon-shape icon-sm bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="ti ti-plus"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Add New Course/Test</div>
+                            <small class="text-muted">Import Cambridge or custom materials</small>
+                        </div>
+                    </a>
+                    
+                    <a href="/Admin/Users?roleFilter=teacher" class="btn btn-outline-success d-flex align-items-center justify-content-start p-3 text-start">
+                        <div class="icon-shape icon-sm bg-success text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="ti ti-user-check"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">Verify Teachers</div>
+                            <small class="text-muted">Review teacher profiles and status</small>
+                        </div>
+                    </a>
+                    
+                    <a href="/Admin/Logs" class="btn btn-outline-secondary d-flex align-items-center justify-content-start p-3 text-start">
+                        <div class="icon-shape icon-sm bg-secondary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="ti ti-activity"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold">View System Logs</div>
+                            <small class="text-muted">Monitor database errors and actions</small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('registrationChart').getContext('2d');
+            
+            const labels = @Html.Raw(ViewBag.ChartLabels);
+            const data = @Html.Raw(ViewBag.ChartData);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'New Users',
+                        data: data,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0d6efd',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 13 },
+                            padding: 10,
+                            cornerRadius: 4,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                precision: 0,
+                                font: { size: 11, color: '#6c757d' }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: { size: 11, color: '#6c757d' },
+                                maxTicksLimit: 10
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        });
+    </script>
+}

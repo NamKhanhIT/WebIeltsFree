@@ -1,0 +1,138 @@
+@*
+    Practice Mode — Listening
+    Audio-player centered, section navigation, waveform
+    NO transcript, NO vocabulary, NO guided hints
+*@
+
+@await Html.PartialAsync("~/Views/Practice/_PracticeStyles.cshtml")
+
+<div id="listeningHub" class="exam-shell">
+    <!-- Exam Header -->
+    <div class="exam-header">
+        <div class="container exam-header-inner">
+            <div class="d-flex align-items-center gap-3">
+                <span class="exam-skill-badge listening"><i class="bi bi-headphones me-1"></i>Listening</span>
+                <h1 class="exam-title" id="listeningExamTitle">Listening Test</h1>
+            </div>
+            @await Html.PartialAsync("~/Views/Practice/_PracticeTimer.cshtml")
+        </div>
+    </div>
+
+    <div class="container mt-3">
+        <!-- Audio Player -->
+        <div class="exam-card p-4 mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="exam-panel-title mb-0">Audio Player</span>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="playOnceToggle">
+                        <label class="form-check-label small fw-semibold" for="playOnceToggle">Play Once Mode</label>
+                    </div>
+                    <select id="audioSpeed" class="form-select form-select-sm" style="width:auto;">
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Waveform placeholder -->
+            <div id="listeningWaveform" style="height:60px;background:#f1f5f9;border-radius:8px;display:flex;align-items:end;justify-content:center;gap:3px;padding:8px;overflow:hidden;">
+                <span style="width:4px;border-radius:2px;background:#3b82f6;height:25%"></span>
+                <span style="width:4px;border-radius:2px;background:#93c5fd;height:40%"></span>
+                <span style="width:4px;border-radius:2px;background:#3b82f6;height:55%"></span>
+                <span style="width:4px;border-radius:2px;background:#93c5fd;height:30%"></span>
+                <span style="width:4px;border-radius:2px;background:#3b82f6;height:70%"></span>
+                <span style="width:4px;border-radius:2px;background:#93c5fd;height:45%"></span>
+                <span style="width:4px;border-radius:2px;background:#3b82f6;height:60%"></span>
+                <span style="width:4px;border-radius:2px;background:#93c5fd;height:35%"></span>
+                <span style="width:4px;border-radius:2px;background:#3b82f6;height:50%"></span>
+                <span style="width:4px;border-radius:2px;background:#93c5fd;height:20%"></span>
+                <span style="width:4px;border-radius:2px;background:#3b82f6;height:65%"></span>
+                <span style="width:4px;border-radius:2px;background:#93c5fd;height:40%"></span>
+                <span style="width:4px;border-radius:2px;background:#3b82f6;height:55%"></span>
+                <span style="width:4px;border-radius:2px;background:#93c5fd;height:30%"></span>
+            </div>
+            <audio id="listeningAudio" controls class="w-100 mt-2"></audio>
+        </div>
+
+        <!-- Section Navigation -->
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+            <button class="exam-btn exam-btn-primary listening-section-btn active" data-section="1">Section 1</button>
+            <button class="exam-btn exam-btn-outline listening-section-btn" data-section="2">Section 2</button>
+            <button class="exam-btn exam-btn-outline listening-section-btn" data-section="3">Section 3</button>
+            <button class="exam-btn exam-btn-outline listening-section-btn" data-section="4">Section 4</button>
+        </div>
+
+        <!-- Question Navigation -->
+        <div class="exam-qnav" id="listeningQuestionNav"></div>
+
+        <!-- Questions Area -->
+        <div class="exam-card p-4 mb-3">
+            <div id="listeningDynamic">
+                <p class="text-muted">Loading questions...</p>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex gap-2">
+            <button id="submitBtnListening" class="exam-btn exam-btn-primary">
+                <i class="bi bi-check2-circle me-1"></i>Submit All Answers
+            </button>
+            <button id="saveDraftBtnListening" class="exam-btn exam-btn-outline">Save Progress</button>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="exam-card p-4 mt-3 d-none" id="listeningResultsPanel">
+            <h3 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2"></i>Results</h3>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Correct</div>
+                        <div class="fs-3 fw-bold text-success" id="listeningCorrectCount">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Incorrect</div>
+                        <div class="fs-3 fw-bold text-danger" id="listeningIncorrectCount">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Unanswered</div>
+                        <div class="fs-3 fw-bold text-warning" id="listeningUnansweredCount">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="exam-card p-3 text-center">
+                        <div class="small text-muted">Band Estimate</div>
+                        <div class="fs-3 fw-bold text-primary" id="listeningBandEstimate">-</div>
+                    </div>
+                </div>
+            </div>
+            <div id="listeningAnswerReview" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        ExamTimer.start('listening');
+
+        document.querySelectorAll('.listening-section-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const sectionNum = Number(this.getAttribute('data-section'));
+                if (typeof loadListeningPractice === 'function') {
+                    loadListeningPractice(sectionNum);
+                }
+            });
+        });
+
+        // Audio speed control
+        document.getElementById('audioSpeed')?.addEventListener('change', function() {
+            const audio = document.getElementById('listeningAudio');
+            if (audio) audio.playbackRate = parseFloat(this.value);
+        });
+    });
+</script>

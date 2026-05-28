@@ -1,0 +1,112 @@
+@{
+    ViewData["Title"] = "Register";
+    ViewData["Page"] = "register";
+    Layout = "_Layout";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 500px;">
+        <div class="auth-header">
+            <i class="bi bi-rocket-takeoff fs-1 mb-2 d-block"></i>
+            <h2>Start Your Journey</h2>
+            <p class="mb-0 opacity-75">Create a free account for AI-powered learning</p>
+        </div>
+
+        <div class="auth-body">
+            <form id="registerForm" class="auth-form">
+                <div class="row">
+                    <div class="col-md-7 mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="fullName" id="fullName" 
+                               placeholder="John Doe" required>
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label">Target Band</label>
+                        <select class="form-select" name="targetBand" id="targetBand">
+                            <option value="5.0">5.0</option>
+                            <option value="5.5">5.5</option>
+                            <option value="6.0">6.0</option>
+                            <option value="6.5" selected>6.5</option>
+                            <option value="7.0">7.0</option>
+                            <option value="7.5">7.5</option>
+                            <option value="8.0">8.0+</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control" name="email" id="email" 
+                               placeholder="your@email.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" name="password" id="password" 
+                                   placeholder="Min 8 characters" required minlength="8" autocomplete="new-password">
+                        </div>
+                        <small class="text-muted">At least 8 characters with 1 letter and 1 number</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Confirm</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" class="form-control" name="confirmPassword" id="confirmPassword" 
+                                   placeholder="Confirm password" required autocomplete="new-password">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input type="checkbox" class="form-check-input" id="terms" required>
+                    <label class="form-check-label small" for="terms">
+                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-ielts btn-lg">
+                        <i class="bi bi-person-plus me-2"></i>Create Free Account
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <p class="mb-0">
+                Already have an account? 
+                <a href="@Url.Action("Login", "Home")" class="fw-bold text-decoration-none text-accent">
+                    Sign In <i class="bi bi-arrow-right"></i>
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Additional validation and debugging for registration
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('registerForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const password = form.password.value;
+                const email = form.email.value;
+                
+                console.log('Form submitted with:', {
+                    email: email,
+                    passwordLength: password.length,
+                    hasLetter: /[a-zA-Z]/.test(password),
+                    hasNumber: /\d/.test(password)
+                });
+            });
+        }
+    });
+</script>
+}

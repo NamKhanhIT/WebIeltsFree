@@ -1,0 +1,150 @@
+@model WebIeltsFree.Models.Conversation
+@{
+    ViewData["Title"] = "Conversation Details";
+    var messages = ViewBag.Messages as List<WebIeltsFree.Models.Message> ?? new List<WebIeltsFree.Models.Message>();
+    var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+    bool isMyConversation = Model.TeacherId == currentUserId;
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1 fw-bold">@Model.Subject</h4>
+            <span class="text-muted small">
+                Conversation with <strong>@(Model.Student?.Profile?.FullName ?? Model.Student?.Email)</strong>
+            </span>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i> Back</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4 d-flex flex-column" style="height: 600px;">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Message Thread</h6>
+                <span class="badge @(Model.Status == "open" ? "bg-warning text-dark" : Model.Status == "active" ? "bg-success" : "bg-secondary") rounded-pill px-3 py-2">
+                    @Model.Status.ToUpper()
+                </span>
+            </div>
+            
+            <div class="card-body p-4 bg-light overflow-auto" style="flex: 1;" id="chat-box">
+                @if (Model.Status == "open")
+                {
+                    <div class="alert alert-warning shadow-sm border-warning border-start border-4 mb-4 text-center">
+                        <i class="ti ti-info-circle me-1"></i> <strong>You are the first to reply.</strong> Replying will assign this conversation to you.
+                    </div>
+                }
+
+                @foreach (var msg in messages)
+                {
+                    bool isMe = msg.SenderId == currentUserId;
+                    
+                    <div class="d-flex mb-4 @(isMe ? "justify-content-end" : "justify-content-start")">
+                        @if (!isMe)
+                        {
+                            <div class="avatar avatar-sm rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold me-2 mt-1 flex-shrink-0">
+                                @(msg.Sender?.Profile?.FullName?.FirstOrDefault().ToString() ?? "S")
+                            </div>
+                        }
+                        
+                        <div style="max-width: 75%;">
+                            <div class="d-flex align-items-baseline mb-1 @(isMe ? "justify-content-end" : "")">
+                                <span class="fw-semibold small text-muted me-2">@(isMe ? "You" : (msg.Sender?.Profile?.FullName ?? "Student"))</span>
+                                <span class="small text-muted" style="font-size: 0.7rem;">@msg.CreatedAt.ToString("MMM dd, HH:mm")</span>
+                            </div>
+                            <div class="p-3 rounded-3 shadow-sm @(isMe ? "bg-primary text-white rounded-top-end-0" : "bg-white text-dark border rounded-top-start-0")">
+                                <span style="white-space: pre-wrap; font-family: inherit;">@msg.Content</span>
+                            </div>
+                        </div>
+
+                        @if (isMe)
+                        {
+                            <div class="avatar avatar-sm rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold ms-2 mt-1 flex-shrink-0">
+                                T
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (Model.Status != "closed" && (Model.Status == "open" || isMyConversation))
+            {
+                <div class="card-footer bg-white p-3 border-top">
+                    <form asp-action="Reply" method="post">
+                        <input type="hidden" name="id" value="@Model.ConversationId" />
+                        <div class="input-group">
+                            <textarea name="content" class="form-control shadow-none" rows="2" required placeholder="Type your reply here..."></textarea>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold"><i class="ti ti-send me-1"></i> Send</button>
+                        </div>
+                    </form>
+                </div>
+            }
+            else if (Model.Status == "closed")
+            {
+                <div class="card-footer bg-light p-3 text-center text-muted border-top">
+                    <i class="ti ti-lock me-1"></i> This conversation is closed.
+                </div>
+            }
+            else
+            {
+                <div class="card-footer bg-light p-3 text-center text-muted border-top">
+                    <i class="ti ti-info-circle me-1"></i> This conversation is assigned to another teacher.
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">Details</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-muted small text-uppercase">Opened</span>
+                        <span class="fw-medium text-dark">@Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-muted small text-uppercase">Status</span>
+                        <span class="fw-medium text-dark text-capitalize">@Model.Status</span>
+                    </li>
+                    <li class="list-group-item px-4 py-3">
+                        <span class="fw-semibold text-muted small text-uppercase d-block mb-1">Assigned Teacher</span>
+                        @if (Model.TeacherId.HasValue)
+                        {
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <div class="avatar avatar-sm rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold">T</div>
+                                <span class="fw-medium text-dark">@(Model.Teacher?.Profile?.FullName ?? "Teacher")</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-warning fw-medium"><i class="ti ti-clock me-1"></i> Unassigned</span>
+                        }
+                    </li>
+                </ul>
+            </div>
+            @if (Model.Status != "closed" && (isMyConversation || User.IsInRole("admin")))
+            {
+                <div class="card-footer bg-light p-3 border-top text-center">
+                    <form asp-action="Close" method="post">
+                        <input type="hidden" name="id" value="@Model.ConversationId" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100"><i class="ti ti-lock me-1"></i> Close Conversation</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-scroll chat to bottom
+        var chatBox = document.getElementById('chat-box');
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+}

@@ -1,0 +1,629 @@
+@{
+    ViewData["Title"] = "Interactive Reading — IELTS Learning";
+}
+
+@await Html.PartialAsync("~/Views/Learn/_LearnStyles.cshtml")
+
+<style>
+    /* ─── Reading Workspace: Interactive Article Design ─── */
+    .reading-workspace {
+        --rw-bg: #fdfcfa;
+        --rw-surface: #ffffff;
+        --rw-warm: #92400e;
+        --rw-warm-light: #fef3c7;
+        --rw-ink: #1c1917;
+        --rw-muted: #78716c;
+        --rw-border: #e7e5e4;
+        --rw-primary: #b45309;
+        --rw-primary-soft: rgba(180,83,9,.08);
+        --rw-blue: #1d4ed8;
+        font-family: 'Georgia', 'Playfair Display', serif;
+        background: var(--rw-bg);
+        min-height: calc(100vh - 60px);
+        color: var(--rw-ink);
+    }
+    .rw-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .rw-hero { padding: 44px 0 28px; border-bottom: 1px solid var(--rw-border); }
+    .rw-hero h1 { font-size: 2.6rem; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+    .rw-hero p { font-family: 'Inter', sans-serif; color: var(--rw-muted); max-width: 540px; }
+    .rw-chip {
+        display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px;
+        border-radius: 999px; background: var(--rw-warm-light); color: var(--rw-warm);
+        font-family: 'Inter', sans-serif; font-size: .7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* Grid */
+    .rw-grid { display: grid; grid-template-columns: 240px 1fr 280px; gap: 20px; padding: 24px 0 60px; }
+    .rw-sidebar { position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+    .rw-main { min-width: 0; }
+
+    /* Sidebar lessons */
+    .rw-lesson-item {
+        display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+        border-radius: 10px; cursor: pointer; transition: all .15s;
+        font-family: 'Inter', sans-serif; font-size: .84rem;
+    }
+    .rw-lesson-item:hover { background: var(--rw-primary-soft); }
+    .rw-lesson-item.active { background: var(--rw-warm-light); border: 1px solid rgba(180,83,9,.2); font-weight: 600; }
+    .rw-lesson-num {
+        width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+        border-radius: 50%; background: #fef3c7; font-size: .72rem; font-weight: 700; flex-shrink: 0;
+        color: var(--rw-warm);
+    }
+
+    /* Article content */
+    .rw-article {
+        background: var(--rw-surface); border: 1px solid var(--rw-border);
+        border-radius: 14px; padding: 36px 32px; line-height: 2; font-size: 1.02rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,.03);
+    }
+    .rw-article h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; line-height: 1.3; }
+
+    /* Vocabulary word */
+    .rw-vocab-word {
+        background: var(--rw-warm-light); color: var(--rw-warm);
+        padding: 0 4px; border-radius: 3px; cursor: pointer;
+        border-bottom: 2px dashed rgba(180,83,9,.3);
+        transition: all .15s; position: relative;
+    }
+    .rw-vocab-word:hover { background: rgba(180,83,9,.15); }
+
+    /* Translation popup */
+    .rw-popup {
+        position: fixed; z-index: 500; background: #ffffff !important;
+        opacity: 1 !important;
+        border: 2px solid var(--rw-primary); border-radius: 12px;
+        padding: 16px 20px; box-shadow: 0 10px 30px rgba(180,83,9,.18), 0 4px 12px rgba(0,0,0,.15);
+        max-width: 320px; font-family: 'Inter', sans-serif; font-size: .88rem;
+        display: none;
+    }
+    .rw-popup.visible { display: block; animation: popIn .2s ease; }
+    .rw-popup-word { font-weight: 700; color: var(--rw-primary); font-size: .95rem; }
+    .rw-popup-meaning { color: var(--rw-muted); margin-top: 4px; }
+    .rw-popup-vi { color: var(--rw-blue); margin-top: 4px; font-style: italic; }
+    .rw-popup-close {
+        position: absolute; top: 8px; right: 10px; border: none; background: none;
+        color: var(--rw-muted); cursor: pointer; font-size: 1rem;
+    }
+
+    /* Bilingual toggle */
+    .rw-bilingual-toggle {
+        display: flex; gap: 2px; border-radius: 8px; overflow: hidden;
+        border: 1px solid var(--rw-border);
+    }
+    .rw-bilingual-btn {
+        padding: 5px 14px; border: none; background: transparent;
+        font-family: 'Inter', sans-serif; font-size: .78rem; font-weight: 600;
+        cursor: pointer; color: var(--rw-muted); transition: all .15s;
+    }
+    .rw-bilingual-btn.active { background: var(--rw-primary); color: #fff; }
+
+    /* Right sidebar */
+    .rw-right-card {
+        background: var(--rw-surface); border: 1px solid var(--rw-border);
+        border-radius: 12px; padding: 16px; margin-bottom: 14px;
+    }
+    .rw-section-title {
+        font-family: 'Inter', sans-serif; font-size: .7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .06em; color: var(--rw-muted); margin-bottom: 10px;
+    }
+
+    /* Notes */
+    .rw-note {
+        background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px;
+        padding: 10px 12px; font-size: .84rem; font-family: 'Inter', sans-serif;
+        margin-bottom: 8px; position: relative;
+    }
+    .rw-note-delete { position: absolute; top: 4px; right: 8px; border: none; background: none; color: var(--rw-muted); cursor: pointer; }
+
+    /* Empty */
+    .rw-empty { text-align: center; padding: 48px 20px; color: var(--rw-muted); font-family: 'Inter', sans-serif; }
+    .rw-empty-icon { font-size: 3rem; opacity: .2; margin-bottom: 12px; }
+
+    @@media (max-width: 1199.98px) {
+        .rw-grid { grid-template-columns: 1fr; }
+        .rw-sidebar { position: static; max-height: none; display: flex; gap: 8px; flex-wrap: wrap; }
+    }
+
+    @@keyframes popIn {
+        from { opacity: 0; transform: scale(.95) translateY(4px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+</style>
+
+<div class="reading-workspace">
+    <div class="rw-hero">
+        <div class="rw-container">
+            <span class="rw-chip"><i class="bi bi-book"></i> Interactive Reading</span>
+            <h1 class="mt-2">Reading Workspace</h1>
+            <p class="mt-2 mb-0">Read passages with vocabulary support, AI translation, and bilingual mode.</p>
+        </div>
+    </div>
+
+    <div class="rw-container">
+        <div class="rw-grid">
+            <!-- Left Sidebar: Lessons -->
+            <aside class="rw-sidebar">
+                <div class="mb-2">
+                    <span class="rw-section-title">Lessons</span>
+                </div>
+                <div id="readingLessonList" class="d-grid gap-1">
+                    <div class="text-muted small" style="font-family:'Inter',sans-serif;">Loading...</div>
+                </div>
+
+            </aside>
+
+            <!-- Main: Article Content -->
+            <main class="rw-main">
+                <!-- Toolbar -->
+                <div class="d-flex justify-content-between align-items-center mb-3" style="font-family:'Inter',sans-serif;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rw-bilingual-toggle">
+                            <button class="rw-bilingual-btn active" onclick="setReadingLang('en', this)">EN</button>
+                            <button class="rw-bilingual-btn" onclick="setReadingLang('vi', this)">VI</button>
+                            <button class="rw-bilingual-btn" onclick="setReadingLang('both', this)">EN/VI</button>
+                        </div>
+                        <select id="readingFontSize" class="form-select form-select-sm" style="width:auto;" onchange="setReadingFont(this.value)">
+                            <option value="0.95">Small</option>
+                            <option value="1.05" selected>Normal</option>
+                            <option value="1.2">Large</option>
+                            <option value="1.35">XL</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleReadingNotes()">
+                        <i class="bi bi-sticky me-1"></i>Notes
+                    </button>
+                </div>
+
+                <!-- Article -->
+                <div class="rw-article" id="readingArticleContent">
+                    <div class="rw-empty">
+                        <div class="rw-empty-icon"><i class="bi bi-book-half"></i></div>
+                        <h3 style="font-size:1.2rem;">Select a lesson to begin reading</h3>
+                        <p class="small">Choose a reading lesson from the sidebar.</p>
+                    </div>
+                </div>
+
+                <!-- Related Questions Section -->
+                <div class="mt-4 rw-article" id="readingQuestionsContainer" style="display: none; padding: 24px 32px; background: #fffcf8; border-color: #fef3c7;">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-question-circle text-warning fs-5"></i>
+                        <h4 class="mb-0 fw-bold" style="font-size: 1.2rem;">Practice Questions</h4>
+                    </div>
+                    <div id="readingLessonQuestions">
+                        <p class="small text-muted mb-0">Questions will appear here.</p>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar: Vocabulary + AI + Notes -->
+            <aside class="rw-sidebar">
+                <!-- AI Vocabulary List -->
+                <div class="rw-right-card">
+                    <span class="rw-section-title"><i class="bi bi-translate me-1"></i>Key Vocabulary</span>
+                    <div id="readingVocabList">
+                        <p class="small" style="color:var(--rw-muted);font-family:'Inter',sans-serif;">Load a lesson to see vocabulary.</p>
+                    </div>
+                </div>
+
+                <!-- AI Translation Panel -->
+                <div class="rw-right-card" style="background:linear-gradient(135deg,#451a03,#78350f);border:none;color:#fff;">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-robot" style="color:#fbbf24;"></i>
+                        <span class="fw-bold small" style="font-family:'Inter',sans-serif;">AI Reading Assistant</span>
+                    </div>
+                    <p class="small mb-2" style="color:rgba(255,255,255,.6);font-family:'Inter',sans-serif;">
+                        Click any word in the article or ask about paragraphs and meaning.
+                    </p>
+                    <input id="readingAiInput" type="text" class="form-control form-control-sm"
+                        style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#fff;"
+                        placeholder="e.g., Explain paragraph 3...">
+                </div>
+
+                <!-- Paragraph Summaries -->
+                <div class="rw-right-card">
+                    <span class="rw-section-title"><i class="bi bi-list-ol me-1"></i>Paragraph Summaries</span>
+                    <div id="readingParagraphSummaries" style="font-family:'Inter',sans-serif;">
+                        <p class="small" style="color:var(--rw-muted);">Summaries appear after loading a lesson.</p>
+                    </div>
+                </div>
+
+                <!-- Reading Strategy Tips -->
+                <div class="rw-right-card">
+                    <span class="rw-section-title"><i class="bi bi-lightbulb me-1"></i>Reading Strategies</span>
+                    <div style="font-family:'Inter',sans-serif;font-size:.84rem;">
+                        <details style="margin-bottom:6px;">
+                            <summary style="cursor:pointer;font-weight:600;color:var(--rw-primary);">Skimming</summary>
+                            <p class="small mt-1" style="color:var(--rw-muted);">Read first and last sentences of each paragraph quickly to get the main idea.</p>
+                        </details>
+                        <details style="margin-bottom:6px;">
+                            <summary style="cursor:pointer;font-weight:600;color:var(--rw-primary);">Scanning</summary>
+                            <p class="small mt-1" style="color:var(--rw-muted);">Look for specific keywords, numbers, or names without reading everything.</p>
+                        </details>
+                        <details>
+                            <summary style="cursor:pointer;font-weight:600;color:var(--rw-primary);">TFNG Strategy</summary>
+                            <p class="small mt-1" style="color:var(--rw-muted);">True = passage says same thing. False = passage says opposite. Not Given = passage doesn't mention it.</p>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- My Notes -->
+                <div class="rw-right-card" id="readingNotesPanel" style="display:none;">
+                    <span class="rw-section-title"><i class="bi bi-sticky me-1"></i>My Notes</span>
+                    <div id="readingNotesList"></div>
+                    <div class="d-flex gap-2 mt-2">
+                        <input id="readingNoteInput" type="text" class="form-control form-control-sm" placeholder="Add a note..." style="font-family:'Inter',sans-serif;">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="addReadingNote()">Add</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<!-- Translation Popup -->
+<div class="rw-popup" id="readingPopup">
+    <button class="rw-popup-close" onclick="closeReadingPopup()">×</button>
+    <div class="rw-popup-word" id="readingPopupWord"></div>
+    <div class="rw-popup-meaning" id="readingPopupMeaning"></div>
+    <div class="rw-popup-vi" id="readingPopupVi"></div>
+</div>
+
+@section Scripts {
+<script>
+    let readingNotes = [];
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function renderContent(html) {
+        if (!html) return '';
+        if (html.includes('## ') || html.includes('**')) {
+            html = html
+                .replace(/^### (.+)$/gm, '<h5>$1</h5>')
+                .replace(/^## (.+)$/gm, '<h4>$1</h4>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+        return html;
+    }
+
+    let currentPassage = null;
+    let currentLanguageMode = 'en'; // 'en', 'vi', 'both'
+
+    function setReadingLang(lang, btn) {
+        document.querySelectorAll('.rw-bilingual-btn').forEach(b => b.classList.remove('active'));
+        if (btn) {
+            btn.classList.add('active');
+        } else {
+            const btns = document.querySelectorAll('.rw-bilingual-btn');
+            if (lang === 'en' && btns[0]) btns[0].classList.add('active');
+            if (lang === 'vi' && btns[1]) btns[1].classList.add('active');
+            if (lang === 'both' && btns[2]) btns[2].classList.add('active');
+        }
+        currentLanguageMode = lang;
+        if (currentPassage) {
+            renderReadingPassage(lang);
+        }
+    }
+
+    function showVocabDetail(word) {
+        if (!currentPassage) return;
+        let vocabList = [];
+        try {
+            vocabList = JSON.parse(currentPassage.vocabHighlights || '[]');
+        } catch (e) {
+            console.error(e);
+        }
+        const v = vocabList.find(item => item.word.toLowerCase() === word.toLowerCase());
+        if (!v) return;
+
+        const popup = document.getElementById('readingPopup');
+        document.getElementById('readingPopupWord').textContent = v.word;
+        document.getElementById('readingPopupMeaning').textContent = v.en || 'No English definition available.';
+        document.getElementById('readingPopupVi').textContent = `${v.ipa ? v.ipa + ' - ' : ''}${v.vi}`;
+        popup.style.top = '30%';
+        popup.style.left = 'calc(50% - 160px)';
+        popup.classList.add('visible');
+    }
+
+    function renderReadingPassage(lang) {
+        if (!currentPassage) return;
+        
+        const contentEl = document.getElementById('readingArticleContent');
+        const vocabContainer = document.getElementById('readingVocabList');
+        const summariesContainer = document.getElementById('readingParagraphSummaries');
+
+        let vocabList = [];
+        try {
+            vocabList = JSON.parse(currentPassage.vocabHighlights || '[]');
+        } catch (e) {
+            console.error(e);
+        }
+
+        if (vocabList.length > 0) {
+            vocabContainer.innerHTML = `
+                <div class="d-flex flex-column gap-2 mt-2">
+                    ${vocabList.map(v => `
+                        <div class="p-2 rounded border" style="font-family:'Inter',sans-serif;font-size:.8rem;background:#faf9f6;cursor:pointer;transition:all 0.15s;" onclick="showVocabDetail('${escapeHtml(v.word)}')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-warning" style="color:var(--rw-warm) !important;">${escapeHtml(v.word)}</strong>
+                                <span class="text-muted small" style="font-size:.65rem;">${escapeHtml(v.ipa)}</span>
+                            </div>
+                            <div class="small mt-1 text-dark" style="font-weight: 500;">${escapeHtml(v.vi)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            vocabContainer.innerHTML = '<p class="small text-muted">No key vocabulary loaded.</p>';
+        }
+
+        let highlightedEnText = currentPassage.passageText;
+        vocabList.forEach(v => {
+            const escapedWord = v.word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const regex = new RegExp('\\b' + escapedWord + '\\b', 'gi');
+            highlightedEnText = highlightedEnText.replace(regex, (matched) => {
+                return `<span class="rw-vocab-word" data-word="${escapeHtml(v.word)}" data-ipa="${escapeHtml(v.ipa)}" data-meaning="${escapeHtml(v.en)}" data-vi="${escapeHtml(v.vi)}">${matched}</span>`;
+            });
+        });
+
+        const enParagraphs = highlightedEnText.split(/\n\n+/);
+        const viParagraphs = (currentPassage.passageTranslation || '').split(/\n\n+/);
+
+        let passageHtml = '';
+        
+        passageHtml += `
+            ${currentPassage.imageUrl ? `
+                <div class="position-relative mb-4 overflow-hidden rounded-3" style="height: 220px;">
+                    <img src="${currentPassage.imageUrl}" alt="${escapeHtml(currentPassage.passageTitle)}" class="w-100 h-100" style="object-fit: cover;">
+                    <div class="position-absolute bottom-0 start-0 end-0 p-3" style="background: linear-gradient(transparent, rgba(28,25,23,0.9)); color: #fff;">
+                        <span class="rw-chip mb-1" style="background:var(--rw-warm-light); color:var(--rw-warm); font-size:0.6rem;">${escapeHtml(currentPassage.difficultyLevel || 'Medium')}</span>
+                        <h2 class="mb-0 fs-4 text-white font-serif mt-1">${escapeHtml(currentPassage.passageTitle)}</h2>
+                    </div>
+                </div>
+            ` : `<h2>${escapeHtml(currentPassage.passageTitle)}</h2>`}
+
+            <div class="d-flex gap-3 mb-4 text-muted small pb-2 border-bottom" style="font-family:'Inter',sans-serif;font-size:0.75rem;">
+                <span><i class="bi bi-file-earmark-text"></i> ${currentPassage.wordCount || 0} words</span>
+                <span><i class="bi bi-tag"></i> ${escapeHtml(currentPassage.topicCategory || 'General')}</span>
+                ${currentPassage.source ? `<span><i class="bi bi-info-circle"></i> ${escapeHtml(currentPassage.source)}</span>` : ''}
+            </div>
+        `;
+
+        if (lang === 'en') {
+            passageHtml += enParagraphs.map(p => `<p class="mb-3">${renderContent(p)}</p>`).join('');
+        } else if (lang === 'vi') {
+            passageHtml += viParagraphs.map(p => `<p class="mb-3 text-muted" style="font-family:'Inter',sans-serif;font-style:italic;">${renderContent(p)}</p>`).join('');
+        } else if (lang === 'both') {
+            passageHtml += `<div class="rw-bilingual-layout d-flex flex-column gap-3">`;
+            for (let i = 0; i < enParagraphs.length; i++) {
+                const enP = enParagraphs[i] || '';
+                const viP = viParagraphs[i] || '';
+                passageHtml += `
+                    <div class="rw-bilingual-row row g-3 pb-3 mb-2 border-bottom">
+                        <div class="col-md-6 col-12 rw-bilingual-en" style="border-right: 1px solid var(--rw-border); padding-right: 15px;">
+                            ${renderContent(enP)}
+                        </div>
+                        <div class="col-md-6 col-12 rw-bilingual-vi" style="font-family:'Inter',sans-serif;background:#fafaf9;padding:14px;border-radius:8px;border-left:3px solid var(--rw-primary);">
+                            <div class="text-muted small mb-1" style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--rw-primary) !important;font-weight:700;">Bản dịch tiếng Việt</div>
+                            ${renderContent(viP)}
+                        </div>
+                    </div>
+                `;
+            }
+            passageHtml += `</div>`;
+        }
+
+        contentEl.innerHTML = passageHtml;
+
+        if (enParagraphs.length > 0) {
+            summariesContainer.innerHTML = enParagraphs.map((p, idx) => {
+                const cleanText = p.replace(/Paragraph [A-Z]:\s*/i, '');
+                const sentences = cleanText.split(/[.!?]+/);
+                const firstSentence = sentences[0] ? sentences[0].trim() + '.' : 'No summary available.';
+                const label = p.match(/Paragraph ([A-Z]):/i);
+                const pName = label ? `Paragraph ${label[1]}` : `Paragraph ${idx + 1}`;
+                return `
+                    <div class="mb-2 p-2 rounded border" style="font-size:.78rem;background:#fcfbf9;font-family:'Inter',sans-serif;line-height:1.4;">
+                        <strong style="color:var(--rw-warm);">${pName}</strong>: ${escapeHtml(firstSentence)}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            summariesContainer.innerHTML = '<p class="small text-muted">No paragraphs found.</p>';
+        }
+    }
+
+    function setReadingFont(size) {
+        document.getElementById('readingArticleContent').style.fontSize = size + 'rem';
+    }
+
+    function toggleReadingNotes() {
+        const panel = document.getElementById('readingNotesPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function addReadingNote() {
+        const input = document.getElementById('readingNoteInput');
+        const text = input.value.trim();
+        if (!text) return;
+        readingNotes.push(text);
+        input.value = '';
+        renderReadingNotes();
+    }
+
+    function removeReadingNote(idx) {
+        readingNotes.splice(idx, 1);
+        renderReadingNotes();
+    }
+
+    function renderReadingNotes() {
+        const list = document.getElementById('readingNotesList');
+        list.innerHTML = readingNotes.map((note, i) => `
+            <div class="rw-note">
+                ${escapeHtml(note)}
+                <button class="rw-note-delete" onclick="removeReadingNote(${i})">×</button>
+            </div>
+        `).join('');
+    }
+
+    function closeReadingPopup() {
+        document.getElementById('readingPopup').classList.remove('visible');
+    }
+
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('rw-vocab-word')) {
+            const popup = document.getElementById('readingPopup');
+            const word = e.target.dataset.word || e.target.textContent;
+            document.getElementById('readingPopupWord').textContent = word;
+            document.getElementById('readingPopupMeaning').textContent = e.target.dataset.meaning || 'Click "AI Reading Assistant" for definition';
+            document.getElementById('readingPopupVi').textContent = `${e.target.dataset.ipa ? e.target.dataset.ipa + ' - ' : ''}${e.target.dataset.vi || ''}`;
+            popup.style.top = (e.clientY + 10) + 'px';
+            popup.style.left = Math.min(e.clientX, window.innerWidth - 340) + 'px';
+            popup.classList.add('visible');
+        } else if (!e.target.closest('.rw-popup')) {
+            closeReadingPopup();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const listEl = document.getElementById('readingLessonList');
+
+        try {
+            const res = await api('/lessons/skills/reading', { method: 'GET' });
+            const lessons = res?.data || [];
+
+            if (lessons.length === 0) {
+                listEl.innerHTML = `
+                    <div class="rw-empty" style="padding:16px;">
+                        <p class="small mb-1">No reading lessons yet.</p>
+                        <a href="/Home/AiRoadmap" class="small" style="color:var(--rw-primary);">
+                            <i class="bi bi-stars me-1"></i>AI Recommendations
+                        </a>
+                    </div>`;
+                return;
+            }
+
+            listEl.innerHTML = lessons.map((l, i) => `
+                <div class="rw-lesson-item ${i === 0 ? 'active' : ''}" onclick="loadReadingLesson(${l.lessonId}, this)">
+                    <span class="rw-lesson-num">${i + 1}</span>
+                    <div>
+                        <div style="line-height:1.3;font-size:.83rem;">${escapeHtml(l.title || 'Untitled')}</div>
+                        <div class="small" style="color:var(--rw-muted);font-size:.7rem;">${l.estimatedMinutes || 20} min</div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (lessons[0]) loadReadingLesson(lessons[0].lessonId, listEl.firstElementChild);
+        } catch {
+            listEl.innerHTML = '<div class="small text-danger">Failed to load lessons.</div>';
+        }
+    });
+
+    async function loadReadingLesson(lessonId, el) {
+        document.querySelectorAll('.rw-lesson-item').forEach(i => i.classList.remove('active'));
+        el?.classList.add('active');
+
+        const contentEl = document.getElementById('readingArticleContent');
+        contentEl.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-secondary" role="status"></div></div>';
+
+        try {
+            const res = await api(`/lessons/${lessonId}`, { method: 'GET' });
+            const lesson = res?.data;
+            if (!lesson) { contentEl.innerHTML = '<div class="rw-empty"><p>Not found.</p></div>'; return; }
+
+            const contents = lesson.contents || [];
+            
+            // Handle Reading Passage DTO
+            if (lesson.readingPassage) {
+                currentPassage = lesson.readingPassage;
+                renderReadingPassage(currentLanguageMode);
+
+                let questionsHtml = '';
+                let hasQuestions = false;
+                contents.forEach((item, idx) => {
+                    if (item.contentType && item.contentType.toLowerCase().includes('exercise')) {
+                        hasQuestions = true;
+                        questionsHtml += `
+                            <div style="animation:fadeInUp .4s ease ${idx * 0.1}s both; margin-bottom: 20px;">
+                                <div class="rw-chip mb-2" style="font-size:.6rem; background: #e0f2fe; color: #0284c7;">Question</div>
+                                <div class="lesson-content-rendered">${renderContent(item.contentBody || '')}</div>
+                            </div>`;
+                    }
+                });
+
+                const qContainer = document.getElementById('readingQuestionsContainer');
+                const qContent = document.getElementById('readingLessonQuestions');
+                if (hasQuestions) {
+                    qContainer.style.display = 'block';
+                    qContent.innerHTML = questionsHtml;
+                } else {
+                    qContainer.style.display = 'none';
+                    qContent.innerHTML = '';
+                }
+                return;
+            }
+
+            if (contents.length === 0) {
+                contentEl.innerHTML = `
+                    <div class="rw-empty">
+                        <div class="rw-empty-icon"><i class="bi bi-book-half"></i></div>
+                        <h4 style="font-size:1.1rem;">No content yet</h4>
+                        <p class="small">This lesson is still being prepared.</p>
+                        <a href="/Home/AiRoadmap" class="btn btn-sm" style="background:var(--rw-primary);color:#fff;">
+                            <i class="bi bi-stars me-1"></i>AI Recommendations
+                        </a>
+                    </div>`;
+                return;
+            }
+
+            let html = `<h2>${escapeHtml(lesson.title || 'Reading Lesson')}</h2>`;
+            let questionsHtml = '';
+            let hasQuestions = false;
+
+            contents.forEach((item, idx) => {
+                if (item.contentType && item.contentType.toLowerCase().includes('exercise')) {
+                    hasQuestions = true;
+                    questionsHtml += `
+                        <div style="animation:fadeInUp .4s ease ${idx * 0.1}s both; margin-bottom: 20px;">
+                            <div class="rw-chip mb-2" style="font-size:.6rem; background: #e0f2fe; color: #0284c7;">Question</div>
+                            <div class="lesson-content-rendered">${renderContent(item.contentBody || '')}</div>
+                        </div>`;
+                } else {
+                    html += `
+                        <div style="animation:fadeInUp .4s ease ${idx * 0.1}s both;">
+                            <div class="rw-chip mb-2" style="font-size:.6rem;">${escapeHtml(item.contentType || 'Content')}</div>
+                            <div class="lesson-content-rendered" style="margin-bottom:24px;">${renderContent(item.contentBody || '')}</div>
+                        </div>`;
+                }
+            });
+            contentEl.innerHTML = html;
+
+            const qContainer = document.getElementById('readingQuestionsContainer');
+            const qContent = document.getElementById('readingLessonQuestions');
+            if (hasQuestions) {
+                qContainer.style.display = 'block';
+                qContent.innerHTML = questionsHtml;
+            } else {
+                qContainer.style.display = 'none';
+                qContent.innerHTML = '';
+            }
+        } catch {
+            contentEl.innerHTML = '<div class="small text-danger p-3">Failed to load lesson.</div>';
+        }
+    }
+</script>
+
+<style>
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+}

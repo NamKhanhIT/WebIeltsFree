@@ -1,0 +1,360 @@
+@model IEnumerable<WebIeltsFree.Models.TeacherAssignment>
+
+@{
+    ViewData["Title"] = "Test Assignments";
+    var assignedByMe = ViewBag.AssignedByMe as IEnumerable<WebIeltsFree.Models.TeacherAssignment> ?? new List<WebIeltsFree.Models.TeacherAssignment>();
+    var assignedToMe = ViewBag.AssignedToMe as IEnumerable<WebIeltsFree.Models.TeacherAssignment> ?? new List<WebIeltsFree.Models.TeacherAssignment>();
+    var pendingToMeCount = assignedToMe.Count(a => a.Status == "pending" || a.Status == "overdue");
+}
+
+<div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="fs-3 mb-1">Test Assignments & Peer-to-Peer</h1>
+        <p class="text-muted mb-0">Create exams, assign tests to candidates, and take assignments sent by other teachers.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="CreateTest" class="btn btn-outline-success">
+            <i class="ti ti-playlist-add me-1"></i>Create New Test
+        </a>
+        <a asp-action="Assign" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i>Assign Test / Peer Task
+        </a>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4" id="assignmentTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="assigned-by-me-tab" data-bs-toggle="tab" data-bs-target="#assigned-by-me" type="button" role="tab" aria-controls="assigned-by-me" aria-selected="true">
+            <i class="ti ti-send me-1"></i>Assigned By Me
+            <span class="badge bg-secondary rounded-pill ms-1">@assignedByMe.Count()</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link d-flex align-items-center" id="assigned-to-me-tab" data-bs-toggle="tab" data-bs-target="#assigned-to-me" type="button" role="tab" aria-controls="assigned-to-me" aria-selected="false">
+            <i class="ti ti-inbox me-1"></i>Assigned To Me (P2P)
+            @if (pendingToMeCount > 0)
+            {
+                <span class="badge bg-danger rounded-pill ms-2">@pendingToMeCount Pending</span>
+            }
+            else
+            {
+                <span class="badge bg-light text-dark rounded-pill ms-2">@assignedToMe.Count()</span>
+            }
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="assignmentTabsContent">
+    <!-- TAB: ASSIGNED BY ME -->
+    <div class="tab-pane fade show active" id="assigned-by-me" role="tabpanel" aria-labelledby="assigned-by-me-tab">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 text-dark">Active Assignments Created by You</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Recipient</th>
+                            <th>Role</th>
+                            <th>Test Title</th>
+                            <th>Assignment Info</th>
+                            <th>Assigned At</th>
+                            <th>Deadline</th>
+                            <th>Status / Score</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in assignedByMe)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar avatar-sm rounded-circle bg-light-primary text-primary d-flex align-items-center justify-content-center">
+                                            <i class="ti ti-user fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">@(item.Student?.Profile?.FullName ?? "Unknown Recipient")</h6>
+                                            <small class="text-muted">@item.Student?.Email</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge @(item.Student?.Role == "teacher" ? "bg-info-subtle text-info" : item.Student?.Role == "admin" ? "bg-danger-subtle text-danger" : "bg-secondary-subtle text-secondary") text-capitalize">
+                                        @item.Student?.Role
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark">@item.Test?.Title</span>
+                                </td>
+                                <td>
+                                    <strong class="d-block text-dark small">@item.Title</strong>
+                                    @if (!string.IsNullOrEmpty(item.Instructions))
+                                    {
+                                        <div class="text-muted small">@item.Instructions</div>
+                                    }
+                                </td>
+                                <td>@item.AssignedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    @if (item.Deadline.HasValue)
+                                    {
+                                        @item.Deadline.Value.ToString("yyyy-MM-dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Self-paced</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Test?.IsTeacherCreated == true)
+                                    {
+                                        @if (item.Test.Status == "published")
+                                        {
+                                            <span class="badge bg-success-subtle text-success d-inline-flex align-items-center gap-1 mb-1">
+                                                <i class="ti ti-circle-check"></i> Approved & Published
+                                            </span>
+                                        }
+                                        else if (item.Test.Status == "rejected")
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger d-inline-flex align-items-center gap-1 mb-1">
+                                                <i class="ti ti-circle-x"></i> Rejected
+                                            </span>
+                                        }
+                                        else if (item.Test.Status == "pending_review")
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning d-inline-flex align-items-center gap-1 mb-1">
+                                                <i class="ti ti-hourglass-low"></i> Pending Peer Review
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary d-inline-flex align-items-center gap-1 mb-1">
+                                                <i class="ti ti-edit"></i> Draft
+                                            </span>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(item.Test.ReviewerNote))
+                                        {
+                                            <div class="small text-muted mt-1" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@item.Test.ReviewerNote">
+                                                <strong>Note:</strong> @item.Test.ReviewerNote
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @if (item.Status == "completed")
+                                        {
+                                            <span class="badge bg-success-subtle text-success d-inline-flex align-items-center gap-1 mb-1">
+                                                <i class="ti ti-circle-check"></i> Completed
+                                            </span>
+                                            @if (item.Attempt?.BandScore != null)
+                                            {
+                                                <div class="small fw-bold text-success">Band Score: @item.Attempt.BandScore</div>
+                                            }
+                                        }
+                                        else if (item.Status == "overdue")
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger">Overdue</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                        }
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="Edit" asp-route-id="@item.AssignmentId" class="btn btn-light btn-sm btn-icon" title="Edit">
+                                            <i class="ti ti-pencil"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@item.AssignmentId" method="post" onsubmit="return confirm('Are you sure you want to revoke this assignment?');" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-light btn-sm btn-icon text-danger" title="Revoke">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (!assignedByMe.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="ti ti-clipboard-off fs-1 d-block mb-2 text-secondary"></i>
+                                    No active assignments. Create templates and assign tasks to peer teachers or students!
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: ASSIGNED TO ME (P2P) -->
+    <div class="tab-pane fade" id="assigned-to-me" role="tabpanel" aria-labelledby="assigned-to-me-tab">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-transparent border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+                <h5 class="mb-0 text-dark">Peer-to-Peer Tasks Assigned to You</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Assigned By</th>
+                            <th>Test Title</th>
+                            <th>Instructions</th>
+                            <th>Assigned At</th>
+                            <th>Deadline</th>
+                            <th>Status / Score</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in assignedToMe)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar avatar-sm rounded-circle bg-light-success text-success d-flex align-items-center justify-content-center">
+                                            <i class="ti ti-school fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">@(item.Teacher?.Profile?.FullName ?? "Peer Teacher")</h6>
+                                            <small class="text-muted">@item.Teacher?.Email</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark">@item.Test?.Title</span>
+                                </td>
+                                <td>
+                                    <strong class="d-block text-dark small">@item.Title</strong>
+                                    @if (!string.IsNullOrEmpty(item.Instructions))
+                                    {
+                                        <div class="text-muted small">@item.Instructions</div>
+                                    }
+                                </td>
+                                <td>@item.AssignedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    @if (item.Deadline.HasValue)
+                                    {
+                                        @item.Deadline.Value.ToString("yyyy-MM-dd HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Self-paced</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Test?.IsTeacherCreated == true)
+                                    {
+                                        @if (item.Test.Status == "published")
+                                        {
+                                            <span class="badge bg-success-subtle text-success mb-1">Approved & Published</span>
+                                        }
+                                        else if (item.Test.Status == "rejected")
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger mb-1">Rejected</span>
+                                        }
+                                        else if (item.Test.Status == "pending_review")
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning mb-1">Pending Review</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary mb-1">Draft</span>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(item.Test.ReviewerNote))
+                                        {
+                                            <div class="small text-muted mt-1" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@item.Test.ReviewerNote">
+                                                <strong>Your Note:</strong> @item.Test.ReviewerNote
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @if (item.Status == "completed")
+                                        {
+                                            <span class="badge bg-success-subtle text-success mb-1">Completed</span>
+                                            @if (item.Attempt?.BandScore != null)
+                                            {
+                                                <div class="small fw-bold text-success">Your Score: @item.Attempt.BandScore</div>
+                                            }
+                                        }
+                                        else if (item.Status == "overdue")
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger">Overdue</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning">Pending</span>
+                                        }
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Test?.IsTeacherCreated == true)
+                                    {
+                                        @if (item.Status != "completed")
+                                        {
+                                            <a href="@Url.Action("Review", "TestAssignments", new { id = item.AssignmentId })" class="btn btn-warning btn-sm d-inline-flex align-items-center gap-1">
+                                                <i class="ti ti-checklist"></i> Review Test
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small"><i class="ti ti-check-double text-success"></i> Reviewed</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @if (item.Status != "completed")
+                                        {
+                                            <a href="/Home/TakeTest/@item.TestId" target="_blank" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1">
+                                                <i class="ti ti-player-play"></i> Take Test
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small"><i class="ti ti-check-double text-success"></i> Submitted</span>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!assignedToMe.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="ti ti-inbox-off fs-1 d-block mb-2 text-secondary"></i>
+                                    No peer assignments found. Other teachers can assign you tests to practice/review!
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-light-primary {
+        background-color: rgba(93, 135, 255, 0.15) !important;
+    }
+    .bg-light-success {
+        background-color: rgba(19, 222, 185, 0.15) !important;
+    }
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+</style>

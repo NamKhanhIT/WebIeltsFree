@@ -1,0 +1,205 @@
+@{
+    ViewData["Title"] = "All Courses";
+}
+
+@await Html.PartialAsync("~/Views/Learn/_LearnStyles.cshtml")
+
+<div class="learn-shell">
+    <!-- Hero Banner -->
+    <div class="learn-hero">
+        <div class="container">
+            <span class="learn-hero-chip">
+                <i class="bi bi-mortarboard"></i> IELTS Scholar
+            </span>
+            <h1>Your IELTS<br/>Learning Library</h1>
+            <p>Structured study paths curated by certified IELTS instructors. Build your foundation before heading to the Practice Gym.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="learn-breadcrumb">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Courses</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Dynamic Course Catalog -->
+        <div class="mt-4 mb-5">
+            <h2 class="learn-section-title">Available Courses</h2>
+            <p class="learn-section-sub">Comprehensive IELTS preparation — academic theory, strategies, and structured practice.</p>
+        </div>
+
+        <div id="coursesContainer" class="learn-grid-courses">
+            <div class="text-center" style="grid-column: 1 / -1;">
+                <div class="spinner-border" style="color: var(--learn-sage);" role="status">
+                    <span class="visually-hidden">Loading courses...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skill-Specific Study Paths -->
+        <div class="mt-5 pt-4" style="border-top: 1px solid var(--learn-hairline);">
+            <h2 class="learn-section-title mb-1">Skill Study Paths</h2>
+            <p class="learn-section-sub mb-4">Deep-dive into each IELTS skill with lesson libraries, theory guides, and vocabulary banks.</p>
+
+            <div class="learn-grid-courses">
+                <!-- Reading -->
+                <div class="learn-card">
+                    <div class="learn-card-header">
+                        <div class="learn-skill-icon reading">
+                            <i class="bi bi-book"></i>
+                        </div>
+                        <span class="learn-badge learn-badge-teal">60 min</span>
+                    </div>
+                    <h3>Reading Mastery</h3>
+                    <p>3 passages, 40 questions. Master skimming, scanning, headings, TFNG, matching, and completion strategies.</p>
+                    <a href="@Url.Action("Skill", "Home", new { type = "reading" })" class="learn-btn learn-btn-primary">
+                        <i class="bi bi-book"></i> Study Lessons
+                    </a>
+                </div>
+
+                <!-- Listening -->
+                <div class="learn-card">
+                    <div class="learn-card-header">
+                        <div class="learn-skill-icon listening">
+                            <i class="bi bi-headphones"></i>
+                        </div>
+                        <span class="learn-badge learn-badge-accent">30 min</span>
+                    </div>
+                    <h3>Listening Mastery</h3>
+                    <p>4 parts, 40 questions. Train single-play audio discipline, form completion, map labeling, and note-taking.</p>
+                    <a href="@Url.Action("Skill", "Home", new { type = "listening" })" class="learn-btn learn-btn-primary">
+                        <i class="bi bi-headphones"></i> Study Lessons
+                    </a>
+                </div>
+
+                <!-- Writing -->
+                <div class="learn-card">
+                    <div class="learn-card-header">
+                        <div class="learn-skill-icon writing">
+                            <i class="bi bi-pencil"></i>
+                        </div>
+                        <span class="learn-badge learn-badge-sage">60 min</span>
+                    </div>
+                    <h3>Writing Mastery</h3>
+                    <p>Task 1 report writing + Task 2 argument essays. Learn band descriptors: Task Response, Coherence, Lexical Resource, Grammar.</p>
+                    <a href="@Url.Action("Skill", "Home", new { type = "writing" })" class="learn-btn learn-btn-primary">
+                        <i class="bi bi-pencil"></i> Study Lessons
+                    </a>
+                </div>
+
+                <!-- Speaking -->
+                <div class="learn-card">
+                    <div class="learn-card-header">
+                        <div class="learn-skill-icon speaking">
+                            <i class="bi bi-mic"></i>
+                        </div>
+                        <span class="learn-badge learn-badge-accent">11–14 min</span>
+                    </div>
+                    <h3>Speaking Mastery</h3>
+                    <p>Part 1 interview, Part 2 cue card (1 min prep + 2 min talk), Part 3 abstract discussion with AI feedback.</p>
+                    <a href="@Url.Action("Skill", "Home", new { type = "speaking" })" class="learn-btn learn-btn-primary">
+                        <i class="bi bi-mic"></i> Study Lessons
+                    </a>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const response = await api('/lessons/courses', { method: 'GET' });
+            if (response.success) {
+                displayCourses(response.data);
+            } else {
+                showCoursesError(response.message);
+            }
+        } catch (error) {
+            console.error('Error loading courses:', error);
+            showCoursesError('Failed to load courses');
+        }
+    });
+
+    function displayCourses(courses) {
+        const container = document.getElementById('coursesContainer');
+
+        if (!courses || courses.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1;">
+                    <div class="learn-info-bar">
+                        <i class="bi bi-info-circle"></i>
+                        <span>No courses available yet. Teachers can create courses from the Teacher Dashboard.</span>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = courses.map((course, index) => {
+            const level = course.targetBand <= 5 ? 'Foundation'
+                        : course.targetBand <= 6 ? 'Intermediate'
+                        : course.targetBand <= 7 ? 'Upper-Intermediate'
+                        : 'Advanced';
+            const badgeClass = course.targetBand <= 5 ? 'learn-badge-sage'
+                             : course.targetBand <= 6 ? 'learn-badge-teal'
+                             : course.targetBand <= 7 ? 'learn-badge-accent'
+                             : 'learn-badge-success';
+            const skillType = inferSkillType(course.title || '');
+            const skillClass = skillType || 'reading';
+            const skillIcon = { reading: 'book', listening: 'headphones', writing: 'pencil', speaking: 'mic' }[skillClass] || 'book';
+
+            return `
+                <div class="learn-card learn-fade-in" style="animation-delay: ${index * 0.06}s">
+                    <div class="learn-card-header">
+                        <div class="learn-skill-icon ${skillClass}">
+                            <i class="bi bi-${skillIcon}"></i>
+                        </div>
+                        <span class="learn-badge ${badgeClass}">${level}</span>
+                    </div>
+                    <h3>${escapeHtml(course.title)}</h3>
+                    <p>${escapeHtml(course.description || 'Comprehensive course to improve your IELTS skills')}</p>
+                    <div class="d-flex flex-wrap gap-3 mb-3">
+                        <span class="learn-stat"><i class="bi bi-layers"></i> <strong>${course.moduleCount}</strong> modules</span>
+                        <span class="learn-stat"><i class="bi bi-journal-text"></i> <strong>${course.lessonCount}</strong> lessons</span>
+                        <span class="learn-stat"><i class="bi bi-bullseye"></i> Band <strong>${course.targetBand}</strong></span>
+                    </div>
+                    <button onclick="enrollCourse(${course.courseId})" class="learn-btn learn-btn-primary">
+                        <i class="bi bi-arrow-right"></i> View Curriculum
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function showCoursesError(message) {
+        const container = document.getElementById('coursesContainer');
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1;">
+                <div class="alert alert-danger mb-0">${escapeHtml(message)}</div>
+            </div>`;
+    }
+
+    function enrollCourse(courseId) {
+        if (!Auth.isLoggedIn()) {
+            window.location.href = '/Home/Login';
+            return;
+        }
+        showToast('Course enrollment coming soon!', 'info');
+    }
+
+    function inferSkillType(title) {
+        const t = title.toLowerCase();
+        if (t.includes('reading')) return 'reading';
+        if (t.includes('listening')) return 'listening';
+        if (t.includes('writing')) return 'writing';
+        if (t.includes('speaking')) return 'speaking';
+        return '';
+    }
+</script>

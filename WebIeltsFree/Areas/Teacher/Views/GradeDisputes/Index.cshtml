@@ -1,0 +1,117 @@
+@model IEnumerable<WebIeltsFree.Models.GradeDispute>
+@{
+    ViewData["Title"] = "Grade Disputes";
+    var activeTab = ViewBag.ActiveTab as string ?? "pending";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0 fw-bold">Grade Disputes</h4>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white p-0 border-bottom">
+        <ul class="nav nav-tabs nav-fill border-0" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link text-dark py-3 @(activeTab == "pending" ? "active fw-bold border-primary border-bottom-2" : "border-transparent")" 
+                   href="?activeTab=pending">
+                   Pending 
+                   <span class="badge bg-primary ms-1 rounded-pill">@ViewBag.PendingCount</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark py-3 @(activeTab == "under_review" ? "active fw-bold border-warning border-bottom-2" : "border-transparent")" 
+                   href="?activeTab=under_review">
+                   Under Review 
+                   <span class="badge bg-warning text-dark ms-1 rounded-pill">@ViewBag.UnderReviewCount</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark py-3 @(activeTab == "resolved" ? "active fw-bold border-success border-bottom-2" : "border-transparent")" 
+                   href="?activeTab=resolved">
+                   Resolved 
+                   <span class="badge bg-success ms-1 rounded-pill">@ViewBag.ResolvedCount</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark py-3 @(activeTab == "rejected" ? "active fw-bold border-danger border-bottom-2" : "border-transparent")" 
+                   href="?activeTab=rejected">
+                   Rejected 
+                   <span class="badge bg-danger ms-1 rounded-pill">@ViewBag.RejectedCount</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary">
+                    <tr>
+                        <th class="ps-4">Student</th>
+                        <th>Type</th>
+                        <th>Reason</th>
+                        <th>Submitted</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar avatar-sm rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold">
+                                        @(item.User?.Profile?.FullName?.FirstOrDefault().ToString() ?? item.User?.Email.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 text-dark fw-semibold">@(item.User?.Profile?.FullName ?? "Unknown")</h6>
+                                        <small class="text-muted">Band @item.OriginalScore</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge @(item.SubmissionType == "writing" ? "bg-info-subtle text-info" : "bg-primary-subtle text-primary") rounded-pill">
+                                    <i class="ti @(item.SubmissionType == "writing" ? "ti-pencil" : "ti-microphone") me-1"></i>
+                                    @item.SubmissionType.ToUpper()
+                                </span>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate text-muted small" style="max-width: 250px;">
+                                    @item.Reason
+                                </span>
+                            </td>
+                            <td class="text-muted small">@item.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td class="text-end pe-4">
+                                <a asp-action="Details" asp-route-id="@item.DisputeId" class="btn btn-sm btn-light btn-icon" title="View Details">
+                                    <i class="ti ti-eye text-primary"></i>
+                                </a>
+                                @if (item.Status == "pending")
+                                {
+                                    <form asp-action="Claim" asp-route-id="@item.DisputeId" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-primary">Claim</button>
+                                    </form>
+                                }
+                                @if (item.Status == "under_review" && (User.IsInRole("admin") || item.ReviewedBy.ToString() == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.DisputeId" class="btn btn-sm btn-warning">Resolve</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="ti ti-inbox fs-1 mb-2 d-block"></i>
+                                No disputes found in this category.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

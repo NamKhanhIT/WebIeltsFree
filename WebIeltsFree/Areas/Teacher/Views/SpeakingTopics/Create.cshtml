@@ -1,0 +1,48 @@
+@model WebIeltsFree.Models.SpeakingTopic
+@{
+    ViewData["Title"] = "Create Speaking Topic";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 h5 fw-bold">Create Speaking Topic</h4>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Speaking Part</label>
+                            <select name="partNumber" class="form-select shadow-none">
+                                <option value="1">Part 1 (Introduction &amp; Interview)</option>
+                                <option value="2">Part 2 (Long Turn / Cue Card)</option>
+                                <option value="3">Part 3 (Two-way Discussion)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Target Band <span class="text-danger">*</span></label>
+                            <input type="number" name="targetBand" class="form-control shadow-none" value="6.5" min="0" max="9" step="0.5" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Topic Name <span class="text-danger">*</span></label>
+                        <input type="text" name="topicName" class="form-control shadow-none" required placeholder="e.g. Describe a memorable journey..." />
+                    </div>
+
+                    <div class="alert bg-light border text-muted small mb-4">
+                        <i class="ti ti-info-circle me-1"></i> Newly created topics are saved as <strong>Drafts</strong>. You can submit them for peer review later.
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-info text-white px-4 fw-bold">Save as Draft</button>
+                        <a asp-action="Index" class="btn btn-light px-4">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

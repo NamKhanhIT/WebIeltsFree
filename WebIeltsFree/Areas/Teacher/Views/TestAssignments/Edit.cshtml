@@ -1,0 +1,47 @@
+@model WebIeltsFree.Models.TeacherAssignment
+
+@{
+    ViewData["Title"] = "Edit Assignment";
+}
+
+<div class="mb-6">
+    <h1 class="fs-3 mb-1">Edit Assignment</h1>
+    <p>Update instructions or deadline for this assignment.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="AssignmentId" />
+
+                <div class="mb-3">
+                    <label class="form-label">Student</label>
+                    <input type="text" class="form-control" value="@(Model.Student?.Profile?.FullName ?? "Unknown Student")" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Test</label>
+                    <input type="text" class="form-control" value="@Model.Test?.Title" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Instructions" class="form-label">Instructions (Optional)</label>
+                    <textarea asp-for="Instructions" class="form-control" rows="3" placeholder="Enter instructions for the student..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Deadline" class="form-label">Deadline (Optional)</label>
+                    <input asp-for="Deadline" class="form-control" type="datetime-local" />
+                    <small class="text-muted">Leave empty for self-paced.</small>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-light">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

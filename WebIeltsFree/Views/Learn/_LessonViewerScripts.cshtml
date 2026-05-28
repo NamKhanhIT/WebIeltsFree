@@ -1,0 +1,127 @@
+@*
+    Learning Interface — Lesson Viewer Scripts
+    Handles: opening/closing lesson viewer, loading content via API, marking complete
+*@
+
+<script>
+    let currentViewerLessonId = null;
+
+    function openLessonViewer(lessonId, skillType) {
+        const container = document.getElementById('lessonViewerContainer');
+        if (!container) return;
+
+        currentViewerLessonId = lessonId;
+        container.classList.remove('d-none');
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Practice link removed to decouple learning from practice
+
+        loadLessonContent(lessonId);
+    }
+
+    function closeLessonViewer() {
+        const container = document.getElementById('lessonViewerContainer');
+        if (container) container.classList.add('d-none');
+        currentViewerLessonId = null;
+    }
+
+    async function loadLessonContent(lessonId) {
+        const titleEl = document.getElementById('viewerTitle');
+        const minutesEl = document.getElementById('viewerMinutes');
+        const difficultyEl = document.getElementById('viewerDifficulty');
+        const completionEl = document.getElementById('viewerCompletion');
+        const progressBar = document.getElementById('viewerProgressBar');
+        const contentEl = document.getElementById('viewerContentBlocks');
+
+        titleEl.textContent = 'Loading lesson...';
+        contentEl.innerHTML = '<p class="text-muted">Loading lesson content...</p>';
+
+        try {
+            const response = await api(`/lessons/${lessonId}`, { method: 'GET' });
+            const lesson = response?.data;
+
+            if (!response?.success || !lesson) {
+                titleEl.textContent = 'Lesson unavailable';
+                contentEl.innerHTML = '<div class="alert alert-warning mb-0">Could not load lesson content.</div>';
+                return;
+            }
+
+            titleEl.textContent = lesson.title || `Lesson #${lessonId}`;
+            minutesEl.textContent = lesson.estimatedMinutes || 30;
+            difficultyEl.textContent = getDifficultyLabel(lesson.difficultyLevel);
+            
+            const completion = Math.max(0, Math.min(100, lesson.completionPercent || 0));
+            completionEl.textContent = completion;
+            progressBar.style.width = `${completion}%`;
+
+            const contents = lesson.contents || [];
+            if (contents.length === 0) {
+                contentEl.innerHTML = `
+                    <div class="content-block">
+                        <p class="text-muted mb-0">This lesson has no detailed content blocks yet. 
+                        Check back later or explore other lessons.</p>
+                    </div>`;
+                return;
+            }
+
+            contentEl.innerHTML = contents.map((item, index) => `
+                <div class="content-block learn-fade-in" style="animation-delay: ${index * 0.08}s">
+                    <div class="content-type-label">
+                        <i class="bi bi-${getContentIcon(item.contentType)} me-1"></i>${item.contentType || 'Content'}
+                    </div>
+                    <div class="lesson-content-body">${item.contentBody || ''}</div>
+                </div>
+            `).join('');
+
+        } catch {
+            titleEl.textContent = 'Error loading lesson';
+            contentEl.innerHTML = '<div class="alert alert-danger mb-0">Failed to load lesson data.</div>';
+        }
+    }
+
+    async function markLessonComplete() {
+        if (!currentViewerLessonId || !Auth.isLoggedIn()) {
+            showToast('Please log in to track progress', 'error');
+            return;
+        }
+        try {
+            const result = await api(`/lessons/${currentViewerLessonId}/complete`, { method: 'POST' });
+            if (result?.success) {
+                showToast(result.data?.message || 'Lesson marked complete!', 'success');
+                document.getElementById('viewerCompletion').textContent = '100';
+                document.getElementById('viewerProgressBar').style.width = '100%';
+                // Update the card in the lesson grid
+                const card = document.querySelector(`[data-lesson-id="${currentViewerLessonId}"] .lesson-completion`);
+                if (card) card.textContent = '100% Complete';
+                const cardProgress = document.querySelector(`[data-lesson-id="${currentViewerLessonId}"] .lesson-progress-fill`);
+                if (cardProgress) cardProgress.style.width = '100%';
+            } else {
+                showToast(result?.message || 'Could not mark complete', 'error');
+            }
+        } catch {
+            showToast('Failed to mark lesson complete', 'error');
+        }
+    }
+
+    function getDifficultyLabel(level) {
+        return { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced', 4: 'Expert' }[level] || 'Beginner';
+    }
+
+    function getContentIcon(type) {
+        const t = (type || '').toLowerCase();
+        if (t.includes('video')) return 'play-circle';
+        if (t.includes('audio')) return 'volume-up';
+        if (t.includes('exercise') || t.includes('quiz')) return 'question-circle';
+        if (t.includes('vocab')) return 'translate';
+        return 'file-text';
+    }
+
+    // Bind close button and mark complete button
+    document.addEventListener('DOMContentLoaded', () => {
+        const closeBtn = document.getElementById('closeViewerBtn');
+        if (closeBtn) closeBtn.addEventListener('click', closeLessonViewer);
+
+        const completeBtn = document.getElementById('viewerMarkCompleteBtn');
+        if (completeBtn) completeBtn.addEventListener('click', markLessonComplete);
+    });
+</script>

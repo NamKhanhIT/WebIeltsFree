@@ -1,0 +1,38 @@
+@*
+    Learning Interface — Lesson Viewer Partial
+    Renders inline lesson content when "Study Lesson" is clicked.
+    Requires: lessonId passed via data attribute, uses api() from site.js
+*@
+
+<div id="lessonViewerContainer" class="d-none learn-fade-in">
+    <div class="learn-viewer" id="lessonViewerPanel">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h4 id="viewerTitle">Loading lesson...</h4>
+                <div class="d-flex gap-3 mt-1">
+                    <span class="learn-stat"><i class="bi bi-clock"></i> <strong id="viewerMinutes">—</strong> min</span>
+                    <span class="learn-stat"><i class="bi bi-bar-chart"></i> Difficulty: <strong id="viewerDifficulty">—</strong></span>
+                    <span class="learn-stat"><i class="bi bi-check-circle"></i> <strong id="viewerCompletion">0</strong>% complete</span>
+                </div>
+            </div>
+            <button class="learn-btn learn-btn-outline" id="closeViewerBtn" title="Close lesson viewer">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="learn-progress mb-4">
+            <div id="viewerProgressBar" style="width:0%"></div>
+        </div>
+
+        <div id="viewerContentBlocks">
+            <p class="text-muted">Loading lesson content...</p>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid var(--learn-hairline);">
+            <div></div>
+            <button id="viewerMarkCompleteBtn" class="learn-btn learn-btn-outline">
+                <i class="bi bi-check2-circle"></i> Mark as Complete
+            </button>
+        </div>
+    </div>
+</div>

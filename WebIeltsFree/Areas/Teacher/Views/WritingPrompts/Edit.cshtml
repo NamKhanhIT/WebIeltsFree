@@ -1,0 +1,75 @@
+@model WebIeltsFree.Models.WritingPrompt
+@{
+    ViewData["Title"] = "Edit Writing Prompt";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h4 class="mb-0 h5 fw-bold">Edit Writing Prompt</h4>
+                <span class="badge @(Model.Status == "published" ? "bg-success" : Model.Status == "pending_review" ? "bg-warning text-dark" : "bg-secondary")">
+                    @Model.Status.Replace("_", " ").ToUpper()
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="PromptId" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    @if (Model.Status == "published" || Model.Status == "rejected")
+                    {
+                        <div class="alert alert-warning border-0 shadow-sm mb-4">
+                            <i class="ti ti-alert-triangle me-2"></i> Editing this prompt will reset its status to <strong>Draft</strong> and it will require peer review again.
+                        </div>
+                    }
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Task Type</label>
+                            <select name="taskType" class="form-select shadow-none">
+                                <option value="task1" selected="@(Model.TaskType == "task1")">Academic Task 1 (Graph/Chart)</option>
+                                <option value="task2" selected="@(Model.TaskType == "task2")">Task 2 (Essay)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Target Band <span class="text-danger">*</span></label>
+                            <input type="number" name="targetBand" class="form-control shadow-none" value="@Model.TargetBand" min="0" max="9" step="0.5" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Prompt Text <span class="text-danger">*</span></label>
+                        <textarea name="promptText" class="form-control shadow-none" rows="6" required>@Model.PromptText</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Sample Answer (Optional)</label>
+                        <textarea name="sampleAnswer" class="form-control shadow-none" rows="8">@Model.SampleAnswer</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Chart Image (Task 1)</label>
+                        @if (!string.IsNullOrEmpty(Model.PromptImageUrl))
+                        {
+                            <div class="mb-2">
+                                <div class="position-relative d-inline-block">
+                                    <img src="@Model.PromptImageUrl" alt="Current chart" class="img-thumbnail" style="max-height: 200px;" />
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">Current</span>
+                                </div>
+                            </div>
+                        }
+                        <input type="file" name="ImageFile" class="form-control shadow-none" accept=".jpg,.png,.jpeg" />
+                        <div class="form-text">Upload a new image to replace the current one.</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-5">
+                        <button type="submit" name="action" value="save_draft" class="btn btn-primary px-4 fw-bold">Save Changes (Draft)</button>
+                        <button type="submit" name="action" value="submit_review" class="btn btn-warning px-4 fw-bold text-dark">Submit for Peer Review</button>
+                        <a asp-action="Index" class="btn btn-light px-4 ms-auto">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

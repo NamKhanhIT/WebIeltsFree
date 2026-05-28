@@ -1,0 +1,81 @@
+@{
+    ViewData["Title"] = "Login";
+    ViewData["Page"] = "login";
+    Layout = "_Layout";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="bi bi-mortarboard fs-1 mb-2 d-block"></i>
+            <h2>Welcome Back!</h2>
+            <p class="mb-0 opacity-75">Sign in to continue your IELTS journey</p>
+        </div>
+
+        <div class="auth-body">
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control" name="email" id="email" 
+                               placeholder="your@email.com" required autocomplete="email">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" name="password" id="password" 
+                               placeholder="Enter your password" required autocomplete="current-password">
+                        <button class="btn btn-outline-secondary px-3" type="button" id="btnTogglePassword" style="border: 2px solid #e2e8f0; border-left: none; background: #fff; color: #718096; transition: all 0.2s ease;">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="remember">
+                        <label class="form-check-label" for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="text-decoration-none small">Forgot password?</a>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-ielts btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <p class="mb-0">
+                Don't have an account? 
+                <a href="@Url.Action("Register", "Home")" class="fw-bold text-decoration-none text-accent">
+                    Sign Up Free <i class="bi bi-arrow-right"></i>
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('btnTogglePassword').addEventListener('click', function () {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    </script>
+}

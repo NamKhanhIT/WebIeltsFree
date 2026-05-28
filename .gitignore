@@ -1,0 +1,270 @@
+# ============================================
+# WebIeltsFree - .gitignore
+# Security: Prevent committing secrets, build artifacts, and local files
+# ============================================
+
+# ============================================
+# ENVIRONMENT & CONFIGURATION (CRITICAL)
+# ============================================
+.env
+.env.local
+.env.*.local
+appsettings.json
+appsettings.*.json
+!appsettings.Development.json
+!appsettings.Production.json
+
+# ============================================
+# BUILD & COMPILATION ARTIFACTS
+# ============================================
+## Ignore C# build results
+bin/
+obj/
+dist/
+publish/
+*.dll
+*.exe
+*.so
+*.dylib
+*.o
+*.a
+
+## Visual Studio cache/options
+.vs/
+.vscode/
+*.sln.iml
+*.csproj.user
+*.userprefs
+
+# ============================================
+# DEPENDENCIES
+# ============================================
+packages/
+.nuget/
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnp
+.pnp.js
+
+# ============================================
+# IDE & EDITOR FILES
+# ============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+.vim/
+
+# ============================================
+# LOGS & DIAGNOSTICS
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+*.loga
+Logs/
+
+# ============================================
+# DATABASE & LOCAL DATA
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+*.accdb
+data/
+database/
+*.sql.local
+
+# ============================================
+# TEMPORARY & CACHE FILES
+# ============================================
+temp/
+tmp/
+.cache/
+.temp/
+*.tmp
+.DS_Store
+
+# ============================================
+# TESTING
+# ============================================
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+junit.xml
+
+# ============================================
+# DOCKER
+# ============================================
+docker-compose.override.yml
+.dockerignore
+
+# ============================================
+# DEPLOYMENT & INFRASTRUCTURE
+# ============================================
+.deployment/
+deploy.log
+*.tfstate
+*.tfvars
+
+# ============================================
+# API KEYS & SECRETS (Extra safety)
+# ============================================
+# If any secrets slip through, catch them here
+*.key
+*.pem
+*.pfx
+*.jks
+
+# ============================================
+# IDE-specific directories
+# ============================================
+.classpath
+.c9/
+.eslintcache
+.grunt/
+.hatrc
+.LSOverride
+.ntvs_analysis_data/
+.rtvs_analysis_data/
+.ruby-version
+.ruby-gemset
+.ruby-env
+.rvmrc
+.sass-cache/
+.style-guide/
+.tool-versions
+.webassets-cache
+.yarn-integrity
+
+# ============================================
+# CI/CD & GitHub Actions
+# ============================================
+.github/workflows/secrets.yml
+
+# ============================================
+# Package manager lock files (optional - uncomment if needed)
+# ============================================
+# package-lock.json
+# yarn.lock
+# Gemfile.lock
+
+# ============================================
+# Optional npm cache directory
+# ============================================
+.npm
+
+# ============================================
+# Optional eslint cache
+# ============================================
+.eslintcache
+
+# ============================================
+# dotenv environment variables file
+# ============================================
+.env.local
+.env.*.local
+
+# ============================================
+# User-specific files
+# ============================================
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+.idea_modules/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+.vscode-test
+launch.json
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================
+# PYTHON VIRTUAL ENVIRONMENTS
+# ============================================
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# ============================================
+# USER UPLOADED DATA (privacy)
+# ============================================
+**/wwwroot/uploads/avatars/*
+**/wwwroot/uploads/writing/*
+!**/wwwroot/uploads/avatars/.gitkeep
+!**/wwwroot/uploads/writing/.gitkeep
+
+# ============================================
+# APPLICATION LOGS
+# ============================================
+WebIeltsFree/Logs/
+logs/
+
+# ============================================
+# TEST & DEBUG ARTIFACTS
+# ============================================
+page_source.html
+test_script.js
+**/Views/Practice/test_syntax.js
+
+# ============================================
+# AI AGENT MEMORY / SESSION / CACHE
+# ============================================
+.agents/
+.understand-anything/
+scratch/
+skills-lock.json
+WebIeltsFree/skills-lock.json
+
+# ============================================
+# DOCUMENTATION (local only)
+# ============================================
+DocumentForIELTSDB/
+File MD/
+
+# ============================================
+# TEMPLATES & REFERENCE (not part of app)
+# ============================================
+Template_IELTS/
+
+# ============================================
+# DOCKER & INFRASTRUCTURE (separate repo)
+# ============================================
+Docker/
+deploy.sh
+kubernetes-manifest.yml
+github-actions-ci-cd.yml
+create_dirs.js
+.env.template
+.env.prod.template

@@ -1,0 +1,382 @@
+@{
+    ViewData["Title"] = "Placement Test";
+    ViewData["Page"] = "placement";
+}
+
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="mb-1"><i class="bi bi-file-earmark-text me-2"></i>IELTS Short Mock Placement (Academic)</h2>
+            <p class="text-muted mb-0">Diagnostic assessment aligned to IELTS form flow: Listening, Reading, Writing, Speaking</p>
+        </div>
+    </div>
+
+    <div id="instructionsCard" class="card shadow-sm">
+        <div class="card-body p-4 p-md-5 text-center">
+            <i class="bi bi-mortarboard text-ielts" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">Before You Start</h4>
+            <p class="text-muted mb-3">Follow section instructions for a shortened, 30-minute diagnostic test.</p>
+            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                <span class="badge bg-light text-dark border px-3 py-2">Listening: ~10 mins (5 Qs)</span>
+                <span class="badge bg-light text-dark border px-3 py-2">Reading: ~15 mins (5 Qs)</span>
+                <span class="badge bg-light text-dark border px-3 py-2">Writing: ~5 mins (1 Q)</span>
+                <span class="badge bg-light text-dark border px-3 py-2">Speaking: ~5 mins (1 Q)</span>
+            </div>
+            <button id="startTestBtn" class="btn btn-ielts btn-lg px-4">
+                <i class="bi bi-play-fill me-2"></i>Start Placement Test
+            </button>
+        </div>
+    </div>
+
+    <div id="testShell" style="display:none;">
+        <div class="row g-3 mb-3">
+            <div class="col-lg-3">
+                <div class="card shadow-sm sticky-top" style="top: 88px;">
+                    <div class="card-header fw-semibold">Test Sections</div>
+                    <div class="list-group list-group-flush" id="sectionNav"></div>
+                </div>
+            </div>
+            <div class="col-lg-9">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span id="progressText" class="fw-semibold">0/0 answered</span>
+                                <div class="small text-muted">Use exact constraints (e.g. NO MORE THAN TWO WORDS)</div>
+                            </div>
+                            <span id="timerDisplay" class="badge bg-secondary fs-6">
+                                <i class="bi bi-clock me-1"></i>30:00
+                            </span>
+                        </div>
+                        <div class="progress mt-2" style="height:8px;">
+                            <div id="progressBar" class="progress-bar bg-ielts" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loadingState" class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="spinner-border text-ielts mb-2" role="status"></div>
+                        <p class="text-muted mb-0">Loading placement sections...</p>
+                    </div>
+                </div>
+
+                <div id="sectionCard" class="card shadow-sm" style="display:none;">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 id="sectionTitle" class="mb-0">Section</h5>
+                            <span id="sectionMeta" class="badge bg-light text-dark border">Questions 1-10</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-light border mb-4">
+                            <div class="fw-semibold mb-1">Instructions</div>
+                            <div id="sectionInstructions" class="small text-muted"></div>
+                        </div>
+                        <!-- Audio player for listening sections -->
+                        <div id="placementAudioContainer" class="mb-4 d-none">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-volume-up-fill text-primary fs-5"></i>
+                                <span class="fw-semibold text-primary">Listening Audio</span>
+                            </div>
+                            <audio id="placementAudio" controls class="w-100" style="border-radius:8px;">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        <div id="questionsContainer" class="d-grid gap-3"></div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <button id="prevSectionBtn" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Previous Section
+                        </button>
+                        <button id="nextSectionBtn" class="btn btn-ielts">
+                            Next Section <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="completeState" style="display:none;" class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">Submitting your placement result</h4>
+                        <p class="text-muted">AI is building your personalized diagnosis and roadmap...</p>
+                        <div class="spinner-border text-ielts" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="resultModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div id="bandScoreDisplay" class="mb-4">
+                    <div class="display-1 fw-bold text-ielts" id="bandScore">5.5</div>
+                    <div class="text-muted">Estimated IELTS Band</div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h5 mb-0" id="answeredCount">0/0</div>
+                            <small class="text-muted">Answered Items</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded">
+                            <div class="h5 mb-0" id="timeTaken">0:00</div>
+                            <small class="text-muted">Time Taken</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="small text-muted mb-3" id="skillBreakdown"></div>
+                <p class="text-muted mb-4">Roadmap has been updated from your mistakes and weak skills.</p>
+                <a href="/Home/OnboardingQuestions" class="btn btn-ielts btn-lg">
+                    <i class="bi bi-arrow-right me-2"></i>Continue Setup
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const PlacementTest = {
+        sections: [],
+        currentSectionIndex: 0,
+        answers: {},
+        totalQuestions: 0,
+        startTime: null,
+        timerInterval: null,
+        timeRemaining: 30 * 60,
+
+        cleanQuestionText(text) {
+            if (!text) return '';
+            return text.replace(/^(?:Q|Question)\s*\d+[:.\s]*/i, '').trim();
+        },
+
+        async init() {
+            document.getElementById('startTestBtn').addEventListener('click', () => this.start());
+            document.getElementById('prevSectionBtn').addEventListener('click', () => this.prevSection());
+            document.getElementById('nextSectionBtn').addEventListener('click', () => this.nextSection());
+        },
+
+        async start() {
+            document.getElementById('instructionsCard').style.display = 'none';
+            document.getElementById('testShell').style.display = 'block';
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('sectionCard').style.display = 'none';
+
+            try {
+                const response = await api('/tests/placement');
+                if (response.success && response.data?.sections?.length) {
+                    this.sections = response.data.sections;
+                    this.timeRemaining = (response.data.durationMinutes || 30) * 60;
+                    this.totalQuestions = this.sections.reduce((sum, s) => sum + (s.questions?.length || 0), 0);
+                    this.startTime = new Date();
+                    this.startTimer();
+                    this.renderSectionNav();
+                    this.showSection(0);
+                    return;
+                }
+            } catch (error) {
+                console.warn('Failed to load placement from API:', error);
+            }
+
+            this.useFallback();
+        },
+
+        useFallback() {
+            this.sections = [
+                { sectionId: 1, skillType: 'listening', questions: [{ questionId: 1, questionText: 'Name: ______' }, { questionId: 2, questionText: 'Arrival Date: ______' }] },
+                { sectionId: 2, skillType: 'reading', questions: [{ questionId: 3, questionText: 'Coffee was first discovered in Asia. (TRUE/FALSE/NOT GIVEN)' }] },
+                { sectionId: 3, skillType: 'writing', questions: [{ questionId: 4, questionText: 'Task 2: Discuss both views and give your opinion.' }] },
+                { sectionId: 4, skillType: 'speaking', questions: [{ questionId: 5, questionText: 'Part 2 cue card: Describe a memorable journey.' }] }
+            ];
+            this.totalQuestions = this.sections.reduce((sum, s) => sum + (s.questions?.length || 0), 0);
+            this.startTime = new Date();
+            this.startTimer();
+            this.renderSectionNav();
+            this.showSection(0);
+        },
+
+        startTimer() {
+            this.timerInterval = setInterval(() => {
+                this.timeRemaining--;
+                const mins = Math.floor(this.timeRemaining / 60);
+                const secs = this.timeRemaining % 60;
+                document.getElementById('timerDisplay').innerHTML = `<i class="bi bi-clock me-1"></i>${mins}:${secs.toString().padStart(2, '0')}`;
+                if (this.timeRemaining <= 0) this.submit();
+            }, 1000);
+        },
+
+        renderSectionNav() {
+            const nav = document.getElementById('sectionNav');
+            nav.innerHTML = '';
+            this.sections.forEach((s, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `list-group-item list-group-item-action text-start ${idx === this.currentSectionIndex ? 'active' : ''}`;
+                btn.innerHTML = `<span class="text-uppercase fw-semibold">${s.skillType || 'section'}</span><br><small>${s.questions?.length || 0} items</small>`;
+                btn.onclick = () => this.showSection(idx);
+                nav.appendChild(btn);
+            });
+        },
+
+        getSectionInstruction(skill) {
+            const key = (skill || '').toLowerCase();
+            if (key === 'listening') return 'You will hear recordings. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.';
+            if (key === 'reading') return 'Answer using TRUE/FALSE/NOT GIVEN or exact words from the passage as required.';
+            if (key === 'writing') return 'Task 1 (150 words) and Task 2 (250 words), judged by IELTS descriptors.';
+            if (key === 'speaking') return 'Part 1 interview, Part 2 cue card, Part 3 discussion with clear and fluent delivery.';
+            return 'Answer all items carefully.';
+        },
+
+        showSection(index) {
+            this.currentSectionIndex = index;
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('sectionCard').style.display = 'block';
+            const section = this.sections[index];
+            const questions = section.questions || [];
+            const startNo = this.sections.slice(0, index).reduce((sum, s) => sum + (s.questions?.length || 0), 0) + 1;
+            const endNo = startNo + questions.length - 1;
+
+            document.getElementById('sectionTitle').textContent = `${(section.skillType || 'section').toUpperCase()} SECTION`;
+            document.getElementById('sectionMeta').textContent = `Questions ${startNo}-${endNo}`;
+            document.getElementById('sectionInstructions').textContent = this.getSectionInstruction(section.skillType);
+
+            // Handle audio player for listening sections
+            const audioContainer = document.getElementById('placementAudioContainer');
+            const audioEl = document.getElementById('placementAudio');
+            const isListening = (section.skillType || '').toLowerCase() === 'listening';
+            if (isListening && section.audioUrl) {
+                audioEl.src = section.audioUrl;
+                audioEl.load();
+                audioContainer.classList.remove('d-none');
+            } else {
+                audioContainer.classList.add('d-none');
+                if (audioEl.src) {
+                    audioEl.pause();
+                    audioEl.src = '';
+                }
+            }
+
+            this.renderSectionNav();
+            this.updateProgress();
+
+            document.getElementById('prevSectionBtn').disabled = index === 0;
+            document.getElementById('nextSectionBtn').innerHTML = index === this.sections.length - 1
+                ? 'Submit Placement <i class="bi bi-check2-circle ms-1"></i>'
+                : 'Next Section <i class="bi bi-arrow-right ms-1"></i>';
+
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            questions.forEach((q, idx) => {
+                const questionNo = startNo + idx;
+                const value = this.answers[q.questionId] || '';
+                const isLong = (section.skillType || '').toLowerCase() === 'writing' || (section.skillType || '').toLowerCase() === 'speaking';
+                const wrapper = document.createElement('div');
+                wrapper.className = 'border rounded p-3';
+                wrapper.innerHTML = `
+                    <div class="fw-semibold mb-2">Question ${questionNo}</div>
+                    <div class="mb-2">${this.cleanQuestionText(q.questionText)}</div>
+                    ${isLong
+                        ? `<textarea class="form-control placement-answer" data-qid="${q.questionId}" rows="5" placeholder="Type your answer...">${value}</textarea>`
+                        : `<input class="form-control placement-answer" data-qid="${q.questionId}" value="${this.escapeHtml(value)}" placeholder="Type your answer" />`}
+                `;
+                container.appendChild(wrapper);
+            });
+
+            document.querySelectorAll('.placement-answer').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const qid = parseInt(e.target.getAttribute('data-qid'), 10);
+                    this.answers[qid] = (e.target.value || '').trim();
+                    this.updateProgress();
+                });
+            });
+        },
+
+        updateProgress() {
+            const answered = Object.values(this.answers).filter(v => (v || '').toString().trim().length > 0).length;
+            const total = this.totalQuestions || 1;
+            document.getElementById('progressText').textContent = `${answered}/${total} answered`;
+            document.getElementById('progressBar').style.width = `${Math.round((answered / total) * 100)}%`;
+        },
+
+        prevSection() {
+            if (this.currentSectionIndex > 0) this.showSection(this.currentSectionIndex - 1);
+        },
+
+        nextSection() {
+            if (this.currentSectionIndex < this.sections.length - 1) {
+                this.showSection(this.currentSectionIndex + 1);
+            } else {
+                this.submit();
+            }
+        },
+
+        async submit() {
+            clearInterval(this.timerInterval);
+            document.getElementById('sectionCard').style.display = 'none';
+            document.getElementById('completeState').style.display = 'block';
+
+            const allQuestions = this.sections.flatMap(s => s.questions || []);
+            const submitData = {
+                testId: 0,
+                answers: allQuestions.map(q => ({
+                    questionId: q.questionId,
+                    answer: this.answers[q.questionId] || ''
+                }))
+            };
+
+            let result = null;
+            try {
+                result = await api('/tests/placement/submit', {
+                    method: 'POST',
+                    body: JSON.stringify(submitData)
+                });
+            } catch (error) {
+                console.warn('Placement submit failed:', error);
+            }
+
+            const timeTaken = Math.floor((new Date() - this.startTime) / 1000);
+            const mins = Math.floor(timeTaken / 60);
+            const secs = timeTaken % 60;
+            const bandScore = result?.data?.bandScore || 5.0;
+            const answered = submitData.answers.filter(a => (a.answer || '').trim().length > 0).length;
+            const total = submitData.answers.length;
+
+            document.getElementById('bandScore').textContent = Number(bandScore).toFixed(1);
+            document.getElementById('answeredCount').textContent = `${answered}/${total}`;
+            document.getElementById('timeTaken').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            document.getElementById('skillBreakdown').textContent = this.buildSkillBreakdown(result?.data?.answerResults || []);
+
+            localStorage.setItem('placement_band', bandScore.toString());
+            localStorage.setItem('placement_completed', 'true');
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+        },
+
+        buildSkillBreakdown(answerResults) {
+            if (!answerResults.length) return 'Detailed analysis has been generated and saved to your AI roadmap.';
+            return `AI analyzed ${answerResults.length} responses and prioritized weak skills in your roadmap.`;
+        },
+
+        escapeHtml(value) {
+            return (value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Auth.isLoggedIn()) {
+            window.location.href = '/Home/Login';
+            return;
+        }
+        PlacementTest.init();
+    });
+</script>
+}

@@ -1,139 +1,333 @@
 @{
-    ViewData["Title"] = "Placement Test";
+    ViewData["Title"] = "IELTS Placement Test";
     ViewData["Page"] = "placement";
 }
 
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col-12 text-center">
-            <h2 class="mb-1"><i class="bi bi-file-earmark-text me-2"></i>IELTS Short Mock Placement (Academic)</h2>
-            <p class="text-muted mb-0">Diagnostic assessment aligned to IELTS form flow: Listening, Reading, Writing, Speaking</p>
-        </div>
-    </div>
+<style>
+    /* ===== PREMIUM EXAM CLIENT STYLING (Placement Test) ===== */
+    .placement-body {
+        background-color: #FAF8F5 !important;
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+    
+    .exam-header {
+        background: #0F1A2E;
+        color: white;
+        border-bottom: 2.5px solid #B8963E;
+        padding: 1.2rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(15, 26, 46, 0.15);
+    }
+    
+    .exam-title-editorial {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 700;
+        color: #FAF8F5;
+        letter-spacing: 0.01em;
+        margin-bottom: 0;
+    }
 
-    <div id="instructionsCard" class="card shadow-sm">
+    .timer-container {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 0.4rem 1.2rem;
+        border-radius: 8px;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        background: rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-nav-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    .section-nav-btn {
+        padding: 1rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #4A5568;
+        background: white;
+        border: 1px solid rgba(28, 43, 74, 0.08);
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .section-nav-btn:hover {
+        background: #FAF8F5;
+        color: #1C2B4A;
+        border-color: #B8963E;
+    }
+    
+    .section-nav-btn.active {
+        background: #1C2B4A;
+        color: white;
+        border-color: #1C2B4A;
+    }
+    
+    .split-screen-layout {
+        display: flex;
+        gap: 1.5rem;
+        height: 55vh;
+        min-height: 480px;
+        overflow: hidden;
+    }
+    
+    .split-column-passage {
+        flex: 1.1;
+        overflow-y: auto;
+        height: 100%;
+        background-color: #FAF8F5;
+        border-radius: 12px;
+        border: 1.5px solid rgba(28, 43, 74, 0.08);
+    }
+    
+    .passage-content {
+        font-family: 'EB Garamond', Georgia, serif;
+        font-size: 1.25rem;
+        line-height: 1.8;
+        color: #2C2417;
+        padding: 2.2rem;
+    }
+    
+    .passage-title-editorial {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        color: #1C2B4A;
+        border-bottom: 2px solid #B8963E;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.7rem;
+    }
+    
+    .split-column-questions {
+        flex: 0.9;
+        overflow-y: auto;
+        height: 100%;
+        background: white;
+        border-radius: 12px;
+        border: 1.5px solid rgba(28, 43, 74, 0.08);
+        padding: 1.5rem 1.8rem;
+    }
+    
+    .editorial-card {
+        border: 1px solid rgba(28, 43, 74, 0.08);
+        border-radius: 12px;
+        background: white;
+        box-shadow: var(--shadow-editorial);
+        overflow: hidden;
+    }
+    
+    .audio-card-premium {
+        background: #FAF8F5;
+        border: 1.5px solid rgba(184, 150, 62, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-editorial);
+    }
+    
+    .ielts-form-field {
+        background: #FAF8F5;
+        border: 1px solid rgba(28, 43, 74, 0.15);
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        transition: var(--transition);
+        width: 100%;
+    }
+    
+    .ielts-form-field:focus {
+        border-color: #B8963E;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(184, 150, 62, 0.2);
+        outline: none;
+    }
+    
+    .speaking-virtual-room {
+        background: #0F1A2E;
+        color: #FAF8F5;
+        border-radius: 12px;
+        padding: 2rem;
+        border: 2px solid rgba(184, 150, 62, 0.25);
+    }
+    
+    .audio-wave-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        height: 35px;
+    }
+    
+    .audio-wave-bar {
+        width: 4px;
+        height: 8px;
+        background-color: #DD6B20;
+        border-radius: 2px;
+        animation: wave-pulse-active 1.2s ease-in-out infinite;
+        animation-play-state: paused;
+    }
+    
+    .audio-wave-active .audio-wave-bar {
+        animation-play-state: running;
+    }
+    
+    .audio-wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .audio-wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .audio-wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .audio-wave-bar:nth-child(5) { animation-delay: 0.6s; }
+    
+    @@keyframes wave-pulse-active {
+        0%, 100% { height: 8px; }
+        50% { height: 25px; }
+    }
+    
+    .progress-bar-premium {
+        height: 8px;
+        background: #E2E8F0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background: #1C2B4A;
+        transition: width 0.3s ease;
+    }
+</style>
+
+<div class="container py-4 placement-body">
+    <!-- Instructions Card -->
+    <div id="instructionsCard" class="card editorial-card shadow-sm mx-auto" style="max-width: 680px;">
         <div class="card-body p-4 p-md-5 text-center">
-            <i class="bi bi-mortarboard text-ielts" style="font-size: 3rem;"></i>
-            <h4 class="mt-3">Before You Start</h4>
-            <p class="text-muted mb-3">Follow section instructions for a shortened, 30-minute diagnostic test.</p>
-            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-                <span class="badge bg-light text-dark border px-3 py-2">Listening: ~10 mins (5 Qs)</span>
-                <span class="badge bg-light text-dark border px-3 py-2">Reading: ~15 mins (5 Qs)</span>
-                <span class="badge bg-light text-dark border px-3 py-2">Writing: ~5 mins (1 Q)</span>
-                <span class="badge bg-light text-dark border px-3 py-2">Speaking: ~5 mins (1 Q)</span>
+            <i class="bi bi-mortarboard text-gold mb-3" style="font-size: 3.5rem;"></i>
+            <h3 class="fw-bold text-navy mb-2" style="font-family: 'Playfair Display', serif;">IELTS Diagnostic Placement Test</h3>
+            <p class="text-muted mb-4 lh-lg">This adaptive 30-minute diagnostic test evaluates your initial band level across all 4 key skills (Listening, Reading, Writing, Speaking) and updates your personalized learning roadmap.</p>
+            
+            <div class="row g-2 mb-4 justify-content-center text-start" style="max-width: 500px; margin: 0 auto;">
+                <div class="col-6"><span class="small text-muted"><i class="bi bi-headphones me-2 text-teal"></i>Listening: 5 Qs (~10 min)</span></div>
+                <div class="col-6"><span class="small text-muted"><i class="bi bi-book me-2 text-primary"></i>Reading: 5 Qs (~15 min)</span></div>
+                <div class="col-6"><span class="small text-muted"><i class="bi bi-pencil me-2 text-purple"></i>Writing: 1 Task (~5 min)</span></div>
+                <div class="col-6"><span class="small text-muted"><i class="bi bi-mic me-2 text-warning"></i>Speaking: 1 Cue Card (~5 min)</span></div>
             </div>
-            <button id="startTestBtn" class="btn btn-ielts btn-lg px-4">
-                <i class="bi bi-play-fill me-2"></i>Start Placement Test
+            
+            <button id="startTestBtn" class="btn btn-gold btn-lg px-5 fw-bold py-3 shadow-sm">
+                <i class="bi bi-play-fill me-2 fs-5"></i>Start Placement Test
             </button>
         </div>
     </div>
 
+    <!-- Exam Shell -->
     <div id="testShell" style="display:none;">
-        <div class="row g-3 mb-3">
-            <div class="col-lg-3">
-                <div class="card shadow-sm sticky-top" style="top: 88px;">
-                    <div class="card-header fw-semibold">Test Sections</div>
-                    <div class="list-group list-group-flush" id="sectionNav"></div>
+        <!-- Header -->
+        <div class="exam-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-gold text-dark font-monospace px-3 py-2 fw-bold" style="font-size:0.85rem; border-radius:6px;">DIAGNOSTIC</span>
+                <div>
+                    <h3 class="exam-title-editorial" style="font-size:1.4rem;">IELTS Academic Placement Test</h3>
+                    <small class="text-white-50" id="progressText">0/0 answered</small>
                 </div>
             </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="progress-bar-premium" style="width: 140px;">
+                    <div id="progressBar" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="timer-container" id="timerDisplay">
+                    <i class="bi bi-clock-history"></i>
+                    <span>30:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Sidebar Navigation -->
+            <div class="col-lg-3">
+                <div class="editorial-card p-3 shadow-sm">
+                    <h6 class="fw-bold mb-3 text-navy pb-2 border-bottom"><i class="bi bi-journal-text me-2"></i>Test Flow</h6>
+                    <div class="section-nav-list" id="sectionNav">
+                        <!-- Dynamic Tabs -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
             <div class="col-lg-9">
-                <div class="card shadow-sm mb-3">
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span id="progressText" class="fw-semibold">0/0 answered</span>
-                                <div class="small text-muted">Use exact constraints (e.g. NO MORE THAN TWO WORDS)</div>
-                            </div>
-                            <span id="timerDisplay" class="badge bg-secondary fs-6">
-                                <i class="bi bi-clock me-1"></i>30:00
-                            </span>
-                        </div>
-                        <div class="progress mt-2" style="height:8px;">
-                            <div id="progressBar" class="progress-bar bg-ielts" style="width:0%"></div>
-                        </div>
-                    </div>
+                <!-- Loading State -->
+                <div id="loadingState" class="editorial-card shadow-sm text-center py-5">
+                    <div class="spinner-border text-gold mb-2" role="status"></div>
+                    <p class="text-muted mb-0">Constructing your customized diagnostic questions...</p>
                 </div>
 
-                <div id="loadingState" class="card shadow-sm">
-                    <div class="card-body text-center py-5">
-                        <div class="spinner-border text-ielts mb-2" role="status"></div>
-                        <p class="text-muted mb-0">Loading placement sections...</p>
-                    </div>
-                </div>
-
-                <div id="sectionCard" class="card shadow-sm" style="display:none;">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 id="sectionTitle" class="mb-0">Section</h5>
-                            <span id="sectionMeta" class="badge bg-light text-dark border">Questions 1-10</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-light border mb-4">
-                            <div class="fw-semibold mb-1">Instructions</div>
-                            <div id="sectionInstructions" class="small text-muted"></div>
-                        </div>
-                        <!-- Audio player for listening sections -->
-                        <div id="placementAudioContainer" class="mb-4 d-none">
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="bi bi-volume-up-fill text-primary fs-5"></i>
-                                <span class="fw-semibold text-primary">Listening Audio</span>
-                            </div>
-                            <audio id="placementAudio" controls class="w-100" style="border-radius:8px;">
-                                Your browser does not support the audio element.
-                            </audio>
-                        </div>
-                        <div id="questionsContainer" class="d-grid gap-3"></div>
-                    </div>
-                    <div class="card-footer d-flex justify-content-between">
-                        <button id="prevSectionBtn" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Previous Section
+                <!-- Section Card -->
+                <div id="sectionCard" style="display:none;">
+                    <!-- Split view or Widescreen panel depending on skill -->
+                    <div id="placementContentArea"></div>
+                    
+                    <!-- Footer Pagination -->
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <button id="prevSectionBtn" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-arrow-left me-2"></i>Previous Section
                         </button>
-                        <button id="nextSectionBtn" class="btn btn-ielts">
-                            Next Section <i class="bi bi-arrow-right ms-1"></i>
+                        <button id="nextSectionBtn" class="btn btn-gold px-4 fw-bold">
+                            Next Section <i class="bi bi-arrow-right ms-2"></i>
                         </button>
                     </div>
                 </div>
 
-                <div id="completeState" style="display:none;" class="card shadow-sm">
-                    <div class="card-body text-center py-5">
-                        <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                        <h4 class="mt-3">Submitting your placement result</h4>
-                        <p class="text-muted">AI is building your personalized diagnosis and roadmap...</p>
-                        <div class="spinner-border text-ielts" role="status"></div>
-                    </div>
+                <!-- Complete State -->
+                <div id="completeState" style="display:none;" class="editorial-card shadow-sm text-center py-5">
+                    <i class="bi bi-check-circle-fill text-success mb-3" style="font-size: 4rem;"></i>
+                    <h4 class="fw-bold text-navy mb-2">Analyzing your performance...</h4>
+                    <p class="text-muted mb-4">Gemini AI is building your detailed CEFR profile and weekly learning roadmap.</p>
+                    <div class="spinner-border text-gold" role="status"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Results Modal -->
 <div class="modal fade" id="resultModal" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-body text-center py-5">
+        <div class="modal-content editorial-card p-4">
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-trophy text-gold mb-3" style="font-size: 3.5rem;"></i>
+                <h3 class="fw-bold text-navy mb-3" style="font-family: 'Playfair Display', serif;">Placement Result</h3>
+                
                 <div id="bandScoreDisplay" class="mb-4">
-                    <div class="display-1 fw-bold text-ielts" id="bandScore">5.5</div>
-                    <div class="text-muted">Estimated IELTS Band</div>
+                    <div class="display-1 fw-bold text-navy" id="bandScore">5.5</div>
+                    <div class="text-muted fw-semibold">Estimated IELTS Band</div>
                 </div>
-                <div class="row g-3 mb-3">
+                
+                <div class="row g-3 mb-4">
                     <div class="col-6">
-                        <div class="p-3 bg-light rounded">
-                            <div class="h5 mb-0" id="answeredCount">0/0</div>
+                        <div class="p-3 bg-light rounded" style="border: 1px solid rgba(28, 43, 74, 0.08);">
+                            <div class="h5 mb-0 fw-bold" id="answeredCount">0/0</div>
                             <small class="text-muted">Answered Items</small>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="p-3 bg-light rounded">
-                            <div class="h5 mb-0" id="timeTaken">0:00</div>
+                        <div class="p-3 bg-light rounded" style="border: 1px solid rgba(28, 43, 74, 0.08);">
+                            <div class="h5 mb-0 fw-bold" id="timeTaken">0:00</div>
                             <small class="text-muted">Time Taken</small>
                         </div>
                     </div>
                 </div>
-                <div class="small text-muted mb-3" id="skillBreakdown"></div>
-                <p class="text-muted mb-4">Roadmap has been updated from your mistakes and weak skills.</p>
-                <a href="/Home/OnboardingQuestions" class="btn btn-ielts btn-lg">
-                    <i class="bi bi-arrow-right me-2"></i>Continue Setup
+                
+                <p class="text-muted small mb-4" id="skillBreakdown">Detailed assessment feedback and weakness tags have been updated in your main Roadmap dashboard.</p>
+                
+                <a href="/Home/OnboardingQuestions" class="btn btn-gold btn-lg w-100 fw-bold py-3">
+                    Continue Dashboard Setup <i class="bi bi-arrow-right ms-2"></i>
                 </a>
             </div>
         </div>
@@ -150,6 +344,7 @@
         startTime: null,
         timerInterval: null,
         timeRemaining: 30 * 60,
+        isSpeakingSimulating: false,
 
         cleanQuestionText(text) {
             if (!text) return '';
@@ -189,10 +384,10 @@
 
         useFallback() {
             this.sections = [
-                { sectionId: 1, skillType: 'listening', questions: [{ questionId: 1, questionText: 'Name: ______' }, { questionId: 2, questionText: 'Arrival Date: ______' }] },
-                { sectionId: 2, skillType: 'reading', questions: [{ questionId: 3, questionText: 'Coffee was first discovered in Asia. (TRUE/FALSE/NOT GIVEN)' }] },
-                { sectionId: 3, skillType: 'writing', questions: [{ questionId: 4, questionText: 'Task 2: Discuss both views and give your opinion.' }] },
-                { sectionId: 4, skillType: 'speaking', questions: [{ questionId: 5, questionText: 'Part 2 cue card: Describe a memorable journey.' }] }
+                { sectionId: 1, skillType: 'listening', questions: [{ questionId: 1, questionText: 'Lakeside Sports Centre Premium membership cost is £____ per month.' }, { questionId: 2, questionText: 'Membership card collection day is ______.' }] },
+                { sectionId: 2, skillType: 'reading', passageTitle: 'The Rise of Urban Farming', passageText: 'Paragraph A: In cities around the world, urban farming has grown into a serious response to food security challenges...', questions: [{ questionId: 3, questionText: 'Urban farming supplies food to 800 million people globally. (TRUE/FALSE/NOT GIVEN)' }] },
+                { sectionId: 3, skillType: 'writing', questions: [{ questionId: 4, questionText: 'Task 2 Essay: Discuss the impact of technology on personal privacy.' }] },
+                { sectionId: 4, skillType: 'speaking', questions: [{ questionId: 5, questionText: 'Part 2 Cue Card: Describe a skill you learned outside of school.' }] }
             ];
             this.totalQuestions = this.sections.reduce((sum, s) => sum + (s.questions?.length || 0), 0);
             this.startTime = new Date();
@@ -206,7 +401,15 @@
                 this.timeRemaining--;
                 const mins = Math.floor(this.timeRemaining / 60);
                 const secs = this.timeRemaining % 60;
-                document.getElementById('timerDisplay').innerHTML = `<i class="bi bi-clock me-1"></i>${mins}:${secs.toString().padStart(2, '0')}`;
+                document.getElementById('timerDisplay').innerHTML = `<i class="bi bi-clock-history me-1"></i>${mins}:${secs.toString().padStart(2, '0')}`;
+                
+                // Color states
+                if (this.timeRemaining < 60) {
+                    document.getElementById('timerDisplay').className = 'timer-container text-danger fw-bold border-danger';
+                } else if (this.timeRemaining < 300) {
+                    document.getElementById('timerDisplay').className = 'timer-container text-warning fw-bold border-warning';
+                }
+                
                 if (this.timeRemaining <= 0) this.submit();
             }, 1000);
         },
@@ -216,51 +419,32 @@
             nav.innerHTML = '';
             this.sections.forEach((s, idx) => {
                 const btn = document.createElement('button');
-                btn.className = `list-group-item list-group-item-action text-start ${idx === this.currentSectionIndex ? 'active' : ''}`;
-                btn.innerHTML = `<span class="text-uppercase fw-semibold">${s.skillType || 'section'}</span><br><small>${s.questions?.length || 0} items</small>`;
+                btn.className = `section-nav-btn ${idx === this.currentSectionIndex ? 'active' : ''}`;
+                
+                const icon = s.skillType === 'reading' ? 'book' :
+                             s.skillType === 'listening' ? 'headphones' :
+                             s.skillType === 'writing' ? 'pencil' : 'mic';
+                             
+                btn.innerHTML = `
+                    <span><i class="bi bi-${icon} me-2"></i><span class="text-uppercase fw-bold">${s.skillType || 'section'}</span></span>
+                    <span class="badge ${idx === this.currentSectionIndex ? 'bg-light text-navy' : 'bg-secondary'} rounded-pill">${s.questions?.length || 0} Qs</span>
+                `;
                 btn.onclick = () => this.showSection(idx);
                 nav.appendChild(btn);
             });
-        },
-
-        getSectionInstruction(skill) {
-            const key = (skill || '').toLowerCase();
-            if (key === 'listening') return 'You will hear recordings. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.';
-            if (key === 'reading') return 'Answer using TRUE/FALSE/NOT GIVEN or exact words from the passage as required.';
-            if (key === 'writing') return 'Task 1 (150 words) and Task 2 (250 words), judged by IELTS descriptors.';
-            if (key === 'speaking') return 'Part 1 interview, Part 2 cue card, Part 3 discussion with clear and fluent delivery.';
-            return 'Answer all items carefully.';
         },
 
         showSection(index) {
             this.currentSectionIndex = index;
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('sectionCard').style.display = 'block';
+            
             const section = this.sections[index];
+            const skill = (section.skillType || '').toLowerCase();
             const questions = section.questions || [];
+            
             const startNo = this.sections.slice(0, index).reduce((sum, s) => sum + (s.questions?.length || 0), 0) + 1;
-            const endNo = startNo + questions.length - 1;
-
-            document.getElementById('sectionTitle').textContent = `${(section.skillType || 'section').toUpperCase()} SECTION`;
-            document.getElementById('sectionMeta').textContent = `Questions ${startNo}-${endNo}`;
-            document.getElementById('sectionInstructions').textContent = this.getSectionInstruction(section.skillType);
-
-            // Handle audio player for listening sections
-            const audioContainer = document.getElementById('placementAudioContainer');
-            const audioEl = document.getElementById('placementAudio');
-            const isListening = (section.skillType || '').toLowerCase() === 'listening';
-            if (isListening && section.audioUrl) {
-                audioEl.src = section.audioUrl;
-                audioEl.load();
-                audioContainer.classList.remove('d-none');
-            } else {
-                audioContainer.classList.add('d-none');
-                if (audioEl.src) {
-                    audioEl.pause();
-                    audioEl.src = '';
-                }
-            }
-
+            
             this.renderSectionNav();
             this.updateProgress();
 
@@ -269,28 +453,143 @@
                 ? 'Submit Placement <i class="bi bi-check2-circle ms-1"></i>'
                 : 'Next Section <i class="bi bi-arrow-right ms-1"></i>';
 
-            const container = document.getElementById('questionsContainer');
+            // Render specific template for split-view Reading or standard templates
+            const area = document.getElementById('placementContentArea');
+            area.innerHTML = '';
+
+            if (skill === 'reading') {
+                const layout = document.createElement('div');
+                layout.className = 'split-screen-layout';
+                layout.innerHTML = `
+                    <div class="split-column-passage scrollbar-premium">
+                        <div class="passage-content">
+                            <h3 class="passage-title-editorial">${section.passageTitle || 'Reading Section Passage'}</h3>
+                            <div>${(section.passageText || 'Reading passage text is empty.').replace(/\n\n/g, '</p><p>')}</div>
+                        </div>
+                    </div>
+                    <div class="split-column-questions scrollbar-premium">
+                        <h5 class="passage-title-editorial mb-3" style="font-size: 1.3rem;">Questions Sheet</h5>
+                        <div id="innerQuestionsContainer" class="d-grid gap-3"></div>
+                    </div>
+                `;
+                area.appendChild(layout);
+                this.renderQuestions(questions, startNo, document.getElementById('innerQuestionsContainer'), skill);
+            } 
+            else if (skill === 'listening') {
+                const layout = document.createElement('div');
+                layout.className = 'editorial-card p-4';
+                layout.innerHTML = `
+                    <div class="audio-card-premium mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-headphones text-teal fs-3"></i>
+                            <h5 class="mb-0 text-teal fw-bold">Listening Audio Panel</h5>
+                        </div>
+                        <audio id="placementAudio" controls class="w-100 mt-3" style="border-radius:8px;">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <h5 class="passage-title-editorial mb-3" style="font-size:1.3rem;">Questions Sheet</h5>
+                    <div id="innerQuestionsContainer" class="d-grid gap-3"></div>
+                `;
+                area.appendChild(layout);
+                
+                const audioEl = document.getElementById('placementAudio');
+                if (section.audioUrl) {
+                    audioEl.src = section.audioUrl;
+                    audioEl.load();
+                }
+                
+                this.renderQuestions(questions, startNo, document.getElementById('innerQuestionsContainer'), skill);
+            }
+            else if (skill === 'writing') {
+                const layout = document.createElement('div');
+                layout.className = 'editorial-card p-4';
+                layout.innerHTML = `
+                    <div class="alert alert-light border mb-4">
+                        <div class="badge bg-purple mb-2">Writing Diagnostics</div>
+                        <h6 class="fw-bold mb-1">Prompt:</h6>
+                        <p class="small text-muted mb-0">${section.questions[0]?.questionText || 'IELTS Writing Prompt'}</p>
+                    </div>
+                    <label class="form-label fw-bold text-navy">Your essay</label>
+                    <textarea class="form-control ielts-form-field placement-answer" data-qid="${section.questions[0]?.questionId}" rows="8" placeholder="Type your placement response essay here...">${this.answers[section.questions[0]?.questionId] || ''}</textarea>
+                `;
+                area.appendChild(layout);
+                this.bindInputs();
+            }
+            else if (skill === 'speaking') {
+                const layout = document.createElement('div');
+                layout.className = 'speaking-virtual-room text-center d-flex flex-column align-items-center gap-3';
+                layout.innerHTML = `
+                    <div class="p-3 bg-dark rounded-circle border border-warning" style="width:80px; height:80px; display:flex; align-items:center; justify-content:center;">
+                        <i class="bi bi-mic-fill text-warning fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold text-warning">Speaking Diagnostics</h5>
+                    <div class="card bg-dark border-light p-3 w-100 text-start text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-warning text-dark">Cue Card Prompt</span>
+                            <div class="audio-wave-container" id="placementSpeakingWave">
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                            </div>
+                        </div>
+                        <p class="mb-0 small text-white-50">${section.questions[0]?.questionText || 'IELTS Speaking Prompt'}</p>
+                    </div>
+                    <textarea class="form-control bg-dark text-white border-secondary placement-answer w-100" data-qid="${section.questions[0]?.questionId}" rows="5" placeholder="Type transcript or speaking response notes here...">${this.answers[section.questions[0]?.questionId] || ''}</textarea>
+                    
+                    <button class="btn btn-warning fw-bold px-4" id="placementMicSimBtn">
+                        <i class="bi bi-record-circle-fill me-2"></i>Simulate Mic
+                    </button>
+                `;
+                area.appendChild(layout);
+                this.bindInputs();
+                
+                document.getElementById('placementMicSimBtn').addEventListener('click', () => {
+                    this.isSpeakingSimulating = !this.isSpeakingSimulating;
+                    const wave = document.getElementById('placementSpeakingWave');
+                    const input = document.querySelector('.placement-answer');
+                    if (this.isSpeakingSimulating) {
+                        wave.classList.add('audio-wave-active');
+                        document.getElementById('placementMicSimBtn').innerHTML = '<i class="bi bi-stop-circle-fill me-2"></i>Stop mic';
+                        document.getElementById('placementMicSimBtn').className = 'btn btn-danger fw-bold px-4';
+                        if (!input.value) {
+                            input.value = "James Morrison: Lakeside Sports Centre, Premium membership at fifty-five pounds per month...";
+                            this.answers[section.questions[0]?.questionId] = input.value;
+                            this.updateProgress();
+                        }
+                    } else {
+                        wave.classList.remove('audio-wave-active');
+                        document.getElementById('placementMicSimBtn').innerHTML = '<i class="bi bi-record-circle-fill me-2"></i>Simulate Mic';
+                        document.getElementById('placementMicSimBtn').className = 'btn btn-warning fw-bold px-4';
+                    }
+                });
+            }
+        },
+
+        renderQuestions(questions, startNo, container, skill) {
             container.innerHTML = '';
             questions.forEach((q, idx) => {
                 const questionNo = startNo + idx;
                 const value = this.answers[q.questionId] || '';
-                const isLong = (section.skillType || '').toLowerCase() === 'writing' || (section.skillType || '').toLowerCase() === 'speaking';
                 const wrapper = document.createElement('div');
-                wrapper.className = 'border rounded p-3';
+                wrapper.className = 'border rounded p-3 bg-light';
                 wrapper.innerHTML = `
-                    <div class="fw-semibold mb-2">Question ${questionNo}</div>
-                    <div class="mb-2">${this.cleanQuestionText(q.questionText)}</div>
-                    ${isLong
-                        ? `<textarea class="form-control placement-answer" data-qid="${q.questionId}" rows="5" placeholder="Type your answer...">${value}</textarea>`
-                        : `<input class="form-control placement-answer" data-qid="${q.questionId}" value="${this.escapeHtml(value)}" placeholder="Type your answer" />`}
+                    <div class="fw-semibold text-navy mb-1" style="font-size:0.9rem;">Question ${questionNo}</div>
+                    <div class="mb-2 text-secondary small">${this.cleanQuestionText(q.questionText)}</div>
+                    <input class="form-control ielts-form-field placement-answer" data-qid="${q.questionId}" value="${this.escapeHtml(value)}" placeholder="Type answer" />
                 `;
                 container.appendChild(wrapper);
             });
+            this.bindInputs();
+        },
 
+        bindInputs() {
             document.querySelectorAll('.placement-answer').forEach(input => {
                 input.addEventListener('input', (e) => {
                     const qid = parseInt(e.target.getAttribute('data-qid'), 10);
-                    this.answers[qid] = (e.target.value || '').trim();
+                    this.answers[qid] = e.target.value;
                     this.updateProgress();
                 });
             });
@@ -304,10 +603,15 @@
         },
 
         prevSection() {
+            const audioEl = document.getElementById('placementAudio');
+            if (audioEl) audioEl.pause();
             if (this.currentSectionIndex > 0) this.showSection(this.currentSectionIndex - 1);
         },
 
         nextSection() {
+            const audioEl = document.getElementById('placementAudio');
+            if (audioEl) audioEl.pause();
+            
             if (this.currentSectionIndex < this.sections.length - 1) {
                 this.showSection(this.currentSectionIndex + 1);
             } else {
@@ -342,23 +646,23 @@
             const timeTaken = Math.floor((new Date() - this.startTime) / 1000);
             const mins = Math.floor(timeTaken / 60);
             const secs = timeTaken % 60;
-            const bandScore = result?.data?.bandScore || 5.0;
+            const bandScore = result?.data?.bandScore || 5.5;
             const answered = submitData.answers.filter(a => (a.answer || '').trim().length > 0).length;
             const total = submitData.answers.length;
 
             document.getElementById('bandScore').textContent = Number(bandScore).toFixed(1);
             document.getElementById('answeredCount').textContent = `${answered}/${total}`;
             document.getElementById('timeTaken').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-            document.getElementById('skillBreakdown').textContent = this.buildSkillBreakdown(result?.data?.answerResults || []);
 
+            if (result?.data?.answerResults) {
+                document.getElementById('skillBreakdown').textContent = 
+                    `AI completed grading. Answers verified: ${result.data.correctAnswers || answered} items. Roadmap has been dynamically tailored to your needs.`;
+            }
+
+            document.getElementById('completeState').style.display = 'none';
             localStorage.setItem('placement_band', bandScore.toString());
             localStorage.setItem('placement_completed', 'true');
             new bootstrap.Modal(document.getElementById('resultModal')).show();
-        },
-
-        buildSkillBreakdown(answerResults) {
-            if (!answerResults.length) return 'Detailed analysis has been generated and saved to your AI roadmap.';
-            return `AI analyzed ${answerResults.length} responses and prioritized weak skills in your roadmap.`;
         },
 
         escapeHtml(value) {

@@ -1,0 +1,342 @@
+# 🎓 WebIeltsFree — Project Deep Dive
+
+## Tổng quan
+
+**WebIeltsFree** là nền tảng học IELTS miễn phí đầy đủ 4 kỹ năng (Listening, Reading, Writing, Speaking), tích hợp AI (Google Gemini) để chấm bài và dạy kèm, hỗ trợ hệ thống giáo viên-học sinh, và triển khai bằng Docker/Kubernetes.
+
+> [!NOTE]
+> Đây là dự án đại học (thư mục `STKN`), architecture đạt cấp production-grade với multi-database, microservices, và CI/CD pipeline.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Backend chính** | ASP.NET Core 8 (MVC + API), C# |
+| **AI Microservice** | Python 3.11, FastAPI, Google Gemini API |
+| **Database chính** | MySQL 8.0 (Pomelo EF Core) |
+| **NoSQL** | MongoDB (analytics, behavior logs, AI conversations) |
+| **Cache** | Redis (distributed caching & rate limiting) |
+| **Auth** | Cookie Authentication + JWT Bearer |
+| **Logging** | Serilog (Console + File) |
+| **Email** | MailKit (Gmail SMTP / SendGrid / Resend) |
+| **Vector Search** | Pinecone (IELTS knowledge base) |
+| **Avatar AI** | D-ID API (talking-head video) |
+| **Frontend** | Razor Views (server-rendered) + Vanilla JS/CSS |
+| **DevOps** | Docker Compose, Kubernetes manifests, GitHub Actions CI/CD |
+
+---
+
+## Kiến trúc tổng thể
+
+```mermaid
+graph TD
+    Browser["🌐 Browser"] --> ASPNET["ASP.NET Core 8<br/>(MVC + API)"]
+    ASPNET --> MySQL["MySQL 8.0<br/>(ieltsdb)"]
+    ASPNET --> MongoDB["MongoDB<br/>(Analytics/Logs)"]
+    ASPNET --> Redis["Redis<br/>(Cache/Rate Limit)"]
+    ASPNET --> PythonAI["Python FastAPI<br/>(AI Microservice)"]
+    ASPNET -->|WebSocket Proxy| PythonAI
+    PythonAI --> Gemini["Google Gemini API"]
+    PythonAI --> DID["D-ID Avatar API"]
+    ASPNET --> Pinecone["Pinecone<br/>(Vector Search)"]
+    ASPNET --> Email["SMTP<br/>(MailKit)"]
+```
+
+---
+
+## Cấu trúc thư mục
+
+```
+WebIeltsFree/
+├── WebIeltsFree.sln                    # Visual Studio solution
+├── WebIeltsFree/                       # ── ASP.NET Core project ──
+│   ├── Program.cs                      # Entry point, DI, middleware pipeline
+│   ├── Controllers/                    # 20 controllers (API + MVC)
+│   ├── Models/                         # Entities, DTOs, Services, DbContext
+│   ├── Views/                          # Razor views (Account, Home, Learn, Practice, Tests, Teachers)
+│   ├── Areas/                          # Teacher & Admin areas (role-based)
+│   ├── Middleware/                     # DevMagicLogin (dev only)
+│   ├── Utilities/                      # InputSanitizer
+│   ├── Migrations/                     # EF Core migrations (empty — using SQL scripts)
+│   └── wwwroot/                        # Static: CSS, JS, audio, uploads
+├── python_ai_service/                  # ── Python AI microservice ──
+│   ├── app/main.py                     # FastAPI: Writing/Speaking eval + WebSocket
+│   └── requirements.txt               # google-generativeai, fastapi, uvicorn, requests
+├── DatabaseScripts/                    # SQL seed data
+│   ├── ieltsdb.sql                     # Main schema + data (383KB)
+│   ├── ieltsdb_supplement.sql          # Supplementary data
+│   └── cam20_*.sql                     # Cambridge 20 test data
+├── Docker/                             # Docker infrastructure
+│   ├── Dockerfile                      # ASP.NET build image
+│   ├── docker-compose.yml              # Dev: web + python-ai + mysql + redis + phpmyadmin
+│   ├── docker-compose.dev.yml          # Development overrides
+│   └── docker-compose.prod.yml         # Production overrides
+├── deploy.sh                           # Deployment script
+├── kubernetes-manifest.yml             # K8s deployment (13KB)
+└── github-actions-ci-cd.yml           # CI/CD pipeline
+```
+
+---
+
+## Database Schema (MySQL — `ieltsdb`)
+
+### User Domain
+| Table | Mô tả |
+|---|---|
+| `tb_users` | Tài khoản: email, password hash (BCrypt), role (student/teacher/admin), status, onboarding |
+| `tb_user_profiles` | Profile mở rộng: full name, avatar, country, timezone, ngôn ngữ |
+| `tb_user_goals` | Mục tiêu học: current band, target band (0-9), ngày thi, giờ học/ngày, lý do |
+| `tb_user_sessions` | Phiên đăng nhập |
+| `tb_user_placement_results` | Kết quả bài test xếp lớp |
+| `tb_user_daily_activities` | Hoạt động học hàng ngày |
+| `tb_user_achievements` | Achievement đã mở khóa |
+
+### Learning Domain (Course → Module → Lesson → Content)
+| Table | Mô tả |
+|---|---|
+| `tb_courses` | Khóa học: title, target band, skill type, slug |
+| `tb_modules` | Module trong khóa học |
+| `tb_lessons` | Bài học: skill type (reading/listening/writing/speaking), difficulty |
+| `tb_lesson_contents` | Nội dung: video, article, audio, exercise |
+| `tb_vocabulary` | Ngân hàng từ vựng: word, meaning, example, phonetic, synonyms/antonyms, IELTS topic |
+| `tb_user_learning_progress` | Tiến độ học từng lesson |
+
+### Test Domain
+| Table | Mô tả |
+|---|---|
+| `tb_tests` | Đề thi: title, difficulty, duration, created_by (teacher), status (draft/published), reviewer |
+| `tb_test_sections` | Section theo skill (listening/reading), audio URL |
+| `tb_questions` | Câu hỏi |
+| `tb_answers` | Đáp án đúng |
+| `tb_user_test_attempts` | Lần thi: band score, thời gian |
+| `tb_user_answers` | Câu trả lời của user |
+
+### Practice Domain
+| Table | Mô tả |
+|---|---|
+| `tb_listening_materials` | Bài nghe: transcript, audio URL, difficulty, duration |
+| `tb_listening_questions` | Câu hỏi listening: multiple choice / fill blank / matching |
+| `tb_reading_passages` | Bài đọc: passage text, topic, word count |
+| `tb_reading_questions` | Câu hỏi reading |
+| `tb_user_practice_attempts` | Kết quả luyện tập |
+| `tb_writing_prompts` | Đề writing (Task 1 & 2) |
+| `tb_writing_submissions` | Bài viết đã nộp + AI score |
+| `tb_speaking_topics` | Chủ đề speaking |
+| `tb_speaking_topic_parts` | Chi tiết từng part |
+| `tb_speaking_sessions` | Phiên speaking + feedback |
+
+### AI Domain
+| Table | Mô tả |
+|---|---|
+| `tb_ai_roadmaps` | Lộ trình học AI-generated |
+| `tb_ai_roadmap_steps` | Từng bước trong roadmap |
+| `tb_ai_skill_analysis` | Phân tích điểm mạnh/yếu theo 4 skill |
+
+### Teacher & Admin Domain
+| Table | Mô tả |
+|---|---|
+| `tb_teacher_profiles` | Hồ sơ giáo viên |
+| `tb_teacher_certificates` | Chứng chỉ |
+| `tb_teacher_assignments` | Bài tập giao cho học sinh |
+| `tb_grade_disputes` | Khiếu nại điểm |
+| `tb_conversations` / `tb_messages` | Nhắn tin teacher ↔ student |
+| `tb_roadmap_suggestions` | Gợi ý roadmap từ teacher |
+| `tb_announcements` | Thông báo |
+| `tb_notifications` | Notification hệ thống |
+| `tb_achievements` | Định nghĩa achievement |
+| `tb_reports` | Báo cáo |
+| `tb_audit_logs` | Audit log |
+| `tb_admin_actions` | Log hành động admin |
+| `tb_system_settings` | Cấu hình hệ thống (key-value) |
+
+---
+
+## Controllers & Features
+
+### Student-facing (20 controllers)
+
+| Controller | Chức năng chính |
+|---|---|
+| [HomeController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/HomeController.cs) | Landing page, Dashboard, Onboarding, SupportChat |
+| [AccountController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/AccountController.cs) | Login page routing |
+| [AuthController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/AuthController.cs) | Register, Login, Logout, Password reset, Email verify (20KB) |
+| [UsersController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/UsersController.cs) | User profile, settings, goals |
+| [LessonsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/LessonsController.cs) | Course/Module/Lesson CRUD & navigation (25KB) |
+| [ListeningController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/ListeningController.cs) | Listening practice materials & questions |
+| [ReadingController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/ReadingController.cs) | Reading passages & questions |
+| [WritingController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/WritingController.cs) | Writing prompts, submissions, AI evaluation (29KB) |
+| [SpeakingController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/SpeakingController.cs) | Speaking topics, sessions, evaluation (23KB) |
+| [TestsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/TestsController.cs) | Full test flow: list, take, submit, review (26KB) |
+| [AiController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/AiController.cs) | AI Tutor, Roadmap, Chatbot, Skill Analysis (32KB — lớn nhất) |
+| [SessionsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/SessionsController.cs) | Session management |
+| [AchievementsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/AchievementsController.cs) | Gamification: achievements |
+| [NotificationsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/NotificationsController.cs) | In-app notifications |
+| [MessagesController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/MessagesController.cs) | Messaging between teacher-student |
+| [DisputesController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/DisputesController.cs) | Grade dispute flow |
+| [UserActivityController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/UserActivityController.cs) | Daily activity tracking |
+| [TeacherController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/TeacherController.cs) | Teacher public pages |
+| [TeachersController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/TeachersController.cs) | Teachers listing |
+| [RoadmapSuggestionsApiController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Controllers/RoadmapSuggestionsApiController.cs) | AI roadmap suggestions API |
+
+### Teacher Area (8 controllers)
+
+| Controller | Chức năng |
+|---|---|
+| [TeacherProfilesController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Teacher/Controllers/TeacherProfilesController.cs) | Profile & certificates management |
+| [TestAssignmentsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Teacher/Controllers/TestAssignmentsController.cs) | Tạo & giao bài tập (18KB) |
+| [WritingPromptsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Teacher/Controllers/WritingPromptsController.cs) | Quản lý đề writing |
+| [SpeakingTopicsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Teacher/Controllers/SpeakingTopicsController.cs) | Quản lý chủ đề speaking |
+| [GradeDisputesController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Teacher/Controllers/GradeDisputesController.cs) | Xử lý khiếu nại điểm |
+| [ConversationsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Teacher/Controllers/ConversationsController.cs) | Chat với học sinh |
+| [RoadmapSuggestionsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Teacher/Controllers/RoadmapSuggestionsController.cs) | Gợi ý lộ trình cho học sinh |
+
+### Admin Area (9 controllers)
+
+| Controller | Chức năng |
+|---|---|
+| [UsersController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/UsersController.cs) | Quản lý users (CRUD, ban, role) |
+| [CoursesController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/CoursesController.cs) | Quản lý khóa học |
+| [QuestionsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/QuestionsController.cs) | Quản lý câu hỏi |
+| [AnnouncementsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/AnnouncementsController.cs) | Thông báo hệ thống |
+| [ReportsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/ReportsController.cs) | Báo cáo & thống kê |
+| [SettingsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/SettingsController.cs) | Cấu hình hệ thống |
+| [LogsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/LogsController.cs) | Xem log hệ thống |
+| [RoadmapSuggestionsController](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Areas/Admin/Controllers/RoadmapSuggestionsController.cs) | Duyệt roadmap suggestions |
+
+---
+
+## Services Layer
+
+| Service | File | Vai trò |
+|---|---|---|
+| `GeminiService` | [GeminiService.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/GeminiService.cs) | Gọi Gemini API từ .NET (chatbot, roadmap, analysis) |
+| `PythonAiService` | [PythonAiService.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/PythonAiService.cs) | HTTP client → Python microservice |
+| `RedisService` | [RedisService.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/RedisService.cs) | Caching + Rate limiting (fallback: in-memory) |
+| `MongoDbService` | [MongoDbService.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/MongoDbService.cs) | Analytics, behavior logs, AI conversations |
+| `EmailService` | [EmailService.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/EmailService.cs) | Email: reset password, verification, reminders |
+| `VectorSearchService` | [AiServices.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/AiServices.cs) | Pinecone vector search cho IELTS knowledge |
+| `SpacedRepetitionService` | (in AiServices.cs) | Thuật toán lặp lại ngắt quãng |
+| `ChatbotService` | (in AiServices.cs) | AI chatbot tương tác |
+| `OverdueAssignmentService` | [OverdueAssignmentService.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/OverdueAssignmentService.cs) | Background service: check bài tập quá hạn |
+
+---
+
+## Python AI Microservice
+
+File: [main.py](file:///e:/University/STKN/WebIeltsFree/python_ai_service/app/main.py) (654 dòng)
+
+### Endpoints
+
+| Endpoint | Method | Chức năng |
+|---|---|---|
+| `/health` | GET | Health check |
+| `/v1/writing/evaluate` | POST | Chấm Writing (Task 1/2) → band scores + feedback |
+| `/v1/speaking/evaluate` | POST | Chấm Speaking → band scores + feedback |
+| `/ws/speaking` | WebSocket | **Real-time Speaking exam simulation** |
+
+### Speaking WebSocket Flow
+1. **`start`** → Examiner mở đầu ("Could you tell me your full name?")
+2. **`user_answer`** → Candidate trả lời → Topic guard check → Gemini stream response
+3. Part tự động chuyển: Part 1 (3 turns) → Part 2 (cue card) → Part 3 (analytical questions)
+4. **Topic Guard**: keyword matching + Gemini AI relevance check, 3 warnings = terminated
+5. **Safety Filter**: từ khóa nguy hiểm → terminate ngay
+6. **Avatar**: D-ID API tạo video talking-head cho examiner
+7. **Fallback**: khi Gemini unavailable, dùng hardcoded responses
+
+---
+
+## Middleware Pipeline
+
+```
+Request → RequestLogging → RateLimiting → HTTPS → StaticFiles 
+        → Routing → WebSockets → CORS → Authentication → Authorization 
+        → Controllers/Areas
+```
+
+| Middleware | File | Chức năng |
+|---|---|---|
+| `RequestLogging` | [Middleware.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Models/Middleware.cs) | Log request/response |
+| `RateLimiting` | (in Middleware.cs) | Rate limit API calls |
+| `SecurityHeaders` | (in Middleware.cs) | CSP, X-Frame-Options... (production only) |
+| `DevMagicLogin` | [DevMagicLoginMiddleware.cs](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Middleware/DevMagicLoginMiddleware.cs) | Auto-login dev (đã disabled) |
+
+---
+
+## Frontend (Razor Views)
+
+### Views chính
+| Page | File | Kích thước |
+|---|---|---|
+| **Landing Page** | [Index.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Home/Index.cshtml) | 68KB |
+| **Dashboard** | [Dashboard.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Home/Dashboard.cshtml) | 26KB |
+| **AI Tutor** | [AiTutor.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Learn/AiTutor.cshtml) | 42KB |
+| **Practice Writing** | [_PracticeWriting.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Practice/_PracticeWriting.cshtml) | 84KB |
+| **Practice Scripts** | [_PracticeScripts.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Practice/_PracticeScripts.cshtml) | 118KB |
+| **Practice Speaking** | [_PracticeSpeaking.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Practice/_PracticeSpeaking.cshtml) | 26KB |
+| **Take Test** | [TakeTest.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Tests/TakeTest.cshtml) | 24KB |
+| **Support Chat** | [SupportChat.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Home/SupportChat.cshtml) | 22KB |
+| **Learn Reading** | [LearnReading.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Learn/LearnReading.cshtml) | 31KB |
+| **Learn Listening** | [LearnListening.cshtml](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/Views/Learn/LearnListening.cshtml) | 27KB |
+
+### Static Assets
+- [site.css](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/wwwroot/css/site.css) — 26KB global styles
+- [site.js](file:///e:/University/STKN/WebIeltsFree/WebIeltsFree/wwwroot/js/site.js) — 42KB global scripts
+
+---
+
+## Role-based Authorization
+
+```mermaid
+graph LR
+    Student["🎓 Student"] --> Learn["Learn/Practice/Test"]
+    Student --> AI["AI Tutor/Chatbot"]
+    Student --> Disputes["Grade Disputes"]
+    Teacher["👩‍🏫 Teacher"] --> Assignments["Create Tests/Prompts"]
+    Teacher --> Grading["Grade & Review"]
+    Teacher --> Messaging["Chat with Students"]
+    Teacher --> Roadmap["Suggest Roadmaps"]
+    Admin["🔐 Admin"] --> Users["Manage Users"]
+    Admin --> Content["Manage Courses/Questions"]
+    Admin --> System["Settings/Logs/Reports"]
+    Admin --> Announcements["System Announcements"]
+```
+
+- **Policy `TeacherOrAdmin`**: dùng cho controller Teacher & Admin areas
+- **Auth**: Cookie-based (24h expiry, no sliding)
+
+---
+
+## Deployment Infrastructure
+
+### Docker Compose (5 services)
+| Service | Image | Port |
+|---|---|---|
+| `web` | Custom ASP.NET build | 5000:8080 |
+| `python-ai` | python:3.11-slim | 8000 |
+| `db` | mysql:8.0 | 3306 |
+| `redis` | redis:7-alpine | 6379 |
+| `phpmyadmin` | phpmyadmin:5 | 8080 |
+
+### Kubernetes
+- Full manifest (13KB): Deployments, Services, ConfigMaps, Secrets, Ingress
+- Hỗ trợ horizontal scaling
+
+### CI/CD
+- GitHub Actions pipeline (4.5KB): build → test → deploy
+
+---
+
+## Điểm nổi bật thiết kế
+
+1. **Multi-database**: MySQL (structured) + MongoDB (unstructured analytics) + Redis (cache) + Pinecone (vector search)
+2. **Microservice AI**: Python FastAPI tách riêng xử lý AI nặng, giao tiếp qua HTTP + WebSocket proxy
+3. **WebSocket proxy**: ASP.NET Core relay WebSocket giữa browser ↔ Python speaking service
+4. **Graceful fallback**: Khi Gemini/Redis/MongoDB unavailable → in-memory cache, hardcoded responses
+5. **Topic Guard**: 3-layer safety cho Speaking (keyword → heuristic → Gemini AI check)
+6. **Gamification**: Achievements, daily activity tracking, spaced repetition
+7. **Soft delete**: Entities có `is_deleted` + `deleted_at` thay vì xóa thật
+
+> [!IMPORTANT]
+> EF Migrations folder trống — schema được quản lý bằng SQL scripts trong `DatabaseScripts/` (tổng ~500KB data).

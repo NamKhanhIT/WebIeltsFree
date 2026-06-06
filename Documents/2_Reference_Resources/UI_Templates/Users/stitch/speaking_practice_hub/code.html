@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IELTS Speaking Practice Hub | The Academic Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#002204",
+                      "on-tertiary-container": "#4e3e00",
+                      "inverse-surface": "#192b69",
+                      "on-tertiary-fixed-variant": "#564500",
+                      "primary": "#0057c2",
+                      "on-surface": "#001552",
+                      "surface-variant": "#dde1ff",
+                      "on-surface-variant": "#414755",
+                      "background": "#fbf8ff",
+                      "tertiary-fixed": "#ffe07f",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-bright": "#fbf8ff",
+                      "secondary-fixed-dim": "#28e44d",
+                      "secondary-container": "#4bfc61",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed-variant": "#004398",
+                      "on-primary-container": "#fefcff",
+                      "error-container": "#ffdad6",
+                      "on-secondary-container": "#00711d",
+                      "on-primary-fixed": "#001a43",
+                      "surface-container-high": "#e4e7ff",
+                      "tertiary-fixed-dim": "#edc203",
+                      "surface-tint": "#0059c6",
+                      "outline-variant": "#c1c6d7",
+                      "outline": "#727786",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#efefff",
+                      "tertiary": "#725c00",
+                      "primary-container": "#006ef2",
+                      "tertiary-container": "#cda800",
+                      "surface-dim": "#d1d8ff",
+                      "on-secondary-fixed-variant": "#005313",
+                      "primary-fixed": "#d9e2ff",
+                      "surface-container-highest": "#dde1ff",
+                      "surface-container": "#ebedff",
+                      "primary-fixed-dim": "#afc6ff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed": "#70ff77",
+                      "inverse-primary": "#afc6ff",
+                      "surface": "#fbf8ff",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#231b00",
+                      "surface-container-low": "#f3f2ff",
+                      "on-error": "#ffffff",
+                      "secondary": "#006e1c",
+                      "on-background": "#001552",
+                      "error": "#ba1a1a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Lexend"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #fbf8ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(251, 248, 255, 0.7); backdrop-filter: blur(20px); }
+        .gradient-primary { background: linear-gradient(135deg, #0057c2 0%, #006ef2 100%); }
+    </style>
+</head>
+<body class="text-on-surface selection:bg-primary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf8ff] dark:bg-slate-950 backdrop-blur-xl bg-opacity-70">
+<div class="flex justify-between items-center px-8 h-16 max-w-full mx-auto">
+<div class="text-xl font-bold text-[#001552] dark:text-white font-lexend">The Academic Curator</div>
+<nav class="hidden md:flex items-center gap-8 font-lexend text-sm tracking-tight">
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Listening</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Reading</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Writing</a>
+<a class="text-[#0057c2] font-bold border-b-2 border-[#0057c2] pb-1" href="#">Speaking</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface">account_circle</button>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-full w-64 border-r border-slate-100 dark:border-slate-800 bg-[#fbf8ff] dark:bg-slate-950 hidden lg:block">
+<div class="flex flex-col p-4 gap-2 font-inter text-sm">
+<div class="px-4 py-6">
+<h3 class="font-lexend text-lg text-[#001552] dark:text-white">Study Path</h3>
+<p class="text-xs text-slate-500">IELTS Academic</p>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">assignment</span>
+<span>Mock Tests</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">menu_book</span>
+<span>Vocabulary</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-[#f3f2ff] dark:bg-blue-900/30 text-[#0057c2] dark:text-blue-300 font-semibold rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span>AI Tutor</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">insights</span>
+<span>Progress</span>
+</a>
+<div class="mt-8 px-4">
+<button class="w-full py-3 gradient-primary text-white font-lexend rounded-xl shadow-lg active:scale-95 transition-all">Start Practice</button>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="lg:ml-64 pt-24 pb-12 px-6 lg:px-12">
+<div class="max-w-7xl mx-auto space-y-12">
+<!-- Hero Section: AI Interviewer -->
+<section class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
+<div class="xl:col-span-8 bg-surface-container-low rounded-3xl overflow-hidden relative min-h-[450px] flex items-end">
+<img alt="Lily AI Tutor" class="absolute inset-0 w-full h-full object-cover" data-alt="Professional woman with warm smile in a brightly lit modern office setting, soft natural lighting, high-end editorial style portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADpYyNa4TppqLhP6xYZVgnFJ8tkGy7nEWhxZkFRRKcALmrmPQujCAL0lm02SXk1ACz9d3hYkyM8jTnzoDYEmkr5N4hQcXV9TLxHsvoQo0EeF_v81M1ofcSCz0HDtyDwjuEjJlTS9D26SRtpotVuHXo5MZqtleLNnKgzGkL_r02XeQCgVSDLWLhodac7N8Ri0j3ALuNA1bIpG0__55asAYMFL2HFJe9sIsb5hdP07Vkeyqj-JG_m6iBa5GqS0S6Rj3o3aeoA65rbA4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-transparent to-transparent"></div>
+<!-- AI Status Overlay -->
+<div class="relative z-10 w-full p-8 flex flex-col md:flex-row justify-between items-end gap-6">
+<div class="space-y-2">
+<div class="flex items-center gap-2 bg-secondary-container/90 backdrop-blur px-3 py-1 rounded-full w-fit">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="text-on-secondary-container text-xs font-bold font-lexend uppercase tracking-wider">Lily is Online</span>
+</div>
+<h1 class="text-4xl font-headline font-extrabold text-white">Mock Interview with Lily</h1>
+<p class="text-white/80 max-w-md font-body">Ready to practice Speaking Part 2? Today's focus is "Describing a memorable journey".</p>
+</div>
+<button class="group flex items-center gap-4 bg-white text-primary px-8 py-4 rounded-full font-bold font-lexend shadow-2xl hover:bg-primary-fixed transition-all active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">call</span>
+                            Call AI Tutor
+                        </button>
+</div>
+</div>
+<!-- Fluency Tracker (Asymmetric Sidebar) -->
+<div class="xl:col-span-4 bg-surface-container-lowest rounded-3xl p-8 shadow-sm flex flex-col gap-6 border border-outline-variant/10">
+<div class="flex justify-between items-center">
+<h2 class="font-headline text-xl font-bold">Fluency Tracker</h2>
+<span class="material-symbols-outlined text-primary">trending_up</span>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium text-slate-500">Speaking Pace</span>
+<span class="text-sm font-bold font-lexend">145 wpm</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium text-slate-500">Grammar Accuracy</span>
+<span class="text-sm font-bold font-lexend">8.5/9.0</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[92%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium text-slate-500">Lexical Resource</span>
+<span class="text-sm font-bold font-lexend">7.0/9.0</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container w-[65%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6 border-t border-surface-container-low">
+<div class="flex items-center gap-4 p-4 bg-primary-fixed/30 rounded-2xl">
+<div class="text-3xl font-headline font-bold text-primary">7.5</div>
+<div>
+<div class="text-xs font-bold text-primary uppercase">Current Band</div>
+<div class="text-[10px] text-slate-500 font-medium">+0.5 from last week</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Cue Card Gallery: Bento Layout -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-2xl font-headline font-bold">Practice Cue Cards</h2>
+<p class="text-slate-500">Curated prompts for Parts 1, 2, and 3</p>
+</div>
+<button class="text-primary font-bold text-sm hover:underline">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Part 1 Card -->
+<div class="group bg-surface-container-low rounded-3xl p-6 hover:bg-surface-container hover:translate-y-[-4px] transition-all duration-300 flex flex-col justify-between min-h-[220px] cursor-pointer">
+<div class="space-y-3">
+<span class="px-3 py-1 bg-surface-container-highest text-primary text-[10px] font-bold rounded-full uppercase tracking-tighter">Part 1: Personal</span>
+<h3 class="text-lg font-headline font-bold leading-tight">Daily Routines &amp; Productivity</h3>
+</div>
+<div class="flex justify-between items-center mt-6">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-blue-100 border-2 border-surface-container-low flex items-center justify-center text-[10px] font-bold">12k</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">arrow_forward</span>
+</div>
+</div>
+<!-- Part 2 Card (Asymmetric Featured) -->
+<div class="group bg-on-surface rounded-3xl p-6 hover:translate-y-[-4px] transition-all duration-300 flex flex-col justify-between min-h-[220px] relative overflow-hidden cursor-pointer">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-white text-8xl" style="font-variation-settings: 'FILL' 1;">timer</span>
+</div>
+<div class="space-y-3 relative z-10">
+<span class="px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase tracking-tighter">Part 2: Long Turn</span>
+<h3 class="text-lg font-headline font-bold leading-tight text-white">A Time You Helped Someone in Your Local Community</h3>
+</div>
+<div class="flex justify-between items-center mt-6 relative z-10">
+<div class="text-white/60 text-xs font-medium italic">2 minutes prep + speak</div>
+<span class="material-symbols-outlined text-white">play_circle</span>
+</div>
+</div>
+<!-- Part 3 Card -->
+<div class="group bg-surface-container-low rounded-3xl p-6 hover:bg-surface-container hover:translate-y-[-4px] transition-all duration-300 flex flex-col justify-between min-h-[220px] cursor-pointer">
+<div class="space-y-3">
+<span class="px-3 py-1 bg-surface-container-highest text-primary text-[10px] font-bold rounded-full uppercase tracking-tighter">Part 3: Discussion</span>
+<h3 class="text-lg font-headline font-bold leading-tight">The Impact of Artificial Intelligence on Modern Employment</h3>
+</div>
+<div class="flex justify-between items-center mt-6">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 border-2 border-surface-container-low flex items-center justify-center text-[10px] font-bold">New</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">arrow_forward</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Dashboard: Pronunciation Errors -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="bg-surface-container-low rounded-3xl p-8 flex flex-col gap-6">
+<div class="flex items-center gap-3">
+<div class="p-3 bg-error-container rounded-2xl text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">report_problem</span>
+</div>
+<h2 class="text-xl font-headline font-bold">Pronunciation Heatmap</h2>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-error/5">
+<div class="text-xs text-slate-500 mb-1">Difficult Phoneme</div>
+<div class="text-lg font-headline font-bold text-error">/θ/ (th)</div>
+<div class="text-[10px] text-slate-400 mt-1">42 errors tracked</div>
+</div>
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-error/5">
+<div class="text-xs text-slate-500 mb-1">Difficult Phoneme</div>
+<div class="text-lg font-headline font-bold text-error">/r/ (rhotic)</div>
+<div class="text-[10px] text-slate-400 mt-1">28 errors tracked</div>
+</div>
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-error/5">
+<div class="text-xs text-slate-500 mb-1">Syllable Stress</div>
+<div class="text-lg font-headline font-bold text-error">Multi-syll.</div>
+<div class="text-[10px] text-slate-400 mt-1">15 errors tracked</div>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-high rounded-2xl text-on-surface font-bold text-sm hover:bg-surface-container-highest transition-colors">Practice Drills</button>
+</div>
+<div class="bg-surface-container-low rounded-3xl p-8 flex flex-col gap-6">
+<div class="flex items-center gap-3">
+<div class="p-3 bg-secondary-container rounded-2xl text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">tips_and_updates</span>
+</div>
+<h2 class="text-xl font-headline font-bold">Lily's Pro Tip</h2>
+</div>
+<div class="bg-white/50 border-l-4 border-secondary p-6 rounded-r-2xl font-body text-on-surface/80 italic leading-relaxed">
+                        "In Part 2, don't worry if I stop you! It means you've reached the 2-minute mark, which is actually a positive sign for your fluency. Focus on using varied linking words like 'Moreover' or 'On the other hand'."
+                    </div>
+<div class="mt-auto flex items-center gap-4">
+<img alt="Lily Avatar" class="w-12 h-12 rounded-full object-cover grayscale" data-alt="Close up thumbnail of professional AI tutor avatar Lily" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhtJx4W3i3V8eRqLzQi2zTGU1xb8uArlou2SnzBv5N-k-vQKT9WFisT_NzwH0rb91Nz2_qTJD1F2YIMeWMcRIsRiEUc1E7QXC8Yr8Z29hoygyqKYsjpZNQJgHvx3z0N78vbActq7KHTRDR7596uhzuQI3C49_ruQf1QV0Cfsw0OGKTOlJivO4nw8EcYd9QAQ9PZB7lkKluMVeeykfpwRInjERkaUBIV7NWGFqo1pXvRSUPIvERevK-QO0DwRNEcZ_tku3wsmBr7as"/>
+<div class="text-sm font-medium text-slate-500">Updated 5 mins ago</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Nav for Mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel border-t border-surface-container flex justify-around py-3 px-2 z-50">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="text-[10px] font-medium">Mock Tests</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-[10px] font-bold">AI Tutor</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-[10px] font-medium">Progress</span>
+</a>
+</nav>
+</body></html>

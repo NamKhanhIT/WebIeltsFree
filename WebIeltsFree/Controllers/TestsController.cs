@@ -93,6 +93,8 @@ public class TestsController : ControllerBase
             }).ToList()
         };
 
+        await PopulateFallbackQuestionsAndContentAsync(testDto);
+
         return Ok(ApiResponse<TestDetailDto>.Ok(testDto));
     }
 
@@ -137,22 +139,133 @@ public class TestsController : ControllerBase
         int correctCount = 0;
         int totalQuestions = 0;
 
+        // Build correct answers map
+        var correctAnswersMap = new Dictionary<int, string>();
         foreach (var section in test.Sections)
         {
             foreach (var question in section.Questions)
             {
-                totalQuestions++;
-                var userAnswerText = request.Answers
-                    .FirstOrDefault(a => a.QuestionId == question.QuestionId)?.Answer ?? "";
+                if (question.Answer?.CorrectAnswer != null)
+                {
+                    correctAnswersMap[question.QuestionId] = question.Answer.CorrectAnswer;
+                }
+            }
+        }
 
-                var isCorrect = question.Answer?.CorrectAnswer?.Trim().ToLower() == userAnswerText.Trim().ToLower();
+        // If standard DB questions are empty, try fallback database lookup
+        if (correctAnswersMap.Count == 0)
+        {
+            int p = test.TestId / 1000;
+            if (p >= 3 && p <= 5)
+            {
+                var skill = test.Sections.FirstOrDefault()?.SkillType?.ToLower() ?? "mixed";
+                if (test.Title != null && test.Title.Contains("Full")) skill = "mixed";
+
+                if (skill == "listening" || skill == "mixed")
+                {
+                    var startMaterialId = p * 1000 + 1;
+                    var endMaterialId = p * 1000 + 4;
+                    var lqs = await _context.ListeningQuestions
+                        .Where(q => q.MaterialId >= startMaterialId && q.MaterialId <= endMaterialId)
+                        .ToListAsync();
+                    foreach (var q in lqs)
+                    {
+                        correctAnswersMap[q.QuestionId] = q.CorrectAnswer;
+                    }
+                }
+
+                if (skill == "reading" || skill == "mixed")
+                {
+                    var startPassageId = p * 1000 + 1;
+                    var endPassageId = p * 1000 + 3;
+                    var rqs = await _context.ReadingQuestions
+                        .Where(q => q.PassageId >= startPassageId && q.PassageId <= endPassageId)
+                        .ToListAsync();
+                    foreach (var q in rqs)
+                    {
+                        correctAnswersMap[q.QuestionId] = q.CorrectAnswer;
+                    }
+                }
+            }
+        }
+
+        if (correctAnswersMap.Count > 0)
+        {
+            totalQuestions = correctAnswersMap.Count;
+            var fallbackQuestionTexts = new Dictionary<int, string>();
+
+            int p = test.TestId / 1000;
+            if (p >= 3 && p <= 5)
+            {
+                var lqTexts = await _context.ListeningQuestions
+                    .Where(q => q.QuestionId >= p * 1000 && q.QuestionId <= (p + 1) * 1000)
+                    .Select(q => new { q.QuestionId, q.QuestionText })
+                    .ToDictionaryAsync(q => q.QuestionId, q => q.QuestionText);
+
+                var rqTexts = await _context.ReadingQuestions
+                    .Where(q => q.QuestionId >= p * 1000 && q.QuestionId <= (p + 1) * 1000)
+                    .Select(q => new { q.QuestionId, q.QuestionText })
+                    .ToDictionaryAsync(q => q.QuestionId, q => q.QuestionText);
+
+                foreach (var kv in lqTexts) fallbackQuestionTexts[kv.Key] = kv.Value;
+                foreach (var kv in rqTexts) fallbackQuestionTexts[kv.Key] = kv.Value;
+            }
+
+            // Ensure all missing questions/answers are dynamically registered in tb_questions and tb_answers
+            // to satisfy database foreign key constraints for tb_user_answers.question_id
+            var qids = correctAnswersMap.Keys.ToList();
+            var existingQids = await _context.Questions
+                .Where(q => qids.Contains(q.QuestionId))
+                .Select(q => q.QuestionId)
+                .ToListAsync();
+
+            var missingQids = qids.Except(existingQids).ToList();
+            if (missingQids.Count > 0)
+            {
+                var targetSectionId = test.Sections.FirstOrDefault()?.SectionId;
+                foreach (var qid in missingQids)
+                {
+                    var qText = fallbackQuestionTexts.TryGetValue(qid, out var text) ? text : $"Question #{qid}";
+                    var newQ = new Question
+                    {
+                        QuestionId = qid,
+                        SectionId = targetSectionId,
+                        QuestionText = qText,
+                        Difficulty = 6
+                    };
+                    _context.Questions.Add(newQ);
+                }
+                await _context.SaveChangesAsync();
+
+                foreach (var qid in missingQids)
+                {
+                    var correctAnswer = correctAnswersMap[qid];
+                    var newAns = new Answer
+                    {
+                        QuestionId = qid,
+                        CorrectAnswer = correctAnswer
+                    };
+                    _context.Answers.Add(newAns);
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            foreach (var kv in correctAnswersMap)
+            {
+                var qid = kv.Key;
+                var correctAnswer = kv.Value;
+                var qText = fallbackQuestionTexts.TryGetValue(qid, out var text) ? text : $"Question #{qid}";
+
+                var userAnswerText = request.Answers
+                    .FirstOrDefault(a => a.QuestionId == qid)?.Answer ?? "";
+
+                var isCorrect = correctAnswer.Trim().ToLower() == userAnswerText.Trim().ToLower();
                 if (isCorrect) correctCount++;
 
-                // Save user answer
                 var userAnswer = new UserAnswer
                 {
                     AttemptId = attempt.AttemptId,
-                    QuestionId = question.QuestionId,
+                    QuestionId = qid,
                     UserAnswerText = userAnswerText,
                     IsCorrect = isCorrect
                 };
@@ -160,12 +273,45 @@ public class TestsController : ControllerBase
 
                 answerResults.Add(new AnswerResultDto
                 {
-                    QuestionId = question.QuestionId,
-                    QuestionText = question.QuestionText,
+                    QuestionId = qid,
+                    QuestionText = qText,
                     UserAnswer = userAnswerText,
-                    CorrectAnswer = question.Answer?.CorrectAnswer,
+                    CorrectAnswer = correctAnswer,
                     IsCorrect = isCorrect
                 });
+            }
+        }
+        else
+        {
+            foreach (var section in test.Sections)
+            {
+                foreach (var question in section.Questions)
+                {
+                    totalQuestions++;
+                    var userAnswerText = request.Answers
+                        .FirstOrDefault(a => a.QuestionId == question.QuestionId)?.Answer ?? "";
+
+                    var isCorrect = question.Answer?.CorrectAnswer?.Trim().ToLower() == userAnswerText.Trim().ToLower();
+                    if (isCorrect) correctCount++;
+
+                    var userAnswer = new UserAnswer
+                    {
+                        AttemptId = attempt.AttemptId,
+                        QuestionId = question.QuestionId,
+                        UserAnswerText = userAnswerText,
+                        IsCorrect = isCorrect
+                    };
+                    _context.UserAnswers.Add(userAnswer);
+
+                    answerResults.Add(new AnswerResultDto
+                    {
+                        QuestionId = question.QuestionId,
+                        QuestionText = question.QuestionText,
+                        UserAnswer = userAnswerText,
+                        CorrectAnswer = question.Answer?.CorrectAnswer,
+                        IsCorrect = isCorrect
+                    });
+                }
             }
         }
 
@@ -316,11 +462,28 @@ public class TestsController : ControllerBase
                 .Take(questionLimit)
                 .ToList();
 
+            string? passageText = null;
+            string? passageTitle = null;
+            if (skill == "reading")
+            {
+                var passage = await _context.ReadingPassages
+                    .FirstOrDefaultAsync(p => p.PassageId == section.SectionId)
+                    ?? await _context.ReadingPassages.FirstOrDefaultAsync();
+                
+                if (passage != null)
+                {
+                    passageText = passage.PassageText;
+                    passageTitle = passage.PassageTitle;
+                }
+            }
+
             sectionDtos.Add(new TestSectionDto
             {
                 SectionId = section.SectionId,
                 SkillType = section.SkillType,
                 AudioUrl = section.AudioUrl ?? (skill == "listening" ? fallbackAudio : null),
+                PassageText = passageText,
+                PassageTitle = passageTitle,
                 Questions = questions
             });
         }
@@ -659,6 +822,201 @@ public class TestsController : ControllerBase
             return (int)score + 0.5f;
         else
             return (int)score + 1.0f;
+    }
+
+    private async Task PopulateFallbackQuestionsAndContentAsync(TestDetailDto testDto)
+    {
+        int p = testDto.TestId / 1000;
+        if (p < 3 || p > 5)
+        {
+            var title = testDto.Title ?? "";
+            if (title.Contains("Test 2")) p = 3;
+            else if (title.Contains("Test 3")) p = 4;
+            else if (title.Contains("Test 4")) p = 5;
+            else return; // If we can't infer, do nothing
+        }
+
+        var newSections = new List<TestSectionDto>();
+
+        foreach (var section in testDto.Sections)
+        {
+            var skill = (section.SkillType ?? "").ToLower();
+
+            if (skill == "listening" && section.Questions.Count == 0)
+            {
+                // Find ListeningMaterial where audio_url matches, or matching materialId by prefix
+                var material = await _context.ListeningMaterials
+                    .FirstOrDefaultAsync(m => m.AudioUrl == section.AudioUrl)
+                    ?? await _context.ListeningMaterials
+                        .FirstOrDefaultAsync(m => m.MaterialId == p * 1000 + 1);
+
+                if (material != null)
+                {
+                    // If it's a full mock test, let's load all 4 listening sections for that test!
+                    var isFullOrListening = testDto.Title != null && (testDto.Title.Contains("Full") || testDto.Title.Contains("Listening"));
+                    
+                    if (isFullOrListening)
+                    {
+                        var startMaterialId = p * 1000 + 1;
+                        var endMaterialId = p * 1000 + 4;
+                        
+                        var materials = await _context.ListeningMaterials
+                            .Where(m => m.MaterialId >= startMaterialId && m.MaterialId <= endMaterialId)
+                            .OrderBy(m => m.MaterialId)
+                            .ToListAsync();
+
+                        section.Questions.Clear();
+                        foreach (var mat in materials)
+                        {
+                            var questions = await _context.ListeningQuestions
+                                .Where(q => q.MaterialId == mat.MaterialId)
+                                .OrderBy(q => q.QuestionOrder)
+                                .Select(q => new QuestionDto
+                                {
+                                    QuestionId = q.QuestionId,
+                                    QuestionText = q.QuestionText,
+                                    Difficulty = (int?)q.BandTarget ?? 6
+                                })
+                                .ToListAsync();
+                            
+                            section.Questions.AddRange(questions);
+                        }
+                    }
+                    else
+                    {
+                        var questions = await _context.ListeningQuestions
+                            .Where(q => q.MaterialId == material.MaterialId)
+                            .OrderBy(q => q.QuestionOrder)
+                            .Select(q => new QuestionDto
+                            {
+                                QuestionId = q.QuestionId,
+                                QuestionText = q.QuestionText,
+                                Difficulty = (int?)q.BandTarget ?? 6
+                            })
+                            .ToListAsync();
+                        
+                        section.Questions.AddRange(questions);
+                    }
+                }
+                newSections.Add(section);
+            }
+            else if (skill == "reading" && section.Questions.Count == 0)
+            {
+                // Reading has 3 passages (3001-3003, 4001-4003, 5001-5003)
+                var startPassageId = p * 1000 + 1;
+                var endPassageId = p * 1000 + 3;
+
+                var passages = await _context.ReadingPassages
+                    .Where(pas => pas.PassageId >= startPassageId && pas.PassageId <= endPassageId)
+                    .OrderBy(pas => pas.PassageId)
+                    .ToListAsync();
+
+                if (passages.Any())
+                {
+                    foreach (var pas in passages)
+                    {
+                        var questions = await _context.ReadingQuestions
+                            .Where(q => q.PassageId == pas.PassageId)
+                            .OrderBy(q => q.QuestionNumber)
+                            .Select(q => new QuestionDto
+                            {
+                                QuestionId = q.QuestionId,
+                                QuestionText = q.QuestionText,
+                                Difficulty = (int?)q.BandTarget ?? 6
+                            })
+                            .ToListAsync();
+
+                        newSections.Add(new TestSectionDto
+                        {
+                            SectionId = pas.PassageId,
+                            SkillType = "reading",
+                            PassageTitle = pas.PassageTitle,
+                            PassageText = pas.PassageText,
+                            Questions = questions
+                        });
+                    }
+                }
+                else
+                {
+                    newSections.Add(section);
+                }
+            }
+            else if (skill == "writing" && section.Questions.Count == 0)
+            {
+                // Let's load the Task 1 and Task 2 prompts for this test
+                var task1Id = p * 1000 + 1;
+                var task2Id = p * 1000 + 2;
+
+                var task1 = await _context.WritingPrompts.FirstOrDefaultAsync(wp => wp.PromptId == task1Id);
+                var task2 = await _context.WritingPrompts.FirstOrDefaultAsync(wp => wp.PromptId == task2Id);
+
+                if (task1 != null)
+                {
+                    section.Questions.Add(new QuestionDto
+                    {
+                        QuestionId = task1.PromptId,
+                        QuestionText = $"Task 1: {task1.PromptText}",
+                        Difficulty = 6
+                    });
+                }
+                if (task2 != null)
+                {
+                    section.Questions.Add(new QuestionDto
+                    {
+                        QuestionId = task2.PromptId,
+                        QuestionText = $"Task 2: {task2.PromptText}",
+                        Difficulty = 7
+                    });
+                }
+                newSections.Add(section);
+            }
+            else if (skill == "speaking" && section.Questions.Count == 0)
+            {
+                // Let's load Speaking Part 1, 2, 3 topics for this test
+                var part1Id = p * 1000 + 1;
+                var part2Id = p * 1000 + 2;
+                var part3Id = p * 1000 + 3;
+
+                var part1 = await _context.SpeakingTopics.FirstOrDefaultAsync(st => st.TopicId == part1Id);
+                var part2 = await _context.SpeakingTopics.FirstOrDefaultAsync(st => st.TopicId == part2Id);
+                var part3 = await _context.SpeakingTopics.FirstOrDefaultAsync(st => st.TopicId == part3Id);
+
+                if (part1 != null)
+                {
+                    section.Questions.Add(new QuestionDto
+                    {
+                        QuestionId = part1.TopicId,
+                        QuestionText = $"Part 1: {part1.TopicName} - {part1.Description}",
+                        Difficulty = 5
+                    });
+                }
+                if (part2 != null)
+                {
+                    section.Questions.Add(new QuestionDto
+                    {
+                        QuestionId = part2.TopicId,
+                        QuestionText = $"Part 2 Cue Card: {part2.TopicName} - {part2.Description}",
+                        Difficulty = 6
+                    });
+                }
+                if (part3 != null)
+                {
+                    section.Questions.Add(new QuestionDto
+                    {
+                        QuestionId = part3.TopicId,
+                        QuestionText = $"Part 3 Discussion: {part3.TopicName} - {part3.Description}",
+                        Difficulty = 7
+                    });
+                }
+                newSections.Add(section);
+            }
+            else
+            {
+                newSections.Add(section);
+            }
+        }
+
+        testDto.Sections = newSections;
     }
 
     private async Task<float> GradeOpenEndedSectionAsync(string promptText, string userResponse, string skill)

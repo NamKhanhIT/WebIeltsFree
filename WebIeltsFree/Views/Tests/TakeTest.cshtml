@@ -1,355 +1,733 @@
 @{
-    ViewData["Title"] = "Take IELTS Test";
+    ViewData["Title"] = "IELTS Mock Test Client";
     var testId = ViewData["TestId"]?.ToString() ?? "0";
 }
 
-<div class="row mb-4">
-    <div class="col-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
-                <li class="breadcrumb-item"><a href="@Url.Action("Tests", "Home")">Practice Tests</a></li>
-                <li class="breadcrumb-item active">Take Test</li>
-            </ol>
-        </nav>
-        <h2 class="mb-1">IELTS Test Interface</h2>
-        <p class="text-muted mb-0">Structured by official IELTS format: Listening, Reading, Writing, Speaking</p>
-    </div>
-</div>
+<style>
+    .exam-client-body {
+        background-color: #FAF8F5 !important;
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+    
+    .exam-header {
+        background: #0F1A2E;
+        color: white;
+        border-bottom: 2.5px solid #B8963E;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(15, 26, 46, 0.15);
+    }
+    
+    .exam-title-editorial {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 700;
+        color: #FAF8F5;
+        letter-spacing: 0.01em;
+        margin-bottom: 0;
+    }
 
-<div class="row g-4">
-    <div class="col-lg-9">
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    .timer-container {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 0.4rem 1.2rem;
+        border-radius: 8px;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        background: rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .timer-warning {
+        border-color: #B8963E;
+        color: #B8963E;
+        background: rgba(184, 150, 62, 0.1);
+        animation: pulse-timer 1.5s infinite;
+    }
+    
+    .timer-danger {
+        border-color: #E53E3E;
+        color: #E53E3E;
+        background: rgba(229, 62, 98, 0.1);
+        animation: pulse-timer-fast 0.8s infinite;
+    }
+    
+    @@keyframes pulse-timer {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.75; }
+    }
+    
+    @@keyframes pulse-timer-fast {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .section-tab-bar {
+        display: flex;
+        gap: 0.5rem;
+        background: #ffffff;
+        padding: 0.6rem;
+        border-radius: 10px;
+        border: 1px solid rgba(28, 43, 74, 0.08);
+        box-shadow: var(--shadow-editorial);
+    }
+    
+    .section-tab-item {
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #4A5568;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: capitalize;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .section-tab-item:hover {
+        background: #FAF8F5;
+        color: #1C2B4A;
+    }
+    
+    .section-tab-item.active {
+        background: #1C2B4A;
+        color: white;
+    }
+    
+    .split-screen-layout {
+        display: flex;
+        gap: 1.5rem;
+        height: 60vh;
+        min-height: 520px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+    
+    .split-column-passage {
+        flex: 1.1;
+        overflow-y: auto;
+        height: 100%;
+        background-color: #FAF8F5;
+        border-radius: 12px;
+        border: 1.5px solid rgba(28, 43, 74, 0.08);
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.01);
+    }
+    
+    .passage-content {
+        font-family: 'EB Garamond', Georgia, serif;
+        font-size: 1.25rem;
+        line-height: 1.8;
+        color: #2C2417;
+        padding: 2.2rem;
+    }
+    
+    .passage-title-editorial {
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        color: #1C2B4A;
+        border-bottom: 2px solid #B8963E;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+    }
+    
+    .split-column-questions {
+        flex: 0.9;
+        overflow-y: auto;
+        height: 100%;
+        background: white;
+        border-radius: 12px;
+        border: 1.5px solid rgba(28, 43, 74, 0.08);
+        padding: 1.5rem 1.8rem;
+    }
+    
+    .question-nav-item-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border-radius: 8px;
+        border: 1px solid rgba(28, 43, 74, 0.15);
+        background-color: #ffffff;
+        color: #1C2B4A;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+    
+    .question-nav-item-btn:hover {
+        background-color: #FAF8F5;
+        border-color: #B8963E;
+    }
+    
+    .question-nav-item-btn.active {
+        outline: 2px solid #B8963E;
+        outline-offset: 2px;
+        background-color: #1C2B4A;
+        color: #ffffff;
+        border-color: #1C2B4A;
+    }
+    
+    .question-nav-item-btn.answered {
+        background-color: #B8963E;
+        color: #ffffff;
+        border-color: #B8963E;
+    }
+    
+    .editorial-card {
+        border: 1px solid rgba(28, 43, 74, 0.08);
+        border-radius: 12px;
+        background: white;
+        box-shadow: var(--shadow-editorial);
+        overflow: hidden;
+    }
+    
+    .audio-card-premium {
+        background: #FAF8F5;
+        border: 1.5px solid rgba(184, 150, 62, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-editorial);
+    }
+    
+    .ielts-form-field {
+        background: #FAF8F5;
+        border: 1px solid rgba(28, 43, 74, 0.15);
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        font-family: inherit;
+        color: #1A202C;
+        transition: var(--transition);
+        width: 100%;
+    }
+    
+    .ielts-form-field:focus {
+        border-color: #B8963E;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(184, 150, 62, 0.2);
+        outline: none;
+    }
+    
+    .speaking-virtual-room {
+        background: #0F1A2E;
+        color: #FAF8F5;
+        border-radius: 12px;
+        padding: 2.5rem;
+        border: 2px solid rgba(184, 150, 62, 0.25);
+        box-shadow: var(--shadow-book);
+    }
+    
+    .audio-wave-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        height: 50px;
+    }
+    
+    .audio-wave-bar {
+        width: 4px;
+        height: 8px;
+        background-color: #DD6B20;
+        border-radius: 2px;
+        animation: wave-pulse-active 1.2s ease-in-out infinite;
+        animation-play-state: paused;
+    }
+    
+    .audio-wave-active .audio-wave-bar {
+        animation-play-state: running;
+    }
+    
+    .audio-wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .audio-wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .audio-wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .audio-wave-bar:nth-child(5) { animation-delay: 0.6s; }
+    
+    @@keyframes wave-pulse-active {
+        0%, 100% { height: 8px; }
+        50% { height: 35px; }
+    }
+
+    .word-progress-container {
+        height: 6px;
+        background: #E2E8F0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 0.4rem;
+    }
+
+    .word-progress-bar {
+        height: 100%;
+        background: var(--skill-writing-color);
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+</style>
+
+<div class="container-fluid py-3 exam-client-body">
+    <div class="exam-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-gold text-dark font-monospace px-3 py-2 fw-bold" style="font-size:0.95rem; border-radius:6px;" id="skillBadge">IELTS</span>
+            <div>
+                <h3 class="exam-title-editorial" id="testTitle">Loading Mock Test...</h3>
+                <small class="text-white-50">Exam Client ID: @testId • Dynamic Academic Sandbox</small>
+            </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <div class="timer-container" id="timerContainer">
+                <i class="bi bi-clock-history"></i>
+                <span id="timerDisplay">00:00</span>
+            </div>
+            <button class="btn btn-gold btn-lg fw-bold px-4" id="submitTestBtn">
+                <i class="bi bi-send-fill me-2"></i>Submit Exam
+            </button>
+        </div>
+    </div>
+
+    <div class="section-tab-bar mb-4" id="sectionTabBar">
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-9">
+            <div id="layoutListening" class="d-none">
+                <div class="audio-card-premium mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-3 bg-teal text-white rounded-circle">
+                            <i class="bi bi-headphones fs-4"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1 text-teal">IELTS Listening Section</h4>
+                            <p class="text-muted small mb-0">Audio is fully controlled. Answer all questions based on the dialogue/monologue.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="listeningAudioContainer" class="mt-4">
+                        <audio id="listeningAudio" controls class="w-100" style="border-radius:8px;">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <div id="listeningNoAudio" class="alert alert-warning mt-3 d-none">
+                        <i class="bi bi-info-circle me-2"></i> No audio file attached. Please answer directly using the text materials.
+                    </div>
+                </div>
+                
+                <div class="editorial-card p-4">
+                    <h5 class="passage-title-editorial mb-4">Questions Sheet</h5>
+                    <div id="listeningQuestions" class="d-grid gap-4"></div>
+                </div>
+            </div>
+
+            <div id="layoutReading" class="d-none">
+                <div class="split-screen-layout">
+                    <div class="split-column-passage scrollbar-premium">
+                        <div class="passage-content">
+                            <h2 class="passage-title-editorial" id="readingPassageTitle">Passage Title</h2>
+                            <div id="readingPassageText">Reading content will load here...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Questions -->
+                    <div class="split-column-questions scrollbar-premium">
+                        <h5 class="passage-title-editorial mb-3" style="font-size:1.3rem;">Questions Sheet</h5>
+                        <div id="readingQuestions" class="d-grid gap-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Writing Section -->
+            <div id="layoutWriting" class="d-none">
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <div class="editorial-card p-4 h-100 scrollbar-premium" style="max-height:550px; overflow-y:auto;">
+                            <h5 class="passage-title-editorial mb-3 text-purple" style="font-size:1.3rem;">Writing Prompts</h5>
+                            
+                            <div class="mb-4">
+                                <div class="badge bg-purple mb-2">Task 1 (Recommended: 20 mins)</div>
+                                <h6 class="fw-bold mb-2">Prompt 1:</h6>
+                                <p id="writingTask1Prompt" class="text-secondary small">Describe the visual information presented in the chart.</p>
+                            </div>
+                            
+                            <hr class="my-4" />
+                            
+                            <div>
+                                <div class="badge bg-purple mb-2">Task 2 (Recommended: 40 mins)</div>
+                                <h6 class="fw-bold mb-2">Prompt 2:</h6>
+                                <p id="writingTask2Prompt" class="text-secondary small">Discuss the pros and cons and present your view.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-7">
+                        <div class="editorial-card p-4 d-flex flex-column gap-4">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-navy">Task 1 Answer Area</span>
+                                    <span class="badge bg-light text-muted" id="task1Count">0 words</span>
+                                </div>
+                                <textarea id="writingTask1Answer" class="form-control ielts-form-field" rows="6" placeholder="Start typing Task 1 response here..."></textarea>
+                                <div class="word-progress-container">
+                                    <div id="task1Progress" class="word-progress-bar"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-navy">Task 2 Answer Area</span>
+                                    <span class="badge bg-light text-muted" id="task2Count">0 words</span>
+                                </div>
+                                <textarea id="writingTask2Answer" class="form-control ielts-form-field" rows="10" placeholder="Start typing Task 2 essay here..."></textarea>
+                                <div class="word-progress-container">
+                                    <div id="task2Progress" class="word-progress-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Speaking Section -->
+            <div id="layoutSpeaking" class="d-none">
+                <div class="speaking-virtual-room text-center d-flex flex-column align-items-center gap-4">
+                    <div class="p-4 bg-dark rounded-circle border border-warning position-relative" style="width:110px; height:110px; display:flex; align-items:center; justify-content:center;">
+                        <i class="bi bi-mic-fill text-warning fs-1"></i>
+                    </div>
+                    
                     <div>
-                        <h5 class="mb-1" id="testTitle">Loading test...</h5>
-                        <small class="text-muted">Test ID: @testId</small>
+                        <h4 class="text-warning mb-2">IELTS speaking Interview Room</h4>
+                        <p class="text-white-50 small mb-0">Record your speech corresponding to the prompt card.</p>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary" id="skillBadge">mixed</span>
-                        <span class="badge bg-dark" id="timerDisplay">00:00</span>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Listening Layout -->
-        <div id="layoutListening" class="card d-none mb-4">
-            <div class="card-header"><i class="bi bi-headphones me-2"></i>Listening Section</div>
-            <div class="card-body">
-                <div class="alert alert-light border">
-                    <strong>Instructions:</strong> Listen to the audio, then answer all questions below. You may play the audio as many times as needed during the test.
-                </div>
-                <!-- Audio player - shown only when audio URL is available -->
-                <div id="listeningAudioContainer" class="mb-4 d-none">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-volume-up-fill text-primary fs-5"></i>
-                        <span class="fw-semibold text-primary">Listening Audio</span>
-                    </div>
-                    <audio id="listeningAudio" controls class="w-100" style="border-radius:8px;">
-                        Your browser does not support the audio element.
-                    </audio>
-                </div>
-                <!-- No audio notice -->
-                <div id="listeningNoAudio" class="alert alert-warning mb-3">
-                    <i class="bi bi-info-circle me-2"></i>
-                    No audio file has been attached to this listening section. Answer based on the question text.
-                </div>
-                <div id="listeningQuestions"></div>
-            </div>
-        </div>
-
-        <!-- Reading Layout -->
-        <div id="layoutReading" class="card d-none mb-4">
-            <div class="card-header"><i class="bi bi-book me-2"></i>Reading (3 Sections - 40 Questions)</div>
-            <div class="card-body">
-                <div class="alert alert-light border">
-                    <strong>Format:</strong> 60 minutes. Common tasks: True/False/Not Given, matching headings, sentence/summary/table completion, multiple-choice.
-                </div>
-                <div class="row g-3">
-                    <div class="col-lg-6">
-                        <div class="border rounded p-3 bg-light h-100">
-                            <h6 class="mb-2">Passage</h6>
-                            <div id="readingPassage" style="max-height:420px; overflow:auto;"></div>
+                    <div class="card bg-dark border-light p-4 w-100 text-start text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-warning text-dark fw-bold">Active Prompt</span>
+                            <div class="audio-wave-container" id="speakingWave">
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                                <div class="audio-wave-bar"></div>
+                            </div>
                         </div>
+                        <h5 class="fw-bold mb-1 text-warning" id="speakingPromptTitle">Part 2 Cue Card</h5>
+                        <p id="speakingPrompt" class="mb-0 fs-5 lh-lg">Describe a useful skill you learned outside of school.</p>
                     </div>
-                    <div class="col-lg-6">
-                        <div class="border rounded p-3 h-100">
-                            <h6 class="mb-2">Questions</h6>
-                            <div id="readingQuestions"></div>
-                        </div>
+                    
+                    <div class="w-100 text-start">
+                        <label class="form-label text-white-50 small fw-bold">Interview Transcript / Notes</label>
+                        <textarea id="speakingTranscript" class="form-control bg-dark text-white border-secondary" rows="5" placeholder="Type your speaking response transcript or take notes here..."></textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-warning px-4 py-2 fw-bold" id="startRecordBtn">
+                            <i class="bi bi-record-circle-fill me-2"></i>Simulate Mic Active
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Writing Layout -->
-        <div id="layoutWriting" class="card d-none mb-4">
-            <div class="card-header"><i class="bi bi-pencil-square me-2"></i>Writing (2 Tasks - 60 Minutes)</div>
-            <div class="card-body">
-                <div class="alert alert-light border">
-                    <strong>Format:</strong> Task 1 (>=150 words, chart/map/process), Task 2 (>=250 words, essay types: opinion/discussion/problem-solution/advantages-disadvantages).
-                </div>
-                <div class="mb-3">
-                    <h6>Task 1 Prompt</h6>
-                    <p id="writingTask1Prompt" class="mb-2">Describe the visual information presented in the chart.</p>
-                    <textarea id="writingTask1Answer" class="form-control" rows="6" placeholder="Write Task 1 response..."></textarea>
-                    <small class="text-muted" id="task1Count">0 words</small>
-                </div>
-                <hr />
-                <div>
-                    <h6>Task 2 Prompt</h6>
-                    <p id="writingTask2Prompt" class="mb-2">Some people think public transport should be free. Discuss both views and give your opinion.</p>
-                    <textarea id="writingTask2Answer" class="form-control" rows="10" placeholder="Write Task 2 essay..."></textarea>
-                    <small class="text-muted" id="task2Count">0 words</small>
+        <div class="col-lg-3">
+            <div class="editorial-card mb-4">
+                <div class="card-header bg-navy text-white fw-bold py-3"><i class="bi bi-grid-3x3-gap me-2"></i>Question Navigator</div>
+                <div class="card-body p-3">
+                    <div id="questionNav" class="d-flex flex-wrap gap-2 justify-content-start"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- Speaking Layout -->
-        <div id="layoutSpeaking" class="card d-none mb-4">
-            <div class="card-header"><i class="bi bi-mic me-2"></i>Speaking (3 Parts - 11 to 14 Minutes)</div>
-            <div class="card-body">
-                <div class="alert alert-light border">
-                    <strong>Format:</strong> Part 1 Interview, Part 2 Long Turn (1 min prepare + 1-2 min speak), Part 3 Discussion.
+            <div class="editorial-card">
+                <div class="card-header bg-light fw-bold py-3"><i class="bi bi-info-circle text-gold me-2"></i>Official Exam Instructions</div>
+                <div class="card-body">
+                    <ul class="mb-0 ps-3 small text-muted lh-lg">
+                        <li><strong>Listening:</strong> 40 questions total. Audio will play once.</li>
+                        <li><strong>Reading:</strong> 3 passages, 40 questions total. Side-by-side splits.</li>
+                        <li><strong>Writing:</strong> 2 tasks. Pay attention to word constraints.</li>
+                        <li><strong>Speaking:</strong> Interactive recording.</li>
+                    </ul>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Speaking Part</label>
-                    <select id="speakingPart" class="form-select">
-                        <option value="part1">Part 1 - Introduction and Interview</option>
-                        <option value="part2">Part 2 - Individual Long Turn</option>
-                        <option value="part3">Part 3 - Two-way Discussion</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <strong>Prompt:</strong>
-                    <p id="speakingPrompt" class="mb-0">Describe a memorable event in your life.</p>
-                </div>
-                <textarea id="speakingTranscript" class="form-control" rows="6" placeholder="Transcript will appear here..." readonly></textarea>
             </div>
-        </div>
-
-        <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-outline-secondary" id="prevSectionBtn"><i class="bi bi-arrow-left me-1"></i>Previous</button>
-            <button class="btn btn-outline-primary" id="nextSectionBtn">Next<i class="bi bi-arrow-right ms-1"></i></button>
-            <button class="btn btn-ielts ms-auto" id="submitTestBtn"><i class="bi bi-send me-1"></i>Submit Test</button>
         </div>
     </div>
 
-    <div class="col-lg-3">
-        <div class="card mb-4">
-            <div class="card-header"><i class="bi bi-grid-3x3-gap me-2"></i>Question Navigator</div>
-            <div class="card-body">
-                <div id="questionNav" class="d-flex flex-wrap gap-2"></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header"><i class="bi bi-info-circle me-2"></i>IELTS Structure</div>
-            <div class="card-body">
-                <ul class="mb-0 ps-3">
-                    <li>Listening: 4 parts, 40 questions</li>
-                    <li>Reading: 3 sections, 40 questions</li>
-                    <li>Writing: 2 tasks (150/250 words)</li>
-                    <li>Speaking: 3 parts (11-14 min)</li>
-                </ul>
-            </div>
-        </div>
+    <!-- Navigation Control Buttons -->
+    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+        <button class="btn btn-outline-secondary px-4" id="prevSectionBtn">
+            <i class="bi bi-arrow-left me-2"></i>Previous Section
+        </button>
+        
+        <div class="text-muted small" id="sectionProgressIndicator">Section 1 of 4</div>
+        
+        <button class="btn btn-ielts px-4" id="nextSectionBtn">
+            Next Section <i class="bi bi-arrow-right ms-2"></i>
+        </button>
     </div>
 </div>
 
 @section Scripts {
 <script>
     const testId = Number('@testId');
-    let currentSkill = 'mixed';
+    let testData = null;
+    let sectionKeys = [];
+    let sectionIndex = 0;
+    
+    // Global Answers State (Prevents losing data on page navigation/render)
+    const answersState = {};
+    
     let durationSeconds = 0;
     let timerInterval = null;
-    let testData = null;
-    let sectionKeys = ['listening', 'reading', 'writing', 'speaking'];
-    let sectionIndex = 0;
-    let writingPromptTask1 = null;
-    let writingPromptTask2 = null;
-    let speakingTopicsByPart = { "1": [], "2": [], "3": [] };
+    let isSpeakingSimulating = false;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadTest();
+        bindEvents();
+    });
+
+    async function loadTest() {
+        try {
+            const response = await api(`/tests/${testId}`, { method: 'GET' });
+            if (!response?.success || !response?.data) {
+                showToast('Could not load test details', 'error');
+                return;
+            }
+
+            testData = response.data;
+            document.getElementById('testTitle').textContent = testData.title || `IELTS Mock Test #${testId}`;
+            
+            // Build dynamic sections based on returned sections
+            if (testData.sections && testData.sections.length) {
+                sectionKeys = testData.sections.map((s, idx) => ({
+                    index: idx,
+                    skill: (s.skillType || 'reading').toLowerCase(),
+                    id: s.sectionId,
+                    title: s.passageTitle || `${s.skillType} Part ${idx + 1}`
+                }));
+            } else {
+                sectionKeys = [{ index: 0, skill: 'reading', id: 0, title: 'Mock Section' }];
+            }
+
+            const isMixed = sectionKeys.length > 1;
+            document.getElementById('skillBadge').textContent = isMixed ? 'FULL EXAM' : sectionKeys[0].skill.toUpperCase();
+
+            // Set Duration
+            const minutes = testData.durationMinutes || 60;
+            durationSeconds = minutes * 60;
+            
+            renderSectionTabs();
+            showSectionByIndex(0);
+            startTimer();
+        } catch (e) {
+            console.error(e);
+            showToast('Failed to load test data from system API.', 'error');
+        }
+    }
+
+    function renderSectionTabs() {
+        const bar = document.getElementById('sectionTabBar');
+        bar.innerHTML = sectionKeys.map((sec, idx) => {
+            const icon = sec.skill === 'reading' ? 'book' :
+                         sec.skill === 'listening' ? 'headphones' :
+                         sec.skill === 'writing' ? 'pencil' : 'mic';
+            return `
+                <button class="section-tab-item ${idx === sectionIndex ? 'active' : ''}" 
+                        onclick="showSectionByIndex(${idx})" id="secTab-${idx}">
+                    <i class="bi bi-${icon}"></i> ${sec.title}
+                </button>
+            `;
+        }).join('');
+    }
+
+    function showSectionByIndex(index) {
+        sectionIndex = index;
+        const currentSec = sectionKeys[index];
+        const rawSection = testData.sections[index];
+        
+        // Update active classes on tabs
+        document.querySelectorAll('.section-tab-item').forEach(el => el.classList.remove('active'));
+        const activeTab = document.getElementById(`secTab-${index}`);
+        if (activeTab) activeTab.classList.add('active');
+
+        // Hide all layouts
+        ['layoutListening', 'layoutReading', 'layoutWriting', 'layoutSpeaking']
+            .forEach(id => document.getElementById(id).classList.add('d-none'));
+
+        // Load correct layout
+        if (currentSec.skill === 'listening') {
+            document.getElementById('layoutListening').classList.remove('d-none');
+            renderListeningSection(rawSection);
+        } else if (currentSec.skill === 'reading') {
+            document.getElementById('layoutReading').classList.remove('d-none');
+            renderReadingSection(rawSection);
+        } else if (currentSec.skill === 'writing') {
+            document.getElementById('layoutWriting').classList.remove('d-none');
+            renderWritingSection(rawSection);
+        } else if (currentSec.skill === 'speaking') {
+            document.getElementById('layoutSpeaking').classList.remove('d-none');
+            renderSpeakingSection(rawSection);
+        }
+
+        buildQuestionNavigator(rawSection);
+        updateNavigationControls();
+    }
+
+    function renderListeningSection(section) {
+        const audioEl = document.getElementById('listeningAudio');
+        const noAudioEl = document.getElementById('listeningNoAudio');
+        const container = document.getElementById('listeningQuestions');
+
+        if (section.audioUrl) {
+            audioEl.src = section.audioUrl;
+            audioEl.load();
+            noAudioEl.classList.add('d-none');
+            document.getElementById('listeningAudioContainer').classList.remove('d-none');
+        } else {
+            document.getElementById('listeningAudioContainer').classList.add('d-none');
+            noAudioEl.classList.remove('d-none');
+        }
+
+        const questions = section.questions || [];
+        container.innerHTML = questions.map((q, idx) => `
+            <div class="mb-3">
+                <label class="form-label fw-bold text-navy" style="font-size:1.05rem;">Question ${idx + 1}. ${cleanQuestionText(q.questionText)}</label>
+                <input class="ielts-form-field test-answer" data-question-id="${q.questionId}" 
+                       value="${escapeHtml(answersState[q.questionId] || '')}" 
+                       placeholder="Type your answer here..." oninput="updateAnswerState(this)" />
+            </div>
+        `).join('') || '<p class="text-muted mb-0">No questions found in this Listening section.</p>';
+    }
+
+    function renderReadingSection(section) {
+        document.getElementById('readingPassageTitle').textContent = section.passageTitle || 'Reading Section Passage';
+        document.getElementById('readingPassageText').innerHTML = (section.passageText || 'Reading passage text is empty.')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/Paragraph\s+([A-D]):/g, '<strong>Paragraph $1:</strong>');
+
+        const questions = section.questions || [];
+        const startNo = getQuestionStartNumber(sectionIndex);
+
+        document.getElementById('readingQuestions').innerHTML = questions.map((q, idx) => `
+            <div class="mb-3">
+                <label class="form-label fw-bold text-navy" style="font-size:1.05rem;">Question ${startNo + idx}. ${cleanQuestionText(q.questionText)}</label>
+                <input class="ielts-form-field test-answer" data-question-id="${q.questionId}" 
+                       value="${escapeHtml(answersState[q.questionId] || '')}" 
+                       placeholder="Type your answer here..." oninput="updateAnswerState(this)" />
+            </div>
+        `).join('') || '<p class="text-muted mb-0">No questions found for this Passage.</p>';
+    }
+
+    function renderWritingSection(section) {
+        const questions = section.questions || [];
+        
+        let t1Prompt = "Task 1: Describe the visual information presented in the chart.";
+        let t2Prompt = "Task 2: Discuss both views and give your opinion.";
+
+        questions.forEach(q => {
+            const text = q.questionText || "";
+            if (text.includes("Task 1:")) t1Prompt = text.replace("Task 1:", "").trim();
+            if (text.includes("Task 2:")) t2Prompt = text.replace("Task 2:", "").trim();
+        });
+
+        document.getElementById('writingTask1Prompt').textContent = t1Prompt;
+        document.getElementById('writingTask2Prompt').textContent = t2Prompt;
+
+        initWritingCounters();
+    }
+
+    function renderSpeakingSection(section) {
+        const questions = section.questions || [];
+        let promptText = "Describe a useful skill you learned outside of school or university.";
+        let partTitle = "Part 2 - Individual Long Turn";
+
+        if (questions.length > 0) {
+            promptText = questions[0].questionText || promptText;
+            if (promptText.includes("Part 1:")) {
+                partTitle = "Part 1 - Introduction and Interview";
+                promptText = promptText.replace("Part 1:", "").trim();
+            } else if (promptText.includes("Part 2 Cue Card:")) {
+                partTitle = "Part 2 - Individual Long Turn";
+                promptText = promptText.replace("Part 2 Cue Card:", "").trim();
+            } else if (promptText.includes("Part 3 Discussion:")) {
+                partTitle = "Part 3 - Two-way Discussion";
+                promptText = promptText.replace("Part 3 Discussion:", "").trim();
+            }
+        }
+
+        document.getElementById('speakingPromptTitle').textContent = partTitle;
+        document.getElementById('speakingPrompt').textContent = promptText;
+    }
 
     function cleanQuestionText(text) {
         if (!text) return '';
         return text.replace(/^(?:Q|Question)\s*\d+[:.\s]*/i, '').trim();
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        await loadTest();
-        await preloadSkillContent();
-        bindEvents();
-    });
-
-    async function preloadSkillContent() {
-        try {
-            const [w1, w2, s1, s2, s3] = await Promise.all([
-                api('/writing/prompts?taskType=1', { method: 'GET' }),
-                api('/writing/prompts?taskType=2', { method: 'GET' }),
-                api('/speaking/topics?part=1', { method: 'GET' }),
-                api('/speaking/topics?part=2', { method: 'GET' }),
-                api('/speaking/topics?part=3', { method: 'GET' })
-            ]);
-            const p1 = w1?.success ? (w1.data || []) : [];
-            const p2 = w2?.success ? (w2.data || []) : [];
-            writingPromptTask1 = p1.length ? p1[0] : null;
-            writingPromptTask2 = p2.length ? p2[0] : null;
-            speakingTopicsByPart["1"] = s1?.success ? (s1.data || []) : [];
-            speakingTopicsByPart["2"] = s2?.success ? (s2.data || []) : [];
-            speakingTopicsByPart["3"] = s3?.success ? (s3.data || []) : [];
-            bindWritingPrompts();
-            bindSpeakingPromptByPart();
-        } catch {
-            // Keep default placeholder text
+    function getQuestionStartNumber(index) {
+        let sum = 1;
+        for (let i = 0; i < index; i++) {
+            sum += (testData.sections[i].questions?.length || 0);
         }
+        return sum;
     }
 
-    async function loadTest() {
-        try {
-            const response = await api(`/tests/${testId}`, { method: 'GET' });
-            if (!response?.success || !response?.data) {
-                showToast('Could not load test', 'error');
-                return;
+    function updateAnswerState(input) {
+        const qid = Number(input.dataset.questionId);
+        answersState[qid] = input.value;
+        
+        // Refresh grid navigator state
+        const navBtn = document.getElementById(`navBtn-${qid}`);
+        if (navBtn) {
+            if (input.value.trim().length > 0) {
+                navBtn.classList.add('answered');
+            } else {
+                navBtn.classList.remove('answered');
             }
-
-            testData = response.data;
-            document.getElementById('testTitle').textContent = testData.title || `IELTS Test #${testId}`;
-            currentSkill = detectSkill(testData.sections || []);
-            document.getElementById('skillBadge').textContent = currentSkill;
-
-            const minutes = testData.durationMinutes || getDefaultDuration(currentSkill);
-            durationSeconds = minutes * 60;
-            renderBySkill(currentSkill, testData);
-            buildQuestionNavigator(testData);
-            startTimer();
-        } catch {
-            showToast('Failed to load test data', 'error');
         }
     }
 
-    function detectSkill(sections) {
-        if (!sections.length) return 'mixed';
-        const first = (sections[0].skillType || '').toLowerCase();
-        if (['listening', 'reading', 'writing', 'speaking'].includes(first)) return first;
-        return 'mixed';
+    function buildQuestionNavigator(section) {
+        const nav = document.getElementById('questionNav');
+        nav.innerHTML = '';
+        const questions = section.questions || [];
+        const startNo = getQuestionStartNumber(sectionIndex);
+
+        questions.forEach((q, idx) => {
+            const hasAnswer = (answersState[q.questionId] || '').trim().length > 0;
+            const btn = document.createElement('button');
+            btn.className = `question-nav-item-btn ${hasAnswer ? 'answered' : ''}`;
+            btn.id = `navBtn-${q.questionId}`;
+            btn.textContent = startNo + idx;
+            btn.onclick = () => {
+                // Focus corresponding field
+                const field = document.querySelector(`[data-question-id="${q.questionId}"]`);
+                if (field) {
+                    field.focus();
+                    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            };
+            nav.appendChild(btn);
+        });
     }
 
-    function getDefaultDuration(skill) {
-        if (skill === 'listening') return 40; // 30 + 10 transfer
-        if (skill === 'reading') return 60;
-        if (skill === 'writing') return 60;
-        if (skill === 'speaking') return 14;
-        return 60;
-    }
-
-    function renderBySkill(skill, data) {
-        ['layoutListening', 'layoutReading', 'layoutWriting', 'layoutSpeaking']
-            .forEach(id => document.getElementById(id).classList.add('d-none'));
-
-        if (skill === 'listening') {
-            document.getElementById('layoutListening').classList.remove('d-none');
-            renderListeningQuestions(data);
-            sectionKeys = ['listening'];
-            sectionIndex = 0;
-            return;
-        }
-
-        if (skill === 'reading') {
-            document.getElementById('layoutReading').classList.remove('d-none');
-            renderReadingQuestions(data);
-            sectionKeys = ['reading'];
-            sectionIndex = 0;
-            return;
-        }
-
-        if (skill === 'writing') {
-            document.getElementById('layoutWriting').classList.remove('d-none');
-            initWritingCounters();
-            bindWritingPrompts();
-            sectionKeys = ['writing'];
-            sectionIndex = 0;
-            return;
-        }
-
-        if (skill === 'speaking') {
-            document.getElementById('layoutSpeaking').classList.remove('d-none');
-            bindSpeakingPromptByPart();
-            sectionKeys = ['speaking'];
-            sectionIndex = 0;
-            return;
-        }
-
-        // Mixed: show sequential sections using next/prev
-        sectionKeys = ['listening', 'reading', 'writing', 'speaking'];
-        sectionIndex = 0;
-        showMixedSection(sectionKeys[sectionIndex], data);
-    }
-
-    function showMixedSection(section, data) {
-        ['layoutListening', 'layoutReading', 'layoutWriting', 'layoutSpeaking']
-            .forEach(id => document.getElementById(id).classList.add('d-none'));
-        if (section === 'listening') {
-            document.getElementById('layoutListening').classList.remove('d-none');
-            renderListeningQuestions(data);
-        } else if (section === 'reading') {
-            document.getElementById('layoutReading').classList.remove('d-none');
-            renderReadingQuestions(data);
-        } else if (section === 'writing') {
-            document.getElementById('layoutWriting').classList.remove('d-none');
-            initWritingCounters();
-            bindWritingPrompts();
-        } else if (section === 'speaking') {
-            document.getElementById('layoutSpeaking').classList.remove('d-none');
-            bindSpeakingPromptByPart();
-        }
-        document.getElementById('skillBadge').textContent = section;
-    }
-
-    function renderListeningQuestions(data) {
-        const container = document.getElementById('listeningQuestions');
-        const audioEl = document.getElementById('listeningAudio');
-        const audioContainer = document.getElementById('listeningAudioContainer');
-        const noAudioEl = document.getElementById('listeningNoAudio');
-
-        // Find the listening section and get its audioUrl
-        const listeningSections = (data.sections || []).filter(s =>
-            (s.skillType || '').toLowerCase() === 'listening'
-        );
-        const audioUrl = listeningSections.length > 0 ? listeningSections[0].audioUrl : null;
-
-        if (audioUrl) {
-            audioEl.src = audioUrl;
-            audioEl.load();
-            audioContainer.classList.remove('d-none');
-            noAudioEl.classList.add('d-none');
-        } else {
-            audioContainer.classList.add('d-none');
-            noAudioEl.classList.remove('d-none');
-        }
-
-        const questions = flattenQuestions(data);
-        container.innerHTML = questions.map((q, idx) => `
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Q${idx + 1}. ${cleanQuestionText(q.questionText)}</label>
-                <input class="form-control test-answer" data-question-id="${q.questionId}" placeholder="Type answer..." />
-            </div>
-        `).join('') || '<p class="text-muted mb-0">No listening questions.</p>';
-    }
-
-    function renderReadingQuestions(data) {
-        const questions = flattenQuestions(data);
-        document.getElementById('readingPassage').innerHTML = `
-            <p>This reading passage area follows IELTS format with scrollable text and side-by-side questions.</p>
-            <p>Use scanning and skimming strategies to answer accurately.</p>
-        `;
-        document.getElementById('readingQuestions').innerHTML = questions.map((q, idx) => `
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Q${idx + 1}. ${cleanQuestionText(q.questionText)}</label>
-                <input class="form-control test-answer" data-question-id="${q.questionId}" placeholder="Type answer..." />
-            </div>
-        `).join('') || '<p class="text-muted mb-0">No reading questions.</p>';
+    function updateNavigationControls() {
+        document.getElementById('prevSectionBtn').disabled = sectionIndex === 0;
+        
+        const isLast = sectionIndex === sectionKeys.length - 1;
+        document.getElementById('nextSectionBtn').innerHTML = isLast ?
+            'Review Answers <i class="bi bi-check-circle-fill ms-2"></i>' :
+            'Next Section <i class="bi bi-arrow-right ms-2"></i>';
+            
+        document.getElementById('sectionProgressIndicator').textContent = 
+            `Section ${sectionIndex + 1} of ${sectionKeys.length}`;
     }
 
     function initWritingCounters() {
@@ -357,13 +735,30 @@
         const t2 = document.getElementById('writingTask2Answer');
         const c1 = document.getElementById('task1Count');
         const c2 = document.getElementById('task2Count');
+        const p1 = document.getElementById('task1Progress');
+        const p2 = document.getElementById('task2Progress');
 
         const update = () => {
-            c1.textContent = `${countWords(t1.value)} words`;
-            c2.textContent = `${countWords(t2.value)} words`;
+            const w1 = countWords(t1.value);
+            const w2 = countWords(t2.value);
+            c1.textContent = `${w1} words`;
+            c2.textContent = `${w2} words`;
+            
+            // Update progress bars (150 and 250 targets)
+            p1.style.width = `${Math.min(100, (w1 / 150) * 100)}%`;
+            p2.style.width = `${Math.min(100, (w2 / 250) * 100)}%`;
+            
+            // Cache writing state
+            answersState[-1001] = t1.value;
+            answersState[-1002] = t2.value;
         };
+
         t1.addEventListener('input', update);
         t2.addEventListener('input', update);
+        
+        // Pre-fill answers from state
+        t1.value = answersState[-1001] || '';
+        t2.value = answersState[-1002] || '';
         update();
     }
 
@@ -371,68 +766,83 @@
         return (text.trim().match(/\S+/g) || []).length;
     }
 
-    function flattenQuestions(data) {
-        return (data.sections || []).flatMap(s => s.questions || []);
-    }
-
-    function buildQuestionNavigator(data) {
-        const nav = document.getElementById('questionNav');
-        const questions = flattenQuestions(data);
-        nav.innerHTML = questions.map((q, idx) => `<button type="button" class="btn btn-sm btn-outline-secondary">${idx + 1}</button>`).join('');
-    }
-
     function bindEvents() {
         document.getElementById('prevSectionBtn').addEventListener('click', () => {
-            if (currentSkill !== 'mixed') return;
-            if (sectionIndex <= 0) return;
-            sectionIndex--;
-            showMixedSection(sectionKeys[sectionIndex], testData);
+            if (sectionIndex > 0) showSectionByIndex(sectionIndex - 1);
         });
 
         document.getElementById('nextSectionBtn').addEventListener('click', () => {
-            if (currentSkill !== 'mixed') return;
-            if (sectionIndex >= sectionKeys.length - 1) return;
-            sectionIndex++;
-            showMixedSection(sectionKeys[sectionIndex], testData);
+            if (sectionIndex < sectionKeys.length - 1) {
+                showSectionByIndex(sectionIndex + 1);
+            } else {
+                showToast('Review all parts carefully, then hit Submit Exam in the header.', 'info');
+            }
         });
 
         document.getElementById('submitTestBtn').addEventListener('click', submitTest);
-        document.getElementById('speakingPart').addEventListener('change', bindSpeakingPromptByPart);
+
+        document.getElementById('startRecordBtn').addEventListener('click', function () {
+            isSpeakingSimulating = !isSpeakingSimulating;
+            const container = document.getElementById('speakingWave');
+            const transcript = document.getElementById('speakingTranscript');
+            
+            if (isSpeakingSimulating) {
+                container.classList.add('audio-wave-active');
+                this.innerHTML = '<i class="bi bi-stop-circle-fill me-2"></i>Stop Simulation';
+                this.className = 'btn btn-danger px-4 py-2 fw-bold';
+                showToast('Simulating audio capture...', 'success');
+                
+                // Add dummy text transcript
+                if (!transcript.value) {
+                    transcript.value = "Candidate: Lakeside Sports Centre, I'd like to sign up for a Premium membership card under the name James Morrison...";
+                    answersState[-2001] = transcript.value;
+                }
+            } else {
+                container.classList.remove('audio-wave-active');
+                this.innerHTML = '<i class="bi bi-record-circle-fill me-2"></i>Simulate Mic Active';
+                this.className = 'btn btn-warning px-4 py-2 fw-bold';
+                showToast('Mic turned off.', 'info');
+            }
+        });
+        
+        document.getElementById('speakingTranscript').addEventListener('input', function() {
+            answersState[-2001] = this.value;
+        });
     }
 
     function collectAnswers() {
         const answers = [];
+        
+        // Loop over the answersState
+        for (const [qid, val] of Object.entries(answersState)) {
+            const id = Number(qid);
+            if (id > 0) {
+                answers.push({ questionId: id, answer: val || '' });
+            }
+        }
+        
+        // Ensure any active inputs not saved yet are captured
         document.querySelectorAll('.test-answer').forEach(input => {
             const qid = Number(input.dataset.questionId);
-            answers.push({ questionId: qid, answer: input.value || '' });
+            if (qid > 0 && !answers.some(a => a.questionId === qid)) {
+                answers.push({ questionId: qid, answer: input.value || '' });
+            }
         });
-
-        // Writing pseudo answers if writing test
-        if (currentSkill === 'writing' || currentSkill === 'mixed') {
-            const task1 = document.getElementById('writingTask1Answer')?.value || '';
-            const task2 = document.getElementById('writingTask2Answer')?.value || '';
-            if (task1) answers.push({ questionId: -1001, answer: task1 });
-            if (task2) answers.push({ questionId: -1002, answer: task2 });
-        }
-
-        // Speaking transcript if present
-        if (currentSkill === 'speaking' || currentSkill === 'mixed') {
-            const transcript = document.getElementById('speakingTranscript')?.value || '';
-            if (transcript) answers.push({ questionId: -2001, answer: transcript });
-        }
 
         return answers;
     }
 
     async function submitTest() {
         if (!Auth.isLoggedIn()) {
-            showToast('Please login to submit test', 'info');
+            showToast('Please login to submit test results.', 'info');
             return;
         }
 
-        const answers = collectAnswers().filter(a => a.questionId > 0); // submit only real question ids
-        if (!answers.length) {
-            showToast('Please answer at least one question', 'error');
+        const answers = collectAnswers();
+        const hasOpenEnded = (answersState[-1001] || answersState[-1002] || answersState[-2001]);
+        
+        if (!answers.length && !hasOpenEnded) {
+            showToast('Please answer at least one question before submitting.', 'error');
             return;
         }
 
@@ -446,18 +856,22 @@
             });
 
             if (response?.success && response?.data) {
-                showToast(`Submitted. Estimated band: ${response.data.bandScore}`, 'success');
-                if (currentSkill === 'writing' || currentSkill === 'mixed') {
-                    await submitWritingForAiFeedback();
-                }
-                if (currentSkill === 'speaking' || currentSkill === 'mixed') {
-                    await submitSpeakingForAiFeedback();
-                }
+                clearInterval(timerInterval);
+                showToast(`Test submitted successfully! Estimated score: Band ${response.data.bandScore}`, 'success');
+                
+                // Submit auxiliary feedback
+                await submitWritingForAiFeedback();
+                await submitSpeakingForAiFeedback();
+
+                setTimeout(() => {
+                    window.location.href = '/Home/Tests';
+                }, 2000);
             } else {
-                showToast(response?.message || 'Submit failed', 'error');
+                showToast(response?.message || 'Submission failed.', 'error');
             }
-        } catch {
-            showToast('Submit failed', 'error');
+        } catch (e) {
+            console.error(e);
+            showToast('Submission failed due to system error.', 'error');
         }
     }
 
@@ -468,7 +882,7 @@
             if (durationSeconds <= 0) {
                 clearInterval(timerInterval);
                 timerInterval = null;
-                showToast('Time is up', 'info');
+                handleTimeOut();
                 return;
             }
             durationSeconds -= 1;
@@ -477,63 +891,71 @@
     }
 
     function renderTimer() {
-        const mm = String(Math.floor(durationSeconds / 60)).padStart(2, '0');
-        const ss = String(durationSeconds % 60).padStart(2, '0');
-        document.getElementById('timerDisplay').textContent = `${mm}:${ss}`;
-    }
-
-    function bindWritingPrompts() {
-        if (writingPromptTask1?.prompt) {
-            document.getElementById('writingTask1Prompt').textContent = writingPromptTask1.prompt;
+        const mins = Math.floor(durationSeconds / 60);
+        const secs = durationSeconds % 60;
+        
+        const display = document.getElementById('timerDisplay');
+        const container = document.getElementById('timerContainer');
+        
+        display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        // Colors warning levels
+        if (durationSeconds < 60) {
+            container.className = 'timer-container timer-danger';
+        } else if (durationSeconds < 300) {
+            container.className = 'timer-container timer-warning';
+        } else {
+            container.className = 'timer-container';
         }
-        if (writingPromptTask2?.prompt) {
-            document.getElementById('writingTask2Prompt').textContent = writingPromptTask2.prompt;
-        }
     }
-
-    function bindSpeakingPromptByPart() {
-        const part = (document.getElementById('speakingPart').value || 'part1').replace('part', '');
-        const pool = speakingTopicsByPart[part] || [];
-        const prompt = pool.length ? pool[Math.floor(Math.random() * pool.length)].topic : null;
-        if (prompt) {
-            document.getElementById('speakingPrompt').textContent = prompt;
+    
+    function handleTimeOut() {
+        showToast('Time is up!', 'error');
+        const isFullMock = testData && testData.title && (testData.title.includes("Full") || testData.title.includes("Academic"));
+        
+        if (isFullMock) {
+            showToast('Auto-submitting your exam...', 'info');
+            submitTest();
+        } else {
+            showToast('Exam has ended. Please review your answers and submit.', 'warning');
         }
     }
 
     async function submitWritingForAiFeedback() {
-        if (!Auth.isLoggedIn()) return;
-        const task1Text = (document.getElementById('writingTask1Answer')?.value || '').trim();
-        const task2Text = (document.getElementById('writingTask2Answer')?.value || '').trim();
+        const task1Text = (answersState[-1001] || '').trim();
+        const task2Text = (answersState[-1002] || '').trim();
+        
         try {
-            if (task1Text && writingPromptTask1?.prompt) {
+            if (task1Text) {
                 await api('/writing/submit', {
                     method: 'POST',
-                    body: JSON.stringify({ prompt: writingPromptTask1.prompt, essayText: task1Text, taskType: 1 })
+                    body: JSON.stringify({ prompt: document.getElementById('writingTask1Prompt').textContent, essayText: task1Text, taskType: 1 })
                 });
             }
-            if (task2Text && writingPromptTask2?.prompt) {
+            if (task2Text) {
                 await api('/writing/submit', {
                     method: 'POST',
-                    body: JSON.stringify({ prompt: writingPromptTask2.prompt, essayText: task2Text, taskType: 2 })
+                    body: JSON.stringify({ prompt: document.getElementById('writingTask2Prompt').textContent, essayText: task2Text, taskType: 2 })
                 });
             }
-        } catch {
-            // Test submission already succeeded; skip secondary feedback failure
+        } catch (e) {
+            console.warn('Writing secondary feedback skipped.', e);
         }
     }
 
     async function submitSpeakingForAiFeedback() {
-        if (!Auth.isLoggedIn()) return;
-        const transcript = (document.getElementById('speakingTranscript')?.value || '').trim();
+        const transcript = (answersState[-2001] || '').trim();
         if (!transcript) return;
-        const topic = document.getElementById('speakingPrompt')?.textContent || 'IELTS speaking topic';
+        
         try {
+            const topic = document.getElementById('speakingPrompt')?.textContent || 'IELTS speaking topic';
             const started = await api('/speaking/start', {
                 method: 'POST',
                 body: JSON.stringify({ topic: topic })
             });
             const sessionId = started?.success ? started.data?.sessionId : 0;
             if (!sessionId) return;
+            
             await api('/speaking/submit-audio', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -542,9 +964,18 @@
                     transcript: transcript
                 })
             });
-        } catch {
-            // Keep primary test flow successful
+        } catch (e) {
+            console.warn('Speaking secondary feedback skipped.', e);
         }
+    }
+
+    function escapeHtml(text) {
+        return (text || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
     }
 </script>
 }

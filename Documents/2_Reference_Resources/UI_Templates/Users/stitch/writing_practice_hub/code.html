@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Writing Practice Hub | The Academic Curator</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#002204",
+                    "on-tertiary-container": "#4e3e00",
+                    "inverse-surface": "#192b69",
+                    "on-tertiary-fixed-variant": "#564500",
+                    "primary": "#0057c2",
+                    "on-surface": "#001552",
+                    "surface-variant": "#dde1ff",
+                    "on-surface-variant": "#414755",
+                    "background": "#fbf8ff",
+                    "tertiary-fixed": "#ffe07f",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#fbf8ff",
+                    "secondary-fixed-dim": "#28e44d",
+                    "secondary-container": "#4bfc61",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#004398",
+                    "on-primary-container": "#fefcff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#00711d",
+                    "on-primary-fixed": "#001a43",
+                    "surface-container-high": "#e4e7ff",
+                    "tertiary-fixed-dim": "#edc203",
+                    "surface-tint": "#0059c6",
+                    "outline-variant": "#c1c6d7",
+                    "outline": "#727786",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#efefff",
+                    "tertiary": "#725c00",
+                    "primary-container": "#006ef2",
+                    "tertiary-container": "#cda800",
+                    "surface-dim": "#d1d8ff",
+                    "on-secondary-fixed-variant": "#005313",
+                    "primary-fixed": "#d9e2ff",
+                    "surface-container-highest": "#dde1ff",
+                    "surface-container": "#ebedff",
+                    "primary-fixed-dim": "#afc6ff",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#70ff77",
+                    "inverse-primary": "#afc6ff",
+                    "surface": "#fbf8ff",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed": "#231b00",
+                    "surface-container-low": "#f3f2ff",
+                    "on-error": "#ffffff",
+                    "secondary": "#006e1c",
+                    "on-background": "#001552",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Lexend"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-lexend { font-family: 'Lexend', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-[#fbf8ff] dark:bg-slate-950 backdrop-blur-xl bg-opacity-70 fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 max-w-full mx-auto">
+<div class="text-xl font-bold text-[#001552] dark:text-white font-lexend">The Academic Curator</div>
+<nav class="hidden md:flex gap-8 items-center font-lexend text-sm tracking-tight">
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Listening</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Reading</a>
+<a class="text-[#0057c2] font-bold border-b-2 border-[#0057c2] pb-1" href="#">Writing</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Speaking</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer">account_circle</span>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="bg-[#fbf8ff] dark:bg-slate-950 fixed left-0 top-16 h-full w-64 border-r border-slate-100 dark:border-slate-800 hidden lg:flex flex-col p-4 gap-2">
+<div class="mb-6 px-2">
+<div class="font-lexend text-lg text-[#001552] dark:text-white">Study Path</div>
+<div class="text-xs text-slate-500 uppercase tracking-widest">IELTS Academic</div>
+</div>
+<nav class="flex flex-col gap-1">
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-inter text-sm">Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-inter text-sm">Mock Tests</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-inter text-sm">Vocabulary</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-inter text-sm">AI Tutor</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:translate-x-1 transition-transform duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-inter text-sm">Progress</span>
+</div>
+</nav>
+<button class="mt-auto bg-primary-container text-white py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+            Start Practice
+        </button>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:ml-64 pt-24 px-6 md:px-12 pb-12 min-h-screen">
+<div class="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8">
+<!-- Hero Section & CTA -->
+<section class="xl:col-span-8 flex flex-col gap-8">
+<div class="relative overflow-hidden rounded-[24px] bg-primary text-white p-10 min-h-[320px] flex flex-col justify-end">
+<div class="absolute top-0 right-0 w-full h-full opacity-20 bg-no-repeat bg-cover pointer-events-none" data-alt="abstract editorial style composition with geometric lines and subtle gradient of deep blue and teal" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBrnsU5AJQvR5O65XSGLTui5Q2RXrA39zDG0nJRgSfWPAwUPFdbSmk7r2H_Y26I8ZWAloCssjo5vqvNC1pF0JyE_7MsnOiUw_m3jVLt68Pq6DkNSUCzn3bp0R7VTPwEjHJzQ0IWlETAifgkQbB7fuADq29txcuRCkhsLdUM8Gxv_fmlnapGchDSgHHkhEX05aFHbLMLSuojiUAYS1B6NgKjPbl6yymTqwS_9dUz93gXVgBB37OMSrfAY4EGv_p-fxOA3-obKaLDL6s')"></div>
+<div class="relative z-10 space-y-4">
+<h1 class="text-4xl md:text-5xl font-bold tracking-tight">Refine Your Academic Voice</h1>
+<p class="text-primary-fixed max-w-lg text-lg opacity-90 leading-relaxed font-light">Master Task 1 data interpretation and Task 2 argumentative essays with expert-curated prompts and instant AI evaluation.</p>
+<div class="pt-6 flex flex-wrap gap-4">
+<button class="bg-surface-container-lowest text-primary px-8 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-white transition-all shadow-xl">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+                                Start New Writing Session
+                            </button>
+<button class="bg-primary/20 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-full font-semibold hover:bg-primary/30 transition-all">
+                                View Learning Plan
+                            </button>
+</div>
+</div>
+</div>
+<!-- Task Selection Gallery -->
+<div class="space-y-6">
+<div class="flex items-end justify-between px-2">
+<div>
+<h2 class="text-2xl font-bold">Recent Prompts</h2>
+<p class="text-slate-500 text-sm">Select a task type to begin</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container-low text-primary rounded-full text-sm font-semibold">All Tasks</button>
+<button class="px-4 py-2 hover:bg-surface-container-low transition-colors rounded-full text-sm font-medium">Task 1</button>
+<button class="px-4 py-2 hover:bg-surface-container-low transition-colors rounded-full text-sm font-medium">Task 2</button>
+</div>
+</div>
+<div class="grid md:grid-cols-2 gap-6">
+<!-- Task 1 Card -->
+<div class="group bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border-none">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">TASK 1</span>
+<span class="text-slate-400 text-sm">20 Mins</span>
+</div>
+<h3 class="text-lg font-bold mb-3 leading-snug">Global Energy Consumption by Source (2010-2023)</h3>
+<p class="text-slate-600 text-sm mb-6 line-clamp-2">Summarize the information by selecting and reporting the main features, and make comparisons where relevant.</p>
+<div class="flex items-center justify-between border-t border-slate-50 pt-4">
+<div class="flex items-center -space-x-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[10px] font-bold">AJ</div>
+<div class="w-8 h-8 rounded-full bg-slate-300 border-2 border-white flex items-center justify-center text-[10px] font-bold">+12</div>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                    Analyze Data <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Task 2 Card -->
+<div class="group bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow border-none">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full">TASK 2</span>
+<span class="text-slate-400 text-sm">40 Mins</span>
+</div>
+<h3 class="text-lg font-bold mb-3 leading-snug">The Impact of AI on Creative Industries: Future Outlook</h3>
+<p class="text-slate-600 text-sm mb-6 line-clamp-2">Discuss both views and give your opinion. Use specific examples from your experience.</p>
+<div class="flex items-center justify-between border-t border-slate-50 pt-4">
+<div class="flex items-center -space-x-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[10px] font-bold">LM</div>
+<div class="w-8 h-8 rounded-full bg-slate-300 border-2 border-white flex items-center justify-center text-[10px] font-bold">+45</div>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                    Begin Essay <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Writing Portfolio Section -->
+<div class="space-y-6">
+<h2 class="text-2xl font-bold px-2">Writing Portfolio</h2>
+<div class="bg-surface-container-low rounded-2xl p-8">
+<div class="grid md:grid-cols-3 gap-8">
+<!-- Portfolio Item -->
+<div class="bg-surface-container-lowest p-5 rounded-xl flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-slate-400 uppercase">Latest Task 2</span>
+<span class="bg-secondary-container text-on-secondary-container text-xs font-bold px-2 py-0.5 rounded">Band 7.5</span>
+</div>
+<div class="font-lexend font-bold text-base leading-tight">Economic Growth vs. Sustainability</div>
+<p class="text-xs text-slate-500 italic">"Strong logical flow; improve lexical resource in paragraph 3."</p>
+<button class="text-primary text-xs font-bold uppercase tracking-wider hover:underline text-left">View Analysis</button>
+</div>
+<!-- Portfolio Item -->
+<div class="bg-surface-container-lowest p-5 rounded-xl flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-slate-400 uppercase">Latest Task 1</span>
+<span class="bg-primary-fixed text-primary text-xs font-bold px-2 py-0.5 rounded">Band 6.5</span>
+</div>
+<div class="font-lexend font-bold text-base leading-tight">Bar Chart: Urban Migration Rates</div>
+<p class="text-xs text-slate-500 italic">"Good overview; focus on comparative adverbs next time."</p>
+<button class="text-primary text-xs font-bold uppercase tracking-wider hover:underline text-left">View Analysis</button>
+</div>
+<!-- Portfolio Stats -->
+<div class="flex flex-col justify-center items-center text-center p-5">
+<div class="text-4xl font-extrabold text-primary font-lexend">7.2</div>
+<div class="text-sm font-semibold text-slate-700">Average Band</div>
+<div class="mt-4 w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary w-[82%] h-full"></div>
+</div>
+<p class="text-[10px] text-slate-500 mt-2">Up 0.5 points this month</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Sidebar -->
+<aside class="xl:col-span-4 flex flex-col gap-8">
+<!-- Common Pitfalls Sidebar -->
+<section class="bg-surface-container-high rounded-2xl p-6 h-fit">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h2 class="text-xl font-bold">Pitfall Watch</h2>
+</div>
+<p class="text-sm text-slate-600 mb-6">Based on your last 5 sessions, watch out for these recurring issues:</p>
+<div class="space-y-4">
+<div class="group p-4 bg-surface-container-lowest rounded-xl border-l-4 border-error hover:translate-x-1 transition-transform">
+<h3 class="font-bold text-sm mb-1">Overuse of 'Increase/Decrease'</h3>
+<p class="text-xs text-slate-500">In Task 1, you repeat basic verbs. Try: <i>surged, plummeted, fluctuated.</i></p>
+</div>
+<div class="group p-4 bg-surface-container-lowest rounded-xl border-l-4 border-error-container hover:translate-x-1 transition-transform">
+<h3 class="font-bold text-sm mb-1">Missing Paragraph Links</h3>
+<p class="text-xs text-slate-500">Use cohesive devices like <i>'Furthermore'</i> or <i>'In contrast'</i> more frequently.</p>
+</div>
+<div class="group p-4 bg-surface-container-lowest rounded-xl border-l-4 border-error-container hover:translate-x-1 transition-transform">
+<h3 class="font-bold text-sm mb-1">Subject-Verb Agreement</h3>
+<p class="text-xs text-slate-500">Recurrent errors in complex sentences. Review collective nouns.</p>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border border-outline-variant rounded-xl text-xs font-bold text-slate-700 hover:bg-white transition-colors">
+                        GENERATE DRILLS
+                    </button>
+</section>
+<!-- AI Curator Helper -->
+<section class="relative bg-white rounded-2xl p-8 border border-slate-100 overflow-hidden">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="relative z-10">
+<div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<h3 class="text-lg font-bold mb-2">The Curator's Tip</h3>
+<p class="text-slate-600 text-sm leading-relaxed mb-6">
+                            "For Task 2, avoid taking a neutral stance. A clear position, even if nuanced, helps you score higher on Task Response."
+                        </p>
+<div class="flex items-center gap-3">
+<div class="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-2/3"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">DAILY TIP</span>
+</div>
+</div>
+</section>
+<!-- Practice Records -->
+<section class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm">
+<h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Upcoming Deadlines</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-orange-50 flex flex-col items-center justify-center text-orange-600 leading-none">
+<span class="text-[10px] font-bold">OCT</span>
+<span class="text-lg font-bold">14</span>
+</div>
+<div>
+<div class="text-sm font-bold">IELTS Exam Date</div>
+<div class="text-xs text-slate-500">12 Days remaining</div>
+</div>
+</div>
+</div>
+</section>
+</aside>
+</div>
+</main>
+<!-- FAB (Suppressed on deep detail, visible on main practice hub) -->
+<div class="fixed bottom-8 right-8 z-40">
+<button class="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+</button>
+</div>
+</body></html>

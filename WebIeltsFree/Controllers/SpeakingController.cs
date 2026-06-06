@@ -21,12 +21,14 @@ public class SpeakingController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IPythonAiService _pythonAi;
     private readonly IConfiguration _configuration;
+    private readonly IGeminiService _gemini;
 
-    public SpeakingController(AppDbContext context, IPythonAiService pythonAi, IConfiguration configuration)
+    public SpeakingController(AppDbContext context, IPythonAiService pythonAi, IConfiguration configuration, IGeminiService gemini)
     {
         _context = context;
         _pythonAi = pythonAi;
         _configuration = configuration;
+        _gemini = gemini;
     }
 
     /// <summary>
@@ -89,11 +91,12 @@ public class SpeakingController : ControllerBase
 
         // Sanitize topic input
         var sanitizedTopic = InputSanitizer.StripHtmlTags(request.Topic) ?? "Free speaking practice";
+        sanitizedTopic = InputSanitizer.Truncate(sanitizedTopic, 500);
 
         var session = new SpeakingSession
         {
             UserId = userId,
-            Topic = InputSanitizer.Truncate(sanitizedTopic, 500),
+            Topic = sanitizedTopic,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -133,18 +136,27 @@ public class SpeakingController : ControllerBase
         }
         catch
         {
-            var fallback = SimulateAIEvaluation();
-            aiEvaluation = new WebIeltsFree.Services.SpeakingEvaluation
+            // Call the highly detailed Gemini evaluation for a professional serious grade
+            var geminiEvaluation = await EvaluateSpeakingWithGeminiAsync(transcript, session.Topic ?? "General topic");
+            if (geminiEvaluation != null)
             {
-                OverallBand = Math.Clamp((fallback.Fluency + fallback.Pronunciation + fallback.Grammar) / 3f, 0f, 9f),
-                Fluency = fallback.Fluency,
-                Pronunciation = fallback.Pronunciation,
-                LexicalResource = Math.Clamp(fallback.Grammar + 0.3f, 0f, 9f),
-                GrammaticalRange = fallback.Grammar,
-                Feedback = fallback.Feedback,
-                Strengths = new List<string> { "Clear effort to communicate", "Topic relevance maintained" },
-                Improvements = new List<string> { "Increase response depth", "Improve pronunciation clarity" }
-            };
+                aiEvaluation = geminiEvaluation;
+            }
+            else
+            {
+                var fallback = SimulateAIEvaluation();
+                aiEvaluation = new WebIeltsFree.Services.SpeakingEvaluation
+                {
+                    OverallBand = Math.Clamp((fallback.Fluency + fallback.Pronunciation + fallback.Grammar) / 3f, 0f, 9f),
+                    Fluency = fallback.Fluency,
+                    Pronunciation = fallback.Pronunciation,
+                    LexicalResource = Math.Clamp(fallback.Grammar + 0.3f, 0f, 9f),
+                    GrammaticalRange = fallback.Grammar,
+                    Feedback = fallback.Feedback,
+                    Strengths = new List<string> { "Clear effort to communicate", "Topic relevance maintained" },
+                    Improvements = new List<string> { "Increase response depth", "Improve pronunciation clarity" }
+                };
+            }
         }
 
         session.FluencyScore = aiEvaluation.Fluency;
@@ -169,6 +181,130 @@ public class SpeakingController : ControllerBase
             AiFeedback = session.AiFeedback,
             CreatedAt = session.CreatedAt
         }));
+    }
+
+    private async Task<WebIeltsFree.Services.SpeakingEvaluation> EvaluateSpeakingWithGeminiAsync(string transcript, string topic)
+    {
+        try
+        {
+            var prompt = $$"""
+            You are an expert IELTS Speaking examiner.
+            Seriously evaluate the following student response/transcript for the given topic.
+            
+            Topic:
+            {{topic}}
+            
+            Student Transcript:
+            {{transcript}}
+            
+            Evaluate according to the four official IELTS Speaking criteria:
+            1. Fluency and Coherence (fluency)
+            2. Lexical Resource (lexicalResource)
+            3. Grammatical Range and Accuracy (grammaticalRange)
+            4. Pronunciation (pronunciation)
+            
+            Determine the band score (1.0 to 9.0, rounded to the nearest 0.5) for each criterion and calculate the overall band score.
+            Generate a detailed feedback paragraph, 2-3 specific strengths, and 2-3 specific areas for improvement.
+            
+            Response format: Return ONLY a valid JSON object matching the structure below (do not include markdown wrapping or other text):
+            {
+              "overallBand": 6.5,
+              "fluency": 6.5,
+              "pronunciation": 6.0,
+              "lexicalResource": 7.0,
+              "grammaticalRange": 6.0,
+              "feedback": "Your response is clear and directly addresses the prompt. However, you can improve by using more complex vocabulary...",
+              "strengths": ["Good topic relevance", "Clear pronunciation of key vocabulary"],
+              "improvements": ["Try to reduce pauses between ideas", "Use a wider range of cohesive devices"]
+            }
+            """;
+
+            var jsonResponse = await _gemini.GenerateContentAsync(prompt, "Output JSON format only.");
+            
+            // Basic regex parsing to ensure fallback safety if JSON is not perfectly formatted
+            var matchOverall = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""overallBand""\s*:\s*([0-9.]+)");
+            var matchFluency = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""fluency""\s*:\s*([0-9.]+)");
+            var matchPron = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""pronunciation""\s*:\s*([0-9.]+)");
+            var matchLex = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""lexicalResource""\s*:\s*([0-9.]+)");
+            var matchGram = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""grammaticalRange""\s*:\s*([0-9.]+)");
+            var matchFeedback = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""feedback""\s*:\s*""([^""]+)""");
+
+            float overall = matchOverall.Success ? float.Parse(matchOverall.Groups[1].Value) : 6.0f;
+            float fluency = matchFluency.Success ? float.Parse(matchFluency.Groups[1].Value) : 6.0f;
+            float pron = matchPron.Success ? float.Parse(matchPron.Groups[1].Value) : 6.0f;
+            float lexical = matchLex.Success ? float.Parse(matchLex.Groups[1].Value) : 6.0f;
+            float grammar = matchGram.Success ? float.Parse(matchGram.Groups[1].Value) : 6.0f;
+            string feedback = matchFeedback.Success ? matchFeedback.Groups[1].Value : "Good effort. Keep practicing to build confidence and fluency.";
+
+            // Attempt fully typed deserialization
+            try
+            {
+                using var doc = JsonDocument.Parse(jsonResponse);
+                var root = doc.RootElement;
+                
+                if (root.TryGetProperty("overallBand", out var pBand)) overall = (float)pBand.GetDouble();
+                if (root.TryGetProperty("fluency", out var pFlu)) fluency = (float)pFlu.GetDouble();
+                if (root.TryGetProperty("pronunciation", out var pPro)) pron = (float)pPro.GetDouble();
+                if (root.TryGetProperty("lexicalResource", out var pLex)) lexical = (float)pLex.GetDouble();
+                if (root.TryGetProperty("grammaticalRange", out var pGra)) grammar = (float)pGra.GetDouble();
+                if (root.TryGetProperty("feedback", out var pFeed)) feedback = pFeed.GetString() ?? feedback;
+                
+                var strengths = new List<string>();
+                if (root.TryGetProperty("strengths", out var pStren) && pStren.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in pStren.EnumerateArray())
+                    {
+                        strengths.Add(item.GetString() ?? "");
+                    }
+                }
+                
+                var improvements = new List<string>();
+                if (root.TryGetProperty("improvements", out var pImprov) && pImprov.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in pImprov.EnumerateArray())
+                    {
+                        improvements.Add(item.GetString() ?? "");
+                    }
+                }
+
+                return new WebIeltsFree.Services.SpeakingEvaluation
+                {
+                    OverallBand = RoundToIeltsBand(overall),
+                    Fluency = RoundToIeltsBand(fluency),
+                    Pronunciation = RoundToIeltsBand(pron),
+                    LexicalResource = RoundToIeltsBand(lexical),
+                    GrammaticalRange = RoundToIeltsBand(grammar),
+                    Feedback = feedback,
+                    Strengths = strengths.Count > 0 ? strengths : new List<string> { "Relevant ideas presented", "Natural speaking flow" },
+                    Improvements = improvements.Count > 0 ? improvements : new List<string> { "Expand vocabulary", "Enhance grammar precision" }
+                };
+            }
+            catch
+            {
+                // Fallback to parsed parameters
+                return new WebIeltsFree.Services.SpeakingEvaluation
+                {
+                    OverallBand = RoundToIeltsBand(overall),
+                    Fluency = RoundToIeltsBand(fluency),
+                    Pronunciation = RoundToIeltsBand(pron),
+                    LexicalResource = RoundToIeltsBand(lexical),
+                    GrammaticalRange = RoundToIeltsBand(grammar),
+                    Feedback = feedback,
+                    Strengths = new List<string> { "Relevant ideas presented", "Natural speaking flow" },
+                    Improvements = new List<string> { "Expand vocabulary", "Enhance grammar precision" }
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Speaking Gemini fallback failed: " + ex.Message);
+            return null!;
+        }
+    }
+
+    private static float RoundToIeltsBand(float band)
+    {
+        return (float)Math.Round(band * 2, MidpointRounding.AwayFromZero) / 2f;
     }
 
     /// <summary>

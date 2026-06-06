@@ -422,6 +422,8 @@ public class TestSectionDto
     public string? SkillType { get; set; }
     /// <summary>URL of audio file for listening sections</summary>
     public string? AudioUrl { get; set; }
+    public string? PassageText { get; set; }
+    public string? PassageTitle { get; set; }
     public List<QuestionDto> Questions { get; set; } = new();
 }
 

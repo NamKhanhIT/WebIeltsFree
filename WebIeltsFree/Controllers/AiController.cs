@@ -40,21 +40,17 @@ public class AiController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
     /// Chat with AI tutor (RAG-based)
-    /// </summary>
     [HttpPost("chat")]
     [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<AiChatResponse>>> Chat([FromBody] AiChatRequest request)
     {
         var userId = GetCurrentUserIdOrDefault();
 
-        // Sanitize input to prevent XSS/injection
         var sanitizedMessage = InputSanitizer.StripHtmlTags(request.Message);
         if (string.IsNullOrWhiteSpace(sanitizedMessage))
             return BadRequest(ApiResponse<AiChatResponse>.Fail("Message cannot be empty"));
 
-        // Use RAG chatbot service
         var history = request.Context?.Split('\n')
             .Select(line => new ChatMessage { Role = "user", Content = InputSanitizer.StripHtmlTags(line) })
             .ToList();
@@ -68,9 +64,7 @@ public class AiController : ControllerBase
         }));
     }
 
-    /// <summary>
     /// Get user's existing learning path
-    /// </summary>
     [HttpGet("learning-path")]
     public async Task<ActionResult<ApiResponse<LearningPathDto>>> GetLearningPath()
     {
@@ -80,7 +74,6 @@ public class AiController : ControllerBase
             if (userId == 0)
                 return Unauthorized(ApiResponse<LearningPathDto>.Fail("Please log in"));
 
-            // Query only legacy-safe columns to avoid hard failures on older schemas.
             var roadmapSummary = await _context.AIRoadmaps
                 .Where(r => r.UserId == userId)
                 .OrderByDescending(r => r.GeneratedAt)
@@ -152,11 +145,10 @@ public class AiController : ControllerBase
             float bandGap = targetBand - currentBand;
 
             int estimatedWeeks = (int)Math.Ceiling(bandGap * 8);
-            estimatedWeeks = Math.Max(4, Math.Min(52, estimatedWeeks)); // Between 4-52 weeks
+            estimatedWeeks = Math.Max(4, Math.Min(52, estimatedWeeks)); 
 
             var generatedAt = DateTime.UtcNow;
 
-            // Insert with SQL that works for both legacy and newer schemas.
             await _context.Database.ExecuteSqlInterpolatedAsync($@"
                 INSERT INTO tb_ai_roadmaps (user_id, generated_at)
                 VALUES ({userId}, {generatedAt})");
@@ -169,7 +161,6 @@ public class AiController : ControllerBase
 
             var roadmapId = roadmap?.RoadmapId ?? 0;
 
-            // Generate weekly plan (simplified - in production, use AI to customize)
             var weeklyPlan = GenerateWeeklyPlan(estimatedWeeks, request.FocusAreas, targetBand);
 
             return Ok(ApiResponse<LearningPathDto>.Ok(new LearningPathDto
@@ -204,7 +195,6 @@ public class AiController : ControllerBase
                 return Ok(ApiResponse<List<AiRecommendationDto>>.Ok(GetDefaultRecommendations()));
             }
 
-            // Get user's progress data
             var progress = await _context.UserLearningProgress
                 .Where(p => p.UserId == userId)
                 .Include(p => p.Lesson)
@@ -217,7 +207,6 @@ public class AiController : ControllerBase
             var goal = await _context.UserGoals.FirstOrDefaultAsync(g => g.UserId == userId);
             var targetBand = goal?.TargetBand ?? 6.5f;
 
-            // Generate recommendations based on analysis
             var recommendations = GenerateRecommendations(progress, testAttempts, targetBand);
 
             return Ok(ApiResponse<List<AiRecommendationDto>>.Ok(recommendations));
@@ -238,9 +227,7 @@ public class AiController : ControllerBase
         };
     }
 
-    /// <summary>
     /// Predict band score based on current performance
-    /// </summary>
     [HttpGet("predict-band")]
     public async Task<ActionResult<ApiResponse<BandPredictionDto>>> PredictBand()
     {
@@ -257,14 +244,12 @@ public class AiController : ControllerBase
                 }));
             }
 
-            // Get recent test attempts
             var recentTests = await _context.UserTestAttempts
                 .Where(a => a.UserId == userId && a.BandScore != null)
                 .OrderByDescending(a => a.FinishedAt)
                 .Take(5)
                 .ToListAsync();
 
-            // Get recent speaking/writing scores - use try/catch for potential schema issues
             List<SpeakingSession> recentSpeaking = new();
             List<WritingSubmission> recentWriting = new();
             
@@ -296,7 +281,6 @@ public class AiController : ControllerBase
                 return Ok(ApiResponse<BandPredictionDto>.Fail("An error occurred. Please try again."));
             }
 
-            // If no data at all, return safe response
             if (!recentTests.Any() && !recentSpeaking.Any() && !recentWriting.Any())
             {
                 return Ok(ApiResponse<BandPredictionDto>.Ok(new BandPredictionDto
@@ -307,7 +291,6 @@ public class AiController : ControllerBase
                 }));
             }
 
-            // Calculate predicted scores
             float readingListening = recentTests.Any() ? (float)Math.Round(recentTests.Average(t => t.BandScore ?? 0) * 2, MidpointRounding.AwayFromZero) / 2 : 5.5f;
             float speaking = recentSpeaking.Any() 
                 ? (float)Math.Round(recentSpeaking.Average(s => ((s.FluencyScore ?? 0) + (s.PronunciationScore ?? 0) + (s.GrammarScore ?? 0)) / 3) * 2, MidpointRounding.AwayFromZero) / 2
@@ -333,7 +316,6 @@ public class AiController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Return safe fallback instead of 500 error
             return Ok(ApiResponse<BandPredictionDto>.Ok(new BandPredictionDto
             {
                 PredictedBand = 0,
@@ -343,9 +325,7 @@ public class AiController : ControllerBase
         }
     }
 
-    /// <summary>
     /// Get AI-generated insights about learning progress
-    /// </summary>
     [HttpGet("insights")]
     public async Task<ActionResult<ApiResponse<AiInsightsDto>>> GetInsights()
     {
@@ -394,9 +374,7 @@ public class AiController : ControllerBase
         }
     }
 
-    /// <summary>
     /// Get vocabulary suggestions based on current level
-    /// </summary>
     [HttpPost("vocabulary-suggestions")]
     public async Task<ActionResult<ApiResponse<List<string>>>> GetVocabularySuggestions([FromBody] string topic)
     {
@@ -412,27 +390,22 @@ public class AiController : ControllerBase
         return Ok(ApiResponse<List<string>>.Ok(suggestions));
     }
 
-    /// <summary>
     /// Convert text to speech using Google Cloud Text-to-Speech or Gemini
-    /// </summary>
     [HttpPost("text-to-speech")]
     public async Task<ActionResult<ApiResponse<TextToSpeechResponse>>> TextToSpeech([FromBody] TextToSpeechRequest request)
     {
         try
         {
-            // Validate input
             if (string.IsNullOrWhiteSpace(request.Text))
                 return BadRequest(ApiResponse<TextToSpeechResponse>.Fail("Text cannot be empty"));
 
             if (request.Text.Length > 5000)
                 return BadRequest(ApiResponse<TextToSpeechResponse>.Fail("Text too long (max 5000 characters)"));
 
-            // Get API key for Google Cloud TTS
             var apiKey = _config["Google:CloudTTSKey"] ?? _config["Gemini:ApiKey"];
             if (string.IsNullOrEmpty(apiKey))
                 return StatusCode(500, ApiResponse<TextToSpeechResponse>.Fail("Text-to-speech service not configured"));
 
-            // Use Google Cloud Text-to-Speech API
             using (var client = new HttpClient())
             {
                 var url = "https://texttospeech.googleapis.com/v1/text:synthesize";
@@ -468,7 +441,6 @@ public class AiController : ControllerBase
                 var jsonResponse = System.Text.Json.JsonDocument.Parse(responseContent);
                 var audioContent = jsonResponse.RootElement.GetProperty("audioContent").GetString();
 
-                // Convert to data URL for direct playback
                 var dataUrl = $"data:audio/mp3;base64,{audioContent}";
 
                 return Ok(ApiResponse<TextToSpeechResponse>.Ok(new TextToSpeechResponse

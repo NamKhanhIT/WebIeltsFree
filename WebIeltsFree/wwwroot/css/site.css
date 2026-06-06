@@ -1,25 +1,24 @@
 /* ===== IELTS Learning Platform - Main Stylesheet ===== */
 
-/* CSS Variables */
 :root {
-    --ielts-primary: #1a365d;
-    --ielts-primary-dark: #0f2744;
+    --ielts-primary: #1c2b4a;
+    --ielts-primary-dark: #0f1a2e;
     --ielts-secondary: #2b6cb0;
-    --ielts-accent: #ed8936;
-    --ielts-accent-dark: #dd6b20;
+    --ielts-accent: #b8963e;
+    --ielts-accent-dark: #8b3a2a;
     --ielts-success: #38a169;
     --ielts-warning: #ecc94b;
     --ielts-danger: #e53e3e;
-    --ielts-light: #f7fafc;
+    --ielts-light: #faf8f5;
     --ielts-dark: #1a202c;
     --ielts-gray: #718096;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(28, 43, 74, 0.05);
+    --shadow-lg: 0 12px 24px rgba(28, 43, 74, 0.08);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
-    --transition: all 0.3s ease;
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Academic Theme Colors */
     --navy: #1C2B4A;
@@ -27,18 +26,68 @@
     --navy-mid: #2A3F6B;
     --ink: #2C2417;
     --ink-light: #4A3F30;
-    --cream: #F7F3EB;
+    --cream: #FAF8F5;
     --parchment: #EDE4D0;
     --parchment-dark: #D9CCAF;
     --gold: #B8963E;
     --gold-light: #D4AF60;
-    --gold-pale: #F0E5C4;
+    --gold-pale: #F5EFEB;
     --rust: #8B3A2A;
     --sage: #4A6741;
     --sage-light: #6B8C5E;
     --paper: #FAF7F0;
     --rule-line: rgba(28, 43, 74, 0.12);
     --shadow-book: 6px 12px 32px rgba(28, 43, 74, 0.18), 2px 4px 8px rgba(0, 0, 0, 0.08);
+
+    /* Premium Academic Design Tokens (No AI Slop Gradients) */
+    --academic-navy: #1C2B4A;
+    --academic-gold: #B8963E;
+    --academic-gold-light: #D4AF60;
+    --academic-gold-pale: #F5EFEB;
+    --academic-cream: #FAF8F5;
+    --academic-ink: #2C2417;
+    
+    --state-success-bg: #EAF7F0;
+    --state-success-text: #1E6B43;
+    --state-success-border: #A3D9C9;
+    
+    --skill-reading-color: #2B6CB0;    /* Classic Blue */
+    --skill-listening-color: #319795;  /* Teal */
+    --skill-writing-color: #805AD5;    /* Purple */
+    --skill-speaking-color: #DD6B20;   /* Warm Orange */
+
+    --focus-ring-color: rgba(184, 150, 62, 0.4);
+    --shadow-editorial: 0 4px 12px rgba(28, 43, 74, 0.05), 0 1px 2px rgba(28, 43, 74, 0.02);
+    --shadow-editorial-hover: 0 12px 24px rgba(28, 43, 74, 0.08), 0 2px 4px rgba(0, 0, 0, 0.02);
+    --radius-editorial: 8px;
+}
+
+/* Global focus-rings for user-centered accessibility control */
+.btn:focus,
+.action-card:focus,
+.lesson-card-hover:focus,
+.form-control:focus,
+.btn-ielts:focus,
+.btn-ielts-outline:focus {
+    outline: 2px solid var(--academic-gold) !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--focus-ring-color) !important;
+}
+
+/* Custom premium scrollbar for horizontal cards */
+.scrollbar-premium::-webkit-scrollbar {
+    height: 6px;
+}
+.scrollbar-premium::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.scrollbar-premium::-webkit-scrollbar-thumb {
+    background: var(--academic-gold-light);
+    border-radius: 4px;
+}
+.scrollbar-premium::-webkit-scrollbar-thumb:hover {
+    background: var(--academic-gold);
 }
 
 /* Base Styles */
@@ -1357,4 +1406,41 @@ h6 {
         box-shadow: none;
         break-inside: avoid;
     }
+}
+
+/* ===== Button group active contrast fix ===== */
+.btn-outline-secondary {
+    color: var(--academic-navy) !important;
+    background-color: transparent !important;
+    border-color: rgba(28, 43, 74, 0.4) !important;
+    font-weight: 600 !important;
+    transition: var(--transition) !important;
+}
+
+.btn-outline-secondary:hover {
+    color: var(--academic-navy) !important;
+    background-color: var(--academic-gold-pale) !important;
+    border-color: var(--academic-navy) !important;
+}
+
+.btn-outline-secondary.active,
+.btn-outline-secondary:active,
+.btn-group .btn-outline-secondary.active,
+.btn-group .btn-outline-secondary:active {
+    color: white !important;
+    background-color: var(--academic-navy) !important;
+    border-color: var(--academic-navy) !important;
+}
+
+.btn-group .btn-outline-primary.active,
+.btn-group .btn-outline-primary:active {
+    background-color: var(--academic-navy) !important;
+    color: white !important;
+    border-color: var(--academic-navy) !important;
+}
+
+.btn-group .btn-outline-primary:hover {
+    background-color: var(--academic-gold-light) !important;
+    color: var(--academic-navy) !important;
+    border-color: var(--academic-gold-light) !important;
 }

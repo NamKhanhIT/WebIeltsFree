@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Listening Lab | The Academic Curator</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#002204",
+                      "on-tertiary-container": "#4e3e00",
+                      "inverse-surface": "#192b69",
+                      "on-tertiary-fixed-variant": "#564500",
+                      "primary": "#0057c2",
+                      "on-surface": "#001552",
+                      "surface-variant": "#dde1ff",
+                      "on-surface-variant": "#414755",
+                      "background": "#fbf8ff",
+                      "tertiary-fixed": "#ffe07f",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-bright": "#fbf8ff",
+                      "secondary-fixed-dim": "#28e44d",
+                      "secondary-container": "#4bfc61",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed-variant": "#004398",
+                      "on-primary-container": "#fefcff",
+                      "error-container": "#ffdad6",
+                      "on-secondary-container": "#00711d",
+                      "on-primary-fixed": "#001a43",
+                      "surface-container-high": "#e4e7ff",
+                      "tertiary-fixed-dim": "#edc203",
+                      "surface-tint": "#0059c6",
+                      "outline-variant": "#c1c6d7",
+                      "outline": "#727786",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#efefff",
+                      "tertiary": "#725c00",
+                      "primary-container": "#006ef2",
+                      "tertiary-container": "#cda800",
+                      "surface-dim": "#d1d8ff",
+                      "on-secondary-fixed-variant": "#005313",
+                      "primary-fixed": "#d9e2ff",
+                      "surface-container-highest": "#dde1ff",
+                      "surface-container": "#ebedff",
+                      "primary-fixed-dim": "#afc6ff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed": "#70ff77",
+                      "inverse-primary": "#afc6ff",
+                      "surface": "#fbf8ff",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#231b00",
+                      "surface-container-low": "#f3f2ff",
+                      "on-error": "#ffffff",
+                      "secondary": "#006e1c",
+                      "on-background": "#001552",
+                      "error": "#ba1a1a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Lexend"],
+                      "body": ["Inter"],
+                      "label": ["Inter"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #fbf8ff; color: #001552; }
+        .font-lexend { font-family: 'Lexend', sans-serif; }
+        .glass { background: rgba(251, 248, 255, 0.7); backdrop-filter: blur(20px); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fbf8ff] dark:bg-slate-950 backdrop-blur-xl bg-opacity-70 flex justify-between items-center px-8 h-16 max-w-full mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-[#001552] dark:text-white font-lexend">The Academic Curator</span>
+<nav class="hidden md:flex items-center gap-6 font-lexend text-sm tracking-tight">
+<a class="text-[#0057c2] font-bold border-b-2 border-[#0057c2] pb-1" href="#">Listening</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Reading</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Writing</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#0057c2] transition-colors" href="#">Speaking</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-blue-50/50 transition-all duration-300">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-full w-64 border-r border-slate-100 dark:border-slate-800 bg-[#fbf8ff] dark:bg-slate-950 flex flex-col p-4 gap-2">
+<div class="mb-6 px-2">
+<h2 class="font-lexend text-lg text-[#001552] dark:text-white">Study Path</h2>
+<p class="text-xs text-slate-500 font-inter uppercase tracking-widest">IELTS Academic</p>
+</div>
+<nav class="flex flex-col gap-1">
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-50 hover:translate-x-1 transition-transform duration-200 cursor-pointer rounded-lg font-inter text-sm">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </div>
+<div class="flex items-center gap-3 p-3 bg-[#f3f2ff] dark:bg-blue-900/30 text-[#0057c2] dark:text-blue-300 font-semibold rounded-lg font-inter text-sm cursor-pointer">
+<span class="material-symbols-outlined">assignment</span>
+                Mock Tests
+            </div>
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-50 hover:translate-x-1 transition-transform duration-200 cursor-pointer rounded-lg font-inter text-sm">
+<span class="material-symbols-outlined">menu_book</span>
+                Vocabulary
+            </div>
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-50 hover:translate-x-1 transition-transform duration-200 cursor-pointer rounded-lg font-inter text-sm">
+<span class="material-symbols-outlined">auto_awesome</span>
+                AI Tutor
+            </div>
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-slate-50 hover:translate-x-1 transition-transform duration-200 cursor-pointer rounded-lg font-inter text-sm">
+<span class="material-symbols-outlined">insights</span>
+                Progress
+            </div>
+</nav>
+<div class="mt-auto p-4 bg-surface-container-low rounded-xl">
+<button class="w-full bg-primary text-white py-3 rounded-lg font-lexend font-medium text-sm transition-all hover:opacity-90 active:scale-95">
+                Start Practice
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 mt-16 p-8 min-h-screen">
+<!-- Listening Lab Header -->
+<section class="mb-10">
+<div class="flex items-end justify-between">
+<div>
+<h1 class="font-lexend text-4xl font-extrabold text-on-surface tracking-tight mb-2">Listening Lab</h1>
+<p class="text-slate-500 font-body max-w-xl">Refine your auditory comprehension with our curated IELTS Section 1-4 exercises. Powered by AI-driven feedback.</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-full">
+<span class="text-xs font-lexend font-bold text-primary">CURRENT BAND SCORE</span>
+<span class="text-2xl font-lexend font-extrabold text-primary">7.5</span>
+</div>
+<div class="w-48 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container w-3/4"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Layout: Bento Grid Style -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Audio & Transcript (8/12) -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<!-- Audio Player Module -->
+<div class="bg-surface-container-low p-6 rounded-2xl relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center justify-between mb-8">
+<div>
+<span class="bg-primary-fixed text-on-primary-fixed text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">Section 3: Academic Discussion</span>
+<h3 class="font-lexend text-xl font-semibold mt-2">Sustainable Architecture Seminar</h3>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+<!-- Waveform Mockup -->
+<div class="h-24 flex items-end gap-1 mb-6 px-4">
+<div class="flex-1 bg-primary-container/20 h-1/2 rounded-full"></div>
+<div class="flex-1 bg-primary-container/40 h-2/3 rounded-full"></div>
+<div class="flex-1 bg-primary-container/30 h-1/3 rounded-full"></div>
+<div class="flex-1 bg-primary h-3/4 rounded-full"></div>
+<div class="flex-1 bg-primary h-5/6 rounded-full"></div>
+<div class="flex-1 bg-primary h-full rounded-full"></div>
+<div class="flex-1 bg-primary h-4/5 rounded-full"></div>
+<div class="flex-1 bg-primary-container/40 h-1/2 rounded-full"></div>
+<div class="flex-1 bg-primary-container/20 h-1/3 rounded-full"></div>
+<div class="flex-1 bg-primary-container/40 h-1/2 rounded-full"></div>
+<div class="flex-1 bg-primary h-3/4 rounded-full"></div>
+<div class="flex-1 bg-primary h-5/6 rounded-full"></div>
+<div class="flex-1 bg-primary h-4/5 rounded-full"></div>
+<div class="flex-1 bg-primary-container/20 h-1/4 rounded-full"></div>
+</div>
+<!-- Controls -->
+<div class="flex items-center justify-center gap-8">
+<button class="text-primary"><span class="material-symbols-outlined text-3xl">replay_10</span></button>
+<button class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="text-primary"><span class="material-symbols-outlined text-3xl">forward_10</span></button>
+</div>
+</div>
+<!-- Decorative blur -->
+<div class="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/10 blur-3xl rounded-full"></div>
+</div>
+<!-- Interactive Transcript Section -->
+<div class="bg-surface-container-lowest rounded-2xl p-8 border border-slate-50">
+<div class="flex items-center justify-between mb-8">
+<h4 class="font-lexend text-lg font-bold">Guided Transcript</h4>
+<div class="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-xl">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-tighter">Smart Highlights</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="space-y-8 font-body leading-relaxed text-on-surface">
+<div class="flex gap-6 group">
+<span class="text-primary font-lexend font-bold text-sm w-12 pt-1">00:12</span>
+<div class="flex-1">
+<p class="mb-4">TUTOR: Good morning everyone. Today we're delving into the historical context of <span class="bg-secondary-container/30 px-1 rounded font-semibold text-secondary">urban planning</span> in Western Europe. Could anyone tell me the primary reason for the shift towards pedestrian-only zones in the late 19th century?</p>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-slate-400 uppercase">Q1</span>
+<input class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary-container outline-none transition-all" placeholder="Type your answer" type="text"/>
+</div>
+</div>
+</div>
+<div class="flex gap-6 group">
+<span class="text-primary font-lexend font-bold text-sm w-12 pt-1">01:45</span>
+<div class="flex-1">
+<p class="mb-4">STUDENT: Was it related to the increase in <span class="bg-secondary-container/30 px-1 rounded font-semibold text-secondary">industrial smog</span> and the need for breathable public spaces near the harbor?</p>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-slate-400 uppercase">Q2</span>
+<input class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary-container outline-none transition-all" placeholder="Type your answer" type="text"/>
+</div>
+</div>
+</div>
+<div class="flex gap-6 group">
+<span class="text-primary font-lexend font-bold text-sm w-12 pt-1">02:30</span>
+<div class="flex-1">
+<p class="mb-4">TUTOR: Precisely. And specifically, the introduction of the <span class="bg-secondary-container/30 px-1 rounded font-semibold text-secondary">steam-powered tram</span> created significant noise pollution that forced local councils to rethink commercial layouts.</p>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-slate-400 uppercase">Q3</span>
+<input class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary-container outline-none transition-all" placeholder="Type your answer" type="text"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Navigation & Progress (4/12) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Sections Selector -->
+<div class="bg-surface-container p-6 rounded-2xl">
+<h4 class="font-lexend text-md font-bold mb-4">Module Navigation</h4>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-primary">
+<p class="text-[10px] font-bold text-slate-400 uppercase">Section 1</p>
+<p class="font-lexend font-semibold text-sm">Form Filling</p>
+<div class="mt-2 text-[10px] text-secondary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> COMPLETED
+                            </div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-primary">
+<p class="text-[10px] font-bold text-slate-400 uppercase">Section 2</p>
+<p class="font-lexend font-semibold text-sm">Map Labelling</p>
+<div class="mt-2 text-[10px] text-secondary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> COMPLETED
+                            </div>
+</div>
+<div class="bg-primary text-white p-4 rounded-xl shadow-md">
+<p class="text-[10px] font-bold opacity-70 uppercase">Section 3</p>
+<p class="font-lexend font-semibold text-sm">Academic Talk</p>
+<div class="mt-2 text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">play_circle</span> IN PROGRESS
+                            </div>
+</div>
+<div class="bg-surface-container-lowest/50 p-4 rounded-xl border-l-4 border-slate-200">
+<p class="text-[10px] font-bold text-slate-400 uppercase">Section 4</p>
+<p class="font-lexend font-semibold text-sm">Lecture</p>
+<div class="mt-2 text-[10px] text-slate-400 font-bold">LOCKED</div>
+</div>
+</div>
+</div>
+<!-- AI Curator Insights -->
+<div class="glass p-6 rounded-2xl border border-white/20 shadow-xl relative overflow-hidden">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<h4 class="font-lexend text-md font-bold">AI Curator Insights</h4>
+</div>
+<p class="text-sm font-body text-slate-600 mb-4 italic">"You often miss plural markers in Section 3. Focus on word endings like '-s' during the tram discussion."</p>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+<span>Accuracy</span>
+<span>88%</span>
+</div>
+<div class="w-full h-1.5 bg-white/50 rounded-full">
+<div class="h-full bg-primary rounded-full w-[88%]"></div>
+</div>
+<div class="flex justify-between text-xs font-bold uppercase tracking-wider mt-2">
+<span>Listening Stamina</span>
+<span>High</span>
+</div>
+</div>
+</div>
+<!-- Recent Vocabulary -->
+<div class="bg-surface-container-low p-6 rounded-2xl">
+<h4 class="font-lexend text-md font-bold mb-4">Lab Vocabulary</h4>
+<div class="flex flex-wrap gap-2">
+<span class="bg-white px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-100 hover:shadow-sm cursor-pointer transition-all">Urbanization</span>
+<span class="bg-white px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-100 hover:shadow-sm cursor-pointer transition-all">Pedestrianized</span>
+<span class="bg-white px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-100 hover:shadow-sm cursor-pointer transition-all">Subsequent</span>
+<span class="bg-white px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-100 hover:shadow-sm cursor-pointer transition-all">Efficiency</span>
+<span class="bg-white px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-100 hover:shadow-sm cursor-pointer transition-all">Demographic</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating AI Assistant Pill -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="bg-surface-bright/90 backdrop-blur-xl border border-white/50 shadow-2xl px-6 py-4 rounded-full flex items-center gap-3 group active:scale-95 transition-all">
+<span class="bg-primary text-white p-2 rounded-full">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</span>
+<span class="font-lexend font-bold text-sm text-on-surface">Ask the Curator</span>
+</button>
+</div>
+</main>
+<!-- Background Images for Depth -->
+<div class="fixed top-0 right-0 -z-10 w-1/3 h-1/2 opacity-10 pointer-events-none">
+<img alt="" class="w-full h-full object-cover" data-alt="soft blurred abstract background of a library with dust motes in sunlight and rows of blurred books" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0siM5N4o7b4wVXxuxvqw255GSsO5Ku4xVsLGzehtjtN2q4FdK9zZ7oqRdkBaTAFtqXz92-NaIPo5PX2nvBqfurDbhbWL-RMsTvQIkF-K8IjWw9zFE9z5zLIx_qdBaifBdA8zvG--sMeEtT0nCpgDf9sBP4bP-Rvh44zxyVQR0gt2PgPo9c3mr_sMcnyBwY8qwu_MlypS4eDtaHVvbSk--AhwjuRVt50N6Fv43W8NAZAWd9P-ttMgYirvd4EpEtpQ_QNUqprUzgx4"/>
+</div>
+</body></html>

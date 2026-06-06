@@ -4,70 +4,60 @@
 }
 
 <div class="container py-4">
-    <!-- Header -->
+    <!-- Header & Summary Card -->
     <div class="row mb-4">
         <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Home")">Dashboard</a></li>
-                    <li class="breadcrumb-item active">AI Learning Roadmap</li>
-                </ol>
-            </nav>
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <div class="stat-icon bg-ielts" style="flex-shrink: 0;">
-                    <i class="bi bi-map"></i>
-                </div>
-                <div>
-                    <h2 class="mb-0">Your Personalized Learning Path</h2>
-                    <p class="text-muted mb-0">AI-generated roadmap based on your goals</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon bg-primary">
-                    <i class="bi bi-graph-up-arrow"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="currentBandDisplay">--</div>
-                    <div class="stat-label">Current Level</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon bg-success">
-                    <i class="bi bi-bullseye"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value text-success" id="targetBandDisplay">--</div>
-                    <div class="stat-label">Target Band</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon bg-warning">
-                    <i class="bi bi-calendar-week"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value text-warning" id="weeksDisplay">--</div>
-                    <div class="stat-label">Weeks Plan</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stat-card">
-                <div class="stat-icon bg-info">
-                    <i class="bi bi-journal-check"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value text-info" id="lessonsDisplay">--</div>
-                    <div class="stat-label">Total Lessons</div>
+            <div class="card border-1 shadow-editorial" style="background-color: white; border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius-editorial);">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb mb-2" style="font-size: 13px;">
+                                    <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Home")" class="text-muted text-decoration-none">Dashboard</a></li>
+                                    <li class="breadcrumb-item active text-navy" aria-current="page">My Personalized IELTS Roadmap</li>
+                                </ol>
+                            </nav>
+                            <h2 class="fw-bold text-navy mb-1" style="font-family: 'Playfair Display', serif;">
+                                <i class="fa-solid fa-compass text-primary me-2"></i>Your Personalized IELTS Roadmap
+                            </h2>
+                            <p class="text-muted mb-0">Your customized step-by-step academic pathway based on your target score and skill diagnostics.</p>
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-3 bg-light p-3 rounded border">
+                            <div class="text-center">
+                                <span class="d-block small text-muted text-uppercase fw-bold" style="font-size: 9px; letter-spacing: 0.05em;">Duration</span>
+                                <strong class="fs-4 text-navy"><span id="weeksDisplay">--</span> weeks</strong>
+                            </div>
+                            <div class="vr"></div>
+                            <div class="text-center">
+                                <span class="d-block small text-muted text-uppercase fw-bold" style="font-size: 9px; letter-spacing: 0.05em;">Total Lessons</span>
+                                <strong class="fs-4 text-navy"><span id="lessonsDisplay">--</span> lessons</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mt-3 pt-3 border-top">
+                        <div class="col-6 col-sm-3">
+                            <div class="p-2 border rounded text-center bg-light">
+                                <span class="d-block small text-muted text-uppercase" style="font-size: 9px; letter-spacing: 0.05em;">Current Band</span>
+                                <strong class="fs-5 text-navy" id="currentBandDisplay">--</strong>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="p-2 border rounded text-center bg-light">
+                                <span class="d-block small text-muted text-uppercase" style="font-size: 9px; letter-spacing: 0.05em;">Target Band</span>
+                                <strong class="fs-5 text-success" id="targetBandDisplay">--</strong>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <!-- Khối hiển thị các kỹ năng cần bổ sung -->
+                            <div class="h-100 p-2 border rounded d-flex flex-wrap gap-2 align-items-center bg-light px-3" style="font-size: 13px;">
+                                <span class="text-muted"><i class="fa-solid fa-circle-exclamation text-warning me-1"></i>Weekly Focus:</span>
+                                <span class="badge bg-white text-navy border rounded-pill px-2 py-1"><i class="fa-solid fa-headphones me-1 text-primary"></i>Listening: Map & Form Completion</span>
+                                <span class="badge bg-white text-navy border rounded-pill px-2 py-1"><i class="fa-solid fa-pen-nib me-1 text-success"></i>Writing: Coherence Task 2</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -75,8 +65,8 @@
 
     <!-- Loading State -->
     <div id="loadingState" class="text-center py-5">
-        <div class="spinner-border text-ielts mb-3" role="status"></div>
-        <p class="text-muted">Loading your roadmap...</p>
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <p class="text-muted">Analyzing your learning diagnostics and constructing roadmap...</p>
     </div>
 
     <!-- Roadmap Content -->
@@ -84,9 +74,9 @@
         <div class="row g-4">
             <!-- Weekly Plan -->
             <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-calendar3 me-2"></i>Weekly Study Plan</span>
+                <div class="card border-0 shadow-editorial" style="border: 1px solid rgba(0,0,0,0.05); background: white; border-radius: var(--radius-editorial);">
+                    <div class="card-header border-0 bg-black py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-navy" style="font-family: 'Playfair Display', serif;"><i class="fa-solid fa-calendar-days me-2 text-primary"></i>Weekly Learning Journey</span>
                         <div class="btn-group btn-group-sm">
                             <button class="btn btn-outline-secondary active" data-view="timeline">Timeline</button>
                             <button class="btn btn-outline-secondary" data-view="list">List</button>
@@ -102,91 +92,91 @@
 
             <!-- Skill Focus -->
             <div class="col-lg-4">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-pie-chart me-2"></i>Skill Focus Areas
+                <div class="card border-0 shadow-editorial mb-4" style="border-radius: var(--radius-editorial); border: 1px solid rgba(0,0,0,0.05); background: white;">
+                    <div class="card-header border-0 bg-transparent py-3">
+                        <h5 class="fw-bold text-navy mb-0" style="font-family: 'Playfair Display', serif;"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>IELTS Skill Distribution</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body pt-0">
                         <div id="skillFocusContainer">
                             <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>Reading</span>
-                                    <span id="readingFocus">25%</span>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 14px;">
+                                    <span class="fw-bold text-navy"><i class="fa-solid fa-book-open me-1" style="color: var(--skill-reading-color);"></i> Reading</span>
+                                    <span id="readingFocus" class="text-muted fw-bold">25%</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div id="readingBar" class="progress-bar bg-info" style="width: 25%"></div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>Listening</span>
-                                    <span id="listeningFocus">25%</span>
-                                </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div id="listeningBar" class="progress-bar bg-success" style="width: 25%"></div>
+                                <div class="progress" style="height: 8px; background-color: #E2E8F0;">
+                                    <div id="readingBar" class="progress-bar" style="width: 25%; background-color: var(--skill-reading-color);"></div>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>Writing</span>
-                                    <span id="writingFocus">25%</span>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 14px;">
+                                    <span class="fw-bold text-navy"><i class="fa-solid fa-headphones me-1" style="color: var(--skill-listening-color);"></i> Listening</span>
+                                    <span id="listeningFocus" class="text-muted fw-bold">25%</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div id="writingBar" class="progress-bar bg-warning" style="width: 25%"></div>
+                                <div class="progress" style="height: 8px; background-color: #E2E8F0;">
+                                    <div id="listeningBar" class="progress-bar" style="width: 25%; background-color: var(--skill-listening-color);"></div>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>Speaking</span>
-                                    <span id="speakingFocus">25%</span>
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 14px;">
+                                    <span class="fw-bold text-navy"><i class="fa-solid fa-pen-nib me-1" style="color: var(--skill-writing-color);"></i> Writing</span>
+                                    <span id="writingFocus" class="text-muted fw-bold">25%</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div id="speakingBar" class="progress-bar bg-danger" style="width: 25%"></div>
+                                <div class="progress" style="height: 8px; background-color: #E2E8F0;">
+                                    <div id="writingBar" class="progress-bar" style="width: 25%; background-color: var(--skill-writing-color);"></div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1" style="font-size: 14px;">
+                                    <span class="fw-bold text-navy"><i class="fa-solid fa-microphone me-1" style="color: var(--skill-speaking-color);"></i> Speaking</span>
+                                    <span id="speakingFocus" class="text-muted fw-bold">25%</span>
+                                </div>
+                                <div class="progress" style="height: 8px; background-color: #E2E8F0;">
+                                    <div id="speakingBar" class="progress-bar" style="width: 25%; background-color: var(--skill-speaking-color);"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-lightning me-2"></i>Quick Actions
+                <div class="card border-0 shadow-editorial mb-4" style="border-radius: var(--radius-editorial); border: 1px solid rgba(0,0,0,0.05); background: white;">
+                    <div class="card-header border-0 bg-transparent py-3">
+                        <h5 class="fw-bold text-navy mb-0" style="font-family: 'Playfair Display', serif;"><i class="fa-solid fa-bolt text-warning me-2"></i>Study Shortcuts</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body pt-0">
                         <div class="d-grid gap-2">
-                            <a href="/Home/Tests" class="btn btn-outline-primary">
-                                <i class="bi bi-file-earmark-text me-2"></i>Take Practice Test
+                            <a href="/Home/Tests" class="btn btn-ielts transition-editorial fw-bold" style="height: 38px; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-file-signature me-2"></i>IELTS Mock Test
                             </a>
-                            <a href="/Home/Skill?type=writing" class="btn btn-outline-success">
-                                <i class="bi bi-pencil me-2"></i>Learn Writing
+                            <a href="/Home/Skill?type=writing" class="btn btn-ielts-outline transition-editorial fw-bold text-navy" style="height: 38px; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-pen-nib me-2 text-success"></i>Writing Practice
                             </a>
-                            <a href="/Home/Skill?type=speaking" class="btn btn-outline-warning">
-                                <i class="bi bi-mic me-2"></i>Learn Speaking
+                            <a href="/Home/Skill?type=speaking" class="btn btn-ielts-outline transition-editorial fw-bold text-navy" style="height: 38px; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-microphone me-2 text-danger"></i>Speaking Practice
                             </a>
-                            <a href="/Home/Courses" class="btn btn-outline-secondary">
-                                <i class="bi bi-collection me-2"></i>Browse All Courses
+                            <a href="/Home/Courses" class="btn btn-outline-secondary transition-editorial fw-bold" style="height: 38px; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-book-bookmark me-2"></i>Browse All Courses
                             </a>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-info-circle me-2"></i>Study Tips
+                <div class="card border-0 shadow-editorial" style="border-radius: var(--radius-editorial); border: 1px solid rgba(0,0,0,0.05); background: white;">
+                    <div class="card-header border-0 bg-transparent py-3">
+                        <h5 class="fw-bold text-navy mb-0" style="font-family: 'Playfair Display', serif;"><i class="fa-solid fa-circle-info text-primary me-2"></i>Roadmap Guidelines</h5>
                     </div>
-                    <div class="card-body">
-                        <div id="studyTips" class="small">
-                            <div class="tip mb-2">
-                                <i class="bi bi-check-circle text-success me-1"></i>
-                                <span>Study consistently every day</span>
+                    <div class="card-body pt-0">
+                        <div id="studyTips" class="small d-flex flex-column gap-2 text-muted">
+                            <div class="tip d-flex align-items-center">
+                                <i class="fa-solid fa-circle-check text-success me-2"></i>
+                                <span>Maintain a consistent daily study habit</span>
                             </div>
-                            <div class="tip mb-2">
-                                <i class="bi bi-check-circle text-success me-1"></i>
-                                <span>Focus on your weak areas first</span>
+                            <div class="tip d-flex align-items-center">
+                                <i class="fa-solid fa-circle-check text-success me-2"></i>
+                                <span>Focus on strengthening your weakest skills first</span>
                             </div>
-                            <div class="tip mb-2">
-                                <i class="bi bi-check-circle text-success me-1"></i>
-                                <span>Practice under timed conditions</span>
+                            <div class="tip d-flex align-items-center">
+                                <i class="fa-solid fa-circle-check text-success me-2"></i>
+                                <span>Practice full mock tests under real exam timing conditions</span>
                             </div>
                         </div>
                     </div>
@@ -276,8 +266,55 @@
 
 @section Scripts {
 <script>
+    let skillTestMap = {};
+    async function loadTestsForCheckpoints() {
+        try {
+            const response = await api('/tests', { suppressError: true });
+            if (response.success && response.data) {
+                response.data.forEach(test => {
+                    const skill = (test.skillType || '').toLowerCase();
+                    // Keep only the first test per skill (usually the most relevant)
+                    if (skill && !skillTestMap[skill]) {
+                        skillTestMap[skill] = test.testId;
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Could not load tests for checkpoint links:', e);
+        }
+    }
+    function getCheckpointUrl(week, weekNum) {
+        const focusRaw = (week.focusArea || week.focus || '').toLowerCase();
+        const skillKeywords = ['reading', 'listening', 'writing', 'speaking'];
+        for (const skill of skillKeywords) {
+            if (focusRaw.includes(skill) && skillTestMap[skill]) {
+                return '/Home/TakeTest?id=' + skillTestMap[skill];
+            }
+        }
+        const cycleSkill = skillKeywords[(weekNum - 1) % 4];
+        if (skillTestMap[cycleSkill]) {
+            return '/Home/TakeTest?id=' + skillTestMap[cycleSkill];
+        }
+        return '/Home/Tests';
+    }
+
+    function getLessonUrl(lesson) {
+        const skillType = (lesson.skillType || lesson.skill || '').toLowerCase();
+        const skillRoutes = {
+            'reading': '/Home/Skill?type=reading',
+            'listening': '/Home/Skill?type=listening',
+            'writing': '/Home/Skill?type=writing',
+            'speaking': '/Home/Skill?type=speaking',
+            'vocabulary': '/Home/Courses',
+            'grammar': '/Home/Courses'
+        };
+        return skillRoutes[skillType] || '/Home/Courses';
+    }
+
     document.addEventListener('DOMContentLoaded', async function() {
         try {
+            const testsPromise = loadTestsForCheckpoints();
+
             const progressResponse = await api('/users/progress', { suppressError: true }).catch(() => ({ data: null }));
             const progress = progressResponse.data;
             
@@ -301,6 +338,9 @@
                 }
                 return { success: false };
             });
+
+            // Wait for tests to finish loading before rendering
+            await testsPromise;
 
             document.getElementById('loadingState').style.display = 'none';
 
@@ -366,46 +406,92 @@
             const status = weekNum < currentWeek ? 'completed' : weekNum === currentWeek ? 'current' : '';
             
             const weekDiv = document.createElement('div');
-            weekDiv.className = `week-item ${status}`;
+            weekDiv.className = `week-item ${status} border-start ps-4 pb-4 position-relative`;
+            weekDiv.style.borderLeft = "2px solid #E2E8F0";
             
             let lessonsHtml = '';
             const lessons = week.lessons || [];
             lessons.forEach(lesson => {
                 const skillColors = {
-                    'Reading': 'bg-info',
-                    'Listening': 'bg-success',
-                    'Writing': 'bg-warning',
-                    'Speaking': 'bg-danger',
-                    'Vocabulary': 'bg-primary',
-                    'Grammar': 'bg-secondary'
+                    'Reading': 'var(--skill-reading-color)',
+                    'Listening': 'var(--skill-listening-color)',
+                    'Writing': 'var(--skill-writing-color)',
+                    'Speaking': 'var(--skill-speaking-color)',
+                    'Vocabulary': 'var(--academic-gold)',
+                    'Grammar': '#718096'
                 };
-                const skillColor = skillColors[lesson.skill] || 'bg-secondary';
+                const skillIcons = {
+                    'Reading': 'fa-book-open',
+                    'Listening': 'fa-headphones',
+                    'Writing': 'fa-pen-nib',
+                    'Speaking': 'fa-microphone',
+                    'Vocabulary': 'fa-spell-check',
+                    'Grammar': 'fa-circle-nodes'
+                };
+                const skillColor = skillColors[lesson.skill] || '#718096';
+                const skillIcon = skillIcons[lesson.skill] || 'fa-book-open';
+                const lessonHref = getLessonUrl(lesson);
                 
                 lessonsHtml += `
-                    <div class="lesson-item">
-                        <div class="lesson-icon ${skillColor} text-white">
-                            <i class="bi bi-book"></i>
+                    <a href="${lessonHref}" class="lesson-item d-flex align-items-center p-3 mb-2 bg-light border transition-editorial text-decoration-none" style="border-radius: 6px; cursor: pointer; display: block;">
+                        <div class="lesson-icon text-white d-flex align-items-center justify-content-center me-3" 
+                             style="width: 36px; height: 36px; border-radius: 6px; background-color: ${skillColor};">
+                            <i class="fa-solid ${skillIcon}"></i>
                         </div>
-                        <div>
-                            <div class="fw-medium">${lesson.title}</div>
-                            <small class="text-muted">${lesson.skill || 'General'}</small>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-navy" style="font-size: 0.95rem;">${lesson.title}</div>
+                            <small class="text-muted text-uppercase" style="font-size: 10px; letter-spacing: 0.05em;">${lesson.skill || 'General'}</small>
                         </div>
-                    </div>
+                        <i class="fa-solid fa-angle-right text-muted" style="font-size: 13px;"></i>
+                    </a>
                 `;
             });
 
+            const checkpointUrl = getCheckpointUrl(week, weekNum);
+
             weekDiv.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">
-                        <span class="badge ${status === 'current' ? 'bg-warning' : status === 'completed' ? 'bg-success' : 'bg-secondary'} me-2">
-                            Week ${weekNum}
-                        </span>
-                        ${week.focusArea || 'Mixed Skills'}
-                    </h6>
-                    ${status === 'current' ? '<span class="badge bg-warning-subtle text-warning">Current</span>' : ''}
+                <!-- Timeline Dot Indicator -->
+                <div class="position-absolute rounded-circle bg-white d-flex align-items-center justify-content-center border border-2 border-primary" 
+                     style="left: -10px; top: 0; width: 18px; height: 18px; z-index: 2;">
+                     <div class="rounded-circle ${status === 'current' ? 'bg-warning' : status === 'completed' ? 'bg-success' : 'bg-secondary'}" style="width: 8px; height: 8px;"></div>
                 </div>
-                <div class="lessons-list">
-                    ${lessonsHtml}
+
+                <div class="card border-0 shadow-editorial p-4 mb-2" style="background-color: white; border: 1px solid rgba(0,0,0,0.06); border-radius: var(--radius-editorial);">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-bold text-navy">
+                            <span class="badge ${status === 'current' ? 'bg-warning text-dark' : status === 'completed' ? 'bg-success text-white' : 'bg-secondary text-white'} me-2">
+                                Week ${weekNum}
+                            </span>
+                            ${week.focusArea || 'Mixed Skills'}
+                        </h5>
+                        <div>
+                            <span class="badge bg-light text-muted border me-1"><i class="fa-solid fa-circle-info me-1"></i>Difficulty: Intermediate</span>
+                            ${status === 'current' ? '<span class="badge bg-warning-subtle text-warning border border-warning border-opacity-25">In Progress</span>' : ''}
+                        </div>
+                    </div>
+
+                    <!-- Emotional Study Coach Guidance -->
+                    <div class="p-2 mb-3 bg-light rounded border border-start border-3 border-warning" style="font-size: 13px;">
+                        <i class="fa-solid fa-quote-left text-warning me-2"></i>
+                        <span class="text-muted text-serif">This week, focus on completing 3 Listening/Reading lessons and submitting at least 1 Writing essay for expert evaluation. Good luck!</span>
+                    </div>
+
+                    <div class="lessons-list">
+                        ${lessonsHtml}
+                    </div>
+
+                    <!-- Weekly Checkpoint Quiz Gate -->
+                    <div class="p-3 mt-3 border border-dashed rounded bg-light" style="border-radius: 8px;">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                            <div>
+                                <h6 class="fw-bold mb-1 text-navy" style="font-size: 0.9rem;"><i class="fa-solid fa-shield-halved text-success me-2"></i>Weekly Checkpoint Quiz - Week ${weekNum}</h6>
+                                <p class="text-muted small mb-0">Score at least 60% to evaluate your understanding and advance your weekly progress.</p>
+                            </div>
+                            <a href="${checkpointUrl}" class="btn btn-sm btn-ielts transition-editorial px-3" style="height: 32px; display: inline-flex; align-items: center;">
+                                Take Checkpoint
+                            </a>
+                        </div>
+                    </div>
                 </div>
             `;
             

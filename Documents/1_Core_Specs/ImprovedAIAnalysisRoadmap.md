@@ -1,0 +1,30 @@
+# Phân tích và tối ưu hóa lộ trình học IELTS bằng AI
+
+Dựa trên **Đồ thị tri thức (UnderstandProject.md)** của dự án và file `python_ai_services` cung cấp logic AI hiện tại, ta cần thiết kế một lộ trình học IELTS cá nhân hóa dựa trên các yếu tố người học (trình độ, cảm xúc, thói quen, v.v.), đồng thời đảm bảo chỉ sử dụng nội dung đã có trong cơ sở dữ liệu và không cho phép AI sinh ra thông tin sai lệch (hallucination). Nghiên cứu chuyên sâu trong lĩnh vực giáo dục thường nhấn mạnh việc sử dụng **AI thích ứng** để cá nhân hóa trải nghiệm học tập: theo nghiên cứu, các nền tảng học tập thích ứng (Adaptive Learning Platforms) “**thu thập và phân tích dữ liệu người học**” để “**điều chỉnh linh hoạt nội dung giảng dạy và hành trình học**”, từ đó cung cấp trải nghiệm học tập cá nhân hóa cho từng học viên【101†L1-L3】. Cambridge English cũng nhận định AI tạo ra các “cơ hội phi thường” cho lớp học tiếng Anh, như cung cấp “**lộ trình học tập được cá nhân hóa hơn**” và khả năng “tạo nội dung nhanh chóng” cho giáo viên và học viên【59†L1-L3】. Một thành phần then chốt trong mô hình AI này là **đồ thị tri thức (knowledge graph)**, đóng vai trò làm “nền tảng khái niệm” liên kết chặt chẽ các chủ đề và kỹ năng tiếng Anh cần học【103†L1-L3】. Như vậy, theo phương pháp nghiên cứu, hệ thống AI lý tưởng sẽ dựa vào đồ thị tri thức để hiểu mối liên hệ giữa các khóa học hoặc tài liệu hiện có, rồi kết hợp với dữ liệu cá nhân (trình độ, phản hồi cảm xúc, thói quen học) để xây dựng lộ trình tương tác và chính xác.
+
+## So sánh với logic AI hiện tại
+
+Theo thông tin về **`python_ai_services`**, logic AI hiện tại chủ yếu dựa trên quy tắc định trước hoặc các hàm học máy để phân tích điểm mạnh – yếu (ví dụ kết quả bài kiểm tra đầu vào, lịch sử học). Nếu như chưa có, hệ thống cần bổ sung thành phần thu thập và phân tích dữ liệu về **cảm xúc** và **thói quen học** của người dùng. Ví dụ, nghiên cứu gợi ý AI nên “tích hợp các cơ chế điều chỉnh cảm xúc” như phản hồi thích ứng và hỗ trợ cảm xúc cá nhân cho người học【101†L1-L3】. Nếu mã nguồn hiện tại chưa làm được điều này, ta nên thêm module thu thập phản hồi (ví dụ đánh giá khó dễ của từng bài học, trạng thái tinh thần) để xác định người dùng đang cảm thấy có khó khăn hay không. Đồng thời, cần đảm bảo AI chỉ chọn nội dung có sẵn trong database: tức các bài học, bài tập, đề thi mẫu phải được gắn nhãn rõ ràng về **kỹ năng** (nghe, nói, đọc, viết), **trình độ** (theo CEFR hay band IELTS tương ứng) và chủ đề. Việc sử dụng Đồ thị tri thức của dự án giúp tránh **hallucination**: khi xây lộ trình, AI sẽ truy vấn đồ thị này để biết mối liên hệ giữa các chủ đề (ví dụ ngữ pháp cần học trước để làm bài tập phát âm), từ đó kết hợp chính xác tài liệu hiện có chứ không tự “sáng tác” thêm nội dung.
+
+## Dữ liệu cần tối ưu và đề xuất thay đổi
+
+- **Mở rộng dữ liệu và nhãn cho nội dung học:** Cần đảm bảo cơ sở dữ liệu các bài học IELTS của website có thẻ gắn về cấp độ, chủ đề, kỹ năng cụ thể. Điều này cho phép AI đối chiếu trực tiếp với nhu cầu người học (ví dụ nếu đang ở mức A2 đọc, AI chọn bài tương ứng). Đồ thị tri thức nên mô tả mối quan hệ giữa các khái niệm và kỹ năng (ví dụ: “vốn từ vựng nền” → “bài nghe đơn giản” → “bài đọc nâng cao”).
+- **Thu thập dữ liệu thói quen học:** Bổ sung luồng logic ghi nhận tần suất học, thời gian học (hàng ngày/tuần), sở thích ngữ cảnh học (học chủ yếu buổi sáng hay tối), v.v. Các thông tin này giúp AI điều chỉnh lộ trình (ví dụ người học có ít thời gian thì lộ trình có thể tập trung vào bài tập ngắn nhưng hiệu quả).
+- **Thu thập phản hồi cảm xúc:** Nếu được, hỏi người học về trạng thái hứng thú hoặc khó khăn sau mỗi bài học. AI nên phân tích phản hồi này để cung cấp hỗ trợ kịp thời (ví dụ giảm độ khó hoặc thêm ví dụ minh họa). Các nghiên cứu chỉ ra rằng hệ thống AI hiệu quả “cung cấp phản hồi thích ứng và hỗ trợ cảm xúc cá nhân” cho người học【101†L1-L3】.
+- **Không sửa đổi cấu trúc code gốc:** Tất cả thay đổi nên tập trung vào **dữ liệu** và **cấu hình**, tránh chỉnh sửa lung tung codebase lớn. Ví dụ, có thể thêm bảng hoặc JSON cho thói quen học, bổ sung trường tag cho bài học hiện tại; hoặc viết hàm bổ trợ truy vấn đồ thị tri thức mà tận dụng logic `python_ai_services` đang có.
+- **Bảo đảm tương tác chính xác:** AI phải sử dụng API và hàm trong `python_ai_services` để sinh kết quả. Đặc biệt, lộ trình trả về cần cụ thể và có thể tương tác: ví dụ hỏi thêm điều kiện người học, trình bày từng bước học, tài liệu tham khảo, kiểm tra đánh giá phù hợp. Chú ý chỉ dùng các nội dung thật từ database, tránh tạo ra ví dụ hay bài học mới ngoài dữ liệu có sẵn.
+
+## Prompt mẫu chi tiết cho AI
+
+Dựa trên phân tích trên, dưới đây là đề xuất **prompt mẫu** (bằng tiếng Việt) để điều khiển AI tạo lộ trình IELTS:
+
+```
+Bạn là một AI tư vấn học tập dùng logic hiện có trong `python_ai_services`. Hãy xây dựng **lộ trình học IELTS cá nhân hóa và tương tác** cho người học dựa trên thông tin đầu vào: 
+- Trình độ hiện tại (nghe/ngữ pháp/đọc/viết ở mức nào, có số điểm tham khảo IELTS hay không). 
+- Yếu tố cảm xúc/thói quen (vd. cảm thấy hứng thú với chủ đề nào, thời gian học trong ngày, khả năng tập trung, mức độ kiên trì). 
+Sử dụng **Đồ thị tri thức dự án** để liên kết các kỹ năng và chủ đề có trong cơ sở dữ liệu; và chỉ chọn nội dung thực tế đã có trong website (dữ liệu khóa học, đề mẫu, bài giảng, v.v.). 
+Kết quả đầu ra là một lộ trình chi tiết: từng bước học cụ thể, có đánh giá tương tác (vd. yêu cầu người học trả lời câu hỏi, làm bài tập hay mô phỏng, dựa trên nội dung sẵn có). Lộ trình này phải rất chính xác về IELTS (tập trung từng kỹ năng, band mục tiêu) và hợp lệ theo thông tin gốc của dự án. 
+Đảm bảo không chỉnh sửa codebase gốc, chỉ dùng kiến thức và dữ liệu sẵn có để tạo ra lộ trình. 
+``` 
+
+**Nguồn tham khảo:** Các nguyên tắc AI cá nhân hóa học tập đã được ghi nhận trong nghiên cứu【59†L1-L3】【101†L1-L3】 và phương pháp xây dựng lộ trình dựa trên **đồ thị tri thức**【103†L1-L3】, nhằm đảm bảo tính chính xác và hiệu quả cho hệ thống.
